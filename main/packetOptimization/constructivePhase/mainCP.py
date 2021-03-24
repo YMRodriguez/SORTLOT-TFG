@@ -1,0 +1,311 @@
+import numpy as np
+import math
+from .geometryHelpers import *
+
+
+# --------------------- Weight Limit - C1 -------------------------------------------------------------
+# This function returns if adding an item does not satisfy weight limit
+def isWeightExceeded(placedItems, newItem, truck):
+    if sum(list(map(lambda x: x["weight"], placedItems))) + newItem["weight"] > truck["tonnage"]:
+        return True
+    return False
+
+
+# This function gives the amount of weight exceeded
+def amountWeightExceeded(placedItems, newItem, truck):
+    return sum(list(map(lambda x: x["weight"], placedItems))) + newItem["weight"] - truck["tonnage"]
+
+
+# ----------------- Weight Distribution and load balancing - C2 --------------------------------------
+# This function addapts truck container surface to longitudinal zone separation. Creates the subzones in the truck object.
+# [Xin, Zin, Xend, Zend] which is the diagonal of a square
+# TODO, this goes into Truck Addapter Module
+def setContainerSubzones(truck, nZones):
+    truck["subzones"] = []
+    for i in range(nZones):
+        subzone = {}
+        subzone["id"] = i + 1
+        subzone["blf"] = np.array([0, 0, i * truck["length"] / nZones], dtype=float)
+        subzone["brr"] = np.array([truck["width"], 0, (i + 1) * truck["length"] / nZones], dtype=float)
+        subzone["weight"] = 0
+        subzone["weight_limit"] = truck["tonnage"] / nZones
+        truck["subzones"].append(subzone)
+    return truck
+
+
+# This function gets subzone length.
+def getSubzoneLength(subzones):
+    return subzones[0]["blf"][2]
+
+
+# TODO, we may want to alterate the subzones to reduce the difficulty of the constrain and get better solutions. Maybe balance differently.
+
+# This function returns the subzones of a truck.
+def getContainerSubzones(truck):
+    return truck["subzones"]
+
+
+# This function returns a list with the subzones the item is in.
+def getItemSubzones(item):
+    return list(map(lambda x: x[0], item["subzones"]))
+
+
+# This function returns the percentage of the item for a specified subzone.
+def getPercentageOutSubzone(itemBRRz, subzoneBRRz, itemLength):
+    return (itemBRRz - subzoneBRRz) / itemLength
+
+
+# This function returns the amount of subzones needed to fit the part of the item out of its initial zone.
+def getNeededExtraSubzonesForItem(subzonesLength, itemLength, outSubzone):
+    outzoneItemLength = outSubzone * itemLength
+    neededSubzones = outzoneItemLength / subzonesLength
+    return neededSubzones
+
+
+# This function sets in which zones is the item. It returns for each zone an array with the id and the percentage.
+# This function also checks the physical length contrains of an object
+# Example 1: item in one zone then [id_zone, 1]
+# Example 2: item in two zones then [[id_zone1, p], [id_zone2, (1-p)] ]
+def setItemSubzones(subzones, item):
+    item_blf_z = getItemBLF(item)[2]
+    item_brr_z = getItemBRR(item)[2]
+    subzonesLength = getSubzoneLength(subzones)
+    item["subzones"] = np.empty((1, 2))
+    for i in range(len(subzones)):  # TODO, Se puede reformar este for
+        # Check if it fits completly in one subzone
+        if subzones[i]["blf"][2] <= item_blf_z and subzones[i]["brr"][2] >= item_brr_z:
+            np.append(item["subzones"], np.array([i + 1, 1]))
+        # Last condition needed to separate physical conditions of the container from weight distribution.
+        # It does no fit in only one subzone.
+        else:
+            outSubzone = getPercentageOutSubzone(item_brr_z, subzones[i]["brr"][2], item["length"])
+            neededExtraSubzonesForItem = getNeededExtraSubzonesForItem(subzonesLength, item["length"], outSubzone)
+            # First subzone the item is in.
+            np.append(item["subzones"], np.array([subzones[i]["id"], 1 - outSubzone]))
+            for s in range(1, math.ceil(neededExtraSubzonesForItem) + 1):
+                # Needed to calculate the percentage in the last subzone the item is in.
+                if s == (math.ceil(neededExtraSubzonesForItem) + 1):
+                    np.append(item["subzones"], np.array([subzones[i]["id"] + s, (subzonesLength * (
+                                neededExtraSubzonesForItem - math.floor(neededExtraSubzonesForItem))) / item[
+                                                              "length"]]))
+                else:
+                    np.append(item["subzones"], np.array([subzones[i]["id"] + s, subzonesLength / item["length"]]))
+    return item
+
+
+# This function calculates the weight contribution of an object which has the contactArea for each subzone.
+# Input Item Subzone Format: item["subzones"]=[[id_subzone, percentageIn, contactAreaIn],...]
+# Output Item Subzone Format: item["subzones"]=[[id_subzone, percentageIn, contactAreaIn, weightIn],...]
+def addWeightContributionTo(item):
+    for i in item["subzones"]:
+        # WeightContributionInSubzone = (contactAreaIn/totalArea) * weight
+        np.append(i, np.array([(i[2] / getBottomPlainArea(item)) * item["weight"]]))
+    return item
+
+
+# TODO, This function computes the weight for a subzone everytime an object is added. Add it once is feasible.
+def addItemWeightToTruckSubzones(addedItem, truck):
+    return
+
+
+# This function returns a ndarray with the modified item and true if not any weight limit of a subzone is exceeded, false otherwise.
+# If the item is in the floor the weight contribution is direct to a subzone.
+# If the item is on top of others the weight contribution to a subzone is proportional to the bottom plain in contact of the item.
+# Output Format: [condition, item]
+def itemContributionExceedsSubzonesWeightLimit(item, subzones):
+    # This list stores the state of the condition for each subzone.
+    weightNotExceeded = np.array((), dtype=bool)
+    if isInFloor(item):
+        # Check if for each subzone the weight is exceeded.
+        for i in item["subzones"]:
+            np.append(weightNotExceeded, list(filter(lambda x: x is not None, map(
+                lambda x: (i[1] * item["weight"] + x["weight"]) <= x["weight_limit"] if i[0] == x["id"] else None,
+                subzones))))
+    else:
+        # Once known the area contribution, supposing an homogeneous density, calculate the weight contribution.
+        itemWithWeightContribution = addWeightContributionTo(item)
+        for i in itemWithWeightContribution["subzones"]:
+            # Check if adding the weight to the subzone current weight exceeds its limit.
+            np.append(weightNotExceeded, list(filter(lambda x: x is not None, map(
+                lambda x: (i[3] + x["weight"]) <= x["weight_limit"] if i[0] == x["id"] else None, subzones))))
+    return np.array([all(weightNotExceeded), itemWithWeightContribution])
+
+
+# ------------------ Stackability - C5 ---------------------------------------------
+# This function return the average weight for a list of items.
+def getAverageWeight(items):
+    return sum(list(map(lambda x: x["weight"], items))) / len(items)
+
+
+# This function returns true if a item is stackable, false otherwise.
+# An item is stackable if the contributions of weight for every object underneath does not exceed certain conditions.
+def isStackable(item, averageWeight, placedItems):
+    if isInFloor(item):
+        # For a optimous solution it is better to reward the algorithm to put the weighter items in the floor.
+        if item["weight"] > (1.15 * averageWeight):
+            return True
+        else:
+            return False
+    else:
+        # Reduce the scope of items to those sharing their top y plain with bottom y plain of the new item.
+        sharePlainItems = list(filter(lambda x: getBottomPlainHeight(item) == getTopPlainHeight(x), placedItems))
+        # This ndarray will store if the conditions are met for every item the newItem is above.
+        stackableForSharePlainItems = np.array((), dtype=bool)
+        for i in sharePlainItems:
+            # % of area between the newItem and the placed items underneath * newItem["weight"]
+            itemWeightContribution = (getIntersectionArea(i, item) / getBottomPlainArea(item)) * item["weight"]
+            # Portion of weight above fragile item cannot be more than 50% of the weight of the fragile item.
+            if i["breakability"] and itemWeightContribution <= 0.5 * i["weight"]:
+                np.append(stackableForSharePlainItems, True)
+            elif not i["breakabitily"] and itemWeightContribution <= i["weight"]:
+                np.append(stackableForSharePlainItems, True)
+            else:
+                np.append(stackableForSharePlainItems, False)
+    return all(stackableForSharePlainItems)
+
+
+# ------------------ ADR cargo - C6 ------------------------------------------------
+# This function returns True if the item in in a suitable position for ADR cargo, False otherwise.
+def isADRSuitable(item, truckBRR_z):
+    if item["ADR"]:
+        itemBRR_z = getItemBRR(item)[2]
+        # The item must have its extreme between the rear of the truck and one meter behind.
+        # TODO, make tests on this predefined condition.
+        if (itemBRR_z >= truckBRR_z - 1) and (itemBRR_z <= truckBRR_z):
+            return True
+    else:
+        return False
+
+
+# ------------------ Stability - C7 ------------------------------------------------
+
+# This function returns the item modified including the contact area in each subzone for it.
+# Output Item Subzone Format: [[id_subzone, percentageIn, contactAreaIn],...]
+# TODO, change newItem for item
+def addContactAreaTo(newItem, placedItems):
+    # Go over the subzones the item is in.
+    for i in newItem["subzones"]:
+        # Reduce the scope of items to those in the same subzone
+        placedItemsSubzone = list(filter(lambda x: i[0] in getItemSubzones(x), placedItems))
+        # Reduce the scope of items to those sharing their top y plain with bottom y plain of the new item.
+        sharePlainItems = list(
+            filter(lambda x: getBottomPlainHeight(newItem) == getTopPlainHeight(x), placedItemsSubzone))
+        # Calculate the area of intersection between the sharedPlainItems and the new item.
+        totalContactAreaInSubzone = sum(list(map(lambda x: getIntersectionArea(x, newItem), sharePlainItems)))
+        # For each subzone the item is in we also have the contact area which is not the same as the percentage within the subzone.
+        np.append(i, np.array([totalContactAreaInSubzone]))
+    return newItem
+
+
+# This function returns a ndarray with the item and True if the item has at least 60% of supported area, False otherwise.
+def isStable(item, placedItems):
+    itemWithContactArea = addContactAreaTo(item, placedItems)
+    totalItemContactArea = sum(list(map(lambda x: x[2], itemWithContactArea["subzones"])))
+    contactAreaPercentage = totalItemContactArea / getBottomPlainArea(item)
+    if contactAreaPercentage > 0.6:
+        return np.array([True, itemWithContactArea])
+    return np.array([False, itemWithContactArea])
+
+
+# ------------------ Dimension requirements ----------------------------------------
+# This function returns True if the packet inserted in a potentialPoint does not exceed the length of the truck, False otherwise.
+# Helps to create a value inside the packet object that will be used in checking if the condition is met.
+def isWithinTruckLength(currentSubzone, neededExtraSubzonesForItem, amountSubzones):
+    if currentSubzone + neededExtraSubzonesForItem <= amountSubzones:
+        return True
+    return False
+
+
+# This function returns True if the packet inserted in a potentialPoint does not exceed the length of the truck, False otherwise.
+def isWithinTruckLengthAux(item):
+    return item["lengthFitting"]
+
+
+# This function returns True if the packet inserted in a potentialPoint does not exceed the length of the truck, False otherwise.
+def isWithinTruckLength(item, truckLength):
+    if getItemBRR(item)[2] <= truckLength:
+        return True
+    return False
+
+
+# This function returns True if the packet inserted in a potentialPoint does not exceed the width of the truck, False otherwise.
+def isWithinTruckWidth(item, truckWidth):
+    if getItemBRR(item)[0] <= truckWidth:
+        return True
+    return False
+
+
+# This function returns True if the packet inserted in a potentialPoint does not exceed the height of the truck, False otherwise.
+def isWithinTruckHeight(item, truckHeight):
+    if getTopPlainHeight(item) <= truckHeight:
+        return True
+    return False
+
+
+# This function returns True if dimension constrains are met, False otherwise.
+def isWithinTruckDimensionsContrains(item, truckDimensions):
+    if isWithinTruckLength(item, truckDimensions["length"]) and isWithinTruckWidth(item, truckDimensions[
+        "width"]) and isWithinTruckHeight(item, truckDimensions["Height"]):
+        return True
+    return False
+
+# TODO, may be overlapping issues between items for those PP which are the projection of some extreme points which are in a exceeding area.
+
+# This function checks if a potential point is feasible for placing the item, meaning it satisfies all the conditions
+def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight, truck):
+    item = setItemMassCenter(newItem,potentialPoint)
+    # Conditions to be checked secuentially to improve performance.
+    if isWeightExceeded(placedItems, item, truck) and isWithinTruckDimensionsContrains(item, truck["dimensions"]) and isADRSuitable(item, getTruckBRR(truck)[2]):
+        subzones = getContainerSubzones(truck)
+        itemWithSubzones = setItemSubzones(item)
+        # This item is [condition, itemWithContactAreaForEachSubzone]
+        i3WithCondition = isStable(itemWithSubzones)
+        # Checks if it is stable and stackable.
+        if i3WithCondition[0] and isStackable(newItem, candidateListAverageWeight, placedItems):
+            # Way of keeping the modified object and if the condition state. TODO, maybe is not necessary to keep the item.
+            i4WithCondition = itemContributionExceedsSubzonesWeightLimit(i3WithCondition[1], subzones)
+            if i4WithCondition[0]:
+                return np.array([True, i4WithCondition[1]])
+        else:
+            return np.array([False, newItem])
+    else:
+        return np.array([False, newItem])
+
+
+# This function determines if a potential point if better than other using the following criteria:
+# - PP is better than another PP if it has a lower Z-coordinate.
+# - In case of tie, if inserting an item in the best implies more contact surface with the underlying object.
+def isBetterPP(newPP, currentBest, item):
+    # Lower z-coordinate meaning closer to the front of the truck, increases volume.
+    if newPP[2] < currentBest[2]:
+        return True
+    # In case of tie, take the one which implies the object to have more contact area with the object/objects underneath.
+    elif newPP[2] == currentBest[2]:
+        # If the new potential point is in the floor is better than any other.
+        if isInFloor(item):
+            return True
+        else:
+
+# This function adds the potential point inserted
+
+
+
+# This function creates a solution from a list of packets and a given potential points
+# TODO, determine if just one or several trucks
+def fillInitialList(candidateList, potentialPoints, truck):
+    placedItems = []
+    candidateListAverageWeight = getAverageWeight(candidateList)
+    for i in candidateList:
+        # Initialization of best point as be the worst, in this context the TRR of the truck.
+        pp_best = np.array([truck["width"], truck["height"], truck["length"]])
+        for pp in potentialPoints:
+            # [condition, item]
+            feasibility = isFeasible(pp, placedItems, i, candidateListAverageWeight, truck)
+            if feasibility[0] and isBetterPP(pp, pp_best, feasibility[1]):
+                pp_best = pp
+        if pp_best != np.array([truck["width"], truck["height"], truck["length"]]):
+            
+
+# This function is the main function of the module M2_2
+def main_m2_2(truck, candidateList):
+    potentialPoints = np.array([])
