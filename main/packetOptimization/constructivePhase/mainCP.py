@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from .geometryHelpers import *
+from copy import deepcopy
 
 
 # --------------------- Weight Limit - C1 -------------------------------------------------------------
@@ -62,7 +63,7 @@ def getNeededExtraSubzonesForItem(subzonesLength, itemLength, outSubzone):
     return neededSubzones
 
 
-# This function sets in which zones is the item. It returns for each zone an array with the id and the percentage.
+# This function sets in which zones is the item, for those, it returns an array with the id and the percentage of the base in.
 # This function also checks the physical length contrains of an object
 # Example 1: item in one zone then [id_zone, 1]
 # Example 2: item in two zones then [[id_zone1, p], [id_zone2, (1-p)] ]
@@ -70,26 +71,28 @@ def setItemSubzones(subzones, item):
     item_blf_z = getItemBLF(item)[2]
     item_brr_z = getItemBRR(item)[2]
     subzonesLength = getSubzoneLength(subzones)
-    item["subzones"] = np.empty((1, 2))
+    item["subzones"] = None
     for i in range(len(subzones)):  # TODO, Se puede reformar este for
         # Check if it fits completly in one subzone
         if subzones[i]["blf"][2] <= item_blf_z and subzones[i]["brr"][2] >= item_brr_z:
-            np.append(item["subzones"], np.array([i + 1, 1]))
-        # Last condition needed to separate physical conditions of the container from weight distribution.
-        # It does no fit in only one subzone.
-        else:
+            item["subzones"] = np.array([i + 1, 1])
+            break
+        # Get if the blf of an item is within the subzone, and include needed extra subzones.
+        elif subzones[i]["blf"][2] <= item_blf_z < subzones[i]["brr"][2]:
             outSubzone = getPercentageOutSubzone(item_brr_z, subzones[i]["brr"][2], item["length"])
             neededExtraSubzonesForItem = getNeededExtraSubzonesForItem(subzonesLength, item["length"], outSubzone)
             # First subzone the item is in.
-            np.append(item["subzones"], np.array([subzones[i]["id"], 1 - outSubzone]))
+            item["subzones"] = np.array([subzones[i]["id"], 1 - outSubzone])
             for s in range(1, math.ceil(neededExtraSubzonesForItem) + 1):
                 # Needed to calculate the percentage in the last subzone the item is in.
                 if s == (math.ceil(neededExtraSubzonesForItem) + 1):
-                    np.append(item["subzones"], np.array([subzones[i]["id"] + s, (subzonesLength * (
-                                neededExtraSubzonesForItem - math.floor(neededExtraSubzonesForItem))) / item[
-                                                              "length"]]))
+                    item["subzones"] = np.vstack((item["subzones"], np.array([subzones[i]["id"] + s, (subzonesLength * (
+                            neededExtraSubzonesForItem - math.floor(neededExtraSubzonesForItem))) / item[
+                                                              "length"]])))
                 else:
-                    np.append(item["subzones"], np.array([subzones[i]["id"] + s, subzonesLength / item["length"]]))
+                    item["subzones"] = np.vstack((item["subzones"], np.array([subzones[i]["id"] + s, subzonesLength / item["length"]])))
+        else:
+            break
     return item
 
 
@@ -97,10 +100,16 @@ def setItemSubzones(subzones, item):
 # Input Item Subzone Format: item["subzones"]=[[id_subzone, percentageIn, contactAreaIn],...]
 # Output Item Subzone Format: item["subzones"]=[[id_subzone, percentageIn, contactAreaIn, weightIn],...]
 def addWeightContributionTo(item):
-    for i in item["subzones"]:
+    newitem = deepcopy(item)
+    newitem["subzones"] = np.array(())
+    bottomPlainArea = getBottomPlainArea(item)
+    for i in range(item["subzones"].shape[0]):
         # WeightContributionInSubzone = (contactAreaIn/totalArea) * weight
-        np.append(i, np.array([(i[2] / getBottomPlainArea(item)) * item["weight"]]))
-    return item
+        if i == 0:
+            newitem["subzones"] = np.append(item["subzones"][i], np.array([(item["subzones"][i][2] / bottomPlainArea) * item["weight"]]))
+        else:
+            newitem["subzones"] = np.vstack((newitem["subzones"], np.append(item["subzones"][i], np.array([(item["subzones"][i][2] / bottomPlainArea) * item["weight"]]))))
+    return newitem
 
 
 # TODO, This function computes the weight for a subzone everytime an object is added. Add it once is feasible.
@@ -118,7 +127,7 @@ def itemContributionExceedsSubzonesWeightLimit(item, subzones):
     if isInFloor(item):
         # Check if for each subzone the weight is exceeded.
         for i in item["subzones"]:
-            np.append(weightNotExceeded, list(filter(lambda x: x is not None, map(
+            weightNotExceeded = np.append(weightNotExceeded, list(filter(lambda x: x is not None, map(
                 lambda x: (i[1] * item["weight"] + x["weight"]) <= x["weight_limit"] if i[0] == x["id"] else None,
                 subzones))))
     else:
@@ -126,7 +135,7 @@ def itemContributionExceedsSubzonesWeightLimit(item, subzones):
         itemWithWeightContribution = addWeightContributionTo(item)
         for i in itemWithWeightContribution["subzones"]:
             # Check if adding the weight to the subzone current weight exceeds its limit.
-            np.append(weightNotExceeded, list(filter(lambda x: x is not None, map(
+            weightNotExceeded = np.append(weightNotExceeded, list(filter(lambda x: x is not None, map(
                 lambda x: (i[3] + x["weight"]) <= x["weight_limit"] if i[0] == x["id"] else None, subzones))))
     return np.array([all(weightNotExceeded), itemWithWeightContribution])
 
@@ -156,11 +165,11 @@ def isStackable(item, averageWeight, placedItems):
             itemWeightContribution = (getIntersectionArea(i, item) / getBottomPlainArea(item)) * item["weight"]
             # Portion of weight above fragile item cannot be more than 50% of the weight of the fragile item.
             if i["breakability"] and itemWeightContribution <= 0.5 * i["weight"]:
-                np.append(stackableForSharePlainItems, True)
+                stackableForSharePlainItems = np.append(stackableForSharePlainItems, True)
             elif not i["breakabitily"] and itemWeightContribution <= i["weight"]:
-                np.append(stackableForSharePlainItems, True)
+                stackableForSharePlainItems = np.append(stackableForSharePlainItems, True)
             else:
-                np.append(stackableForSharePlainItems, False)
+                stackableForSharePlainItems = np.append(stackableForSharePlainItems, False)
     return all(stackableForSharePlainItems)
 
 
@@ -180,20 +189,25 @@ def isADRSuitable(item, truckBRR_z):
 # ------------------ Stability - C7 ------------------------------------------------
 
 # This function returns the item modified including the contact area in each subzone for it.
+# Input Item Subzone Format: [[id_subzone, percentageIn],...]
 # Output Item Subzone Format: [[id_subzone, percentageIn, contactAreaIn],...]
-# TODO, change newItem for item
-def addContactAreaTo(newItem, placedItems):
+def addContactAreaTo(item, placedItems):
+    newItem = deepcopy(item)
+    newItem["subzones"] = np.array(())
     # Go over the subzones the item is in.
-    for i in newItem["subzones"]:
+    for i in range(item["subzones"].shape[0]):
         # Reduce the scope of items to those in the same subzone
-        placedItemsSubzone = list(filter(lambda x: i[0] in getItemSubzones(x), placedItems))
+        placedItemsSubzone = list(filter(lambda x: item["subzones"][i][0] in getItemSubzones(x), placedItems))
         # Reduce the scope of items to those sharing their top y plain with bottom y plain of the new item.
         sharePlainItems = list(
-            filter(lambda x: getBottomPlainHeight(newItem) == getTopPlainHeight(x), placedItemsSubzone))
+            filter(lambda x: getBottomPlainHeight(item) == getTopPlainHeight(x), placedItemsSubzone))
         # Calculate the area of intersection between the sharedPlainItems and the new item.
-        totalContactAreaInSubzone = sum(list(map(lambda x: getIntersectionArea(x, newItem), sharePlainItems)))
+        totalContactAreaInSubzone = sum(list(map(lambda x: getIntersectionArea(x, item), sharePlainItems)))
         # For each subzone the item is in we also have the contact area which is not the same as the percentage within the subzone.
-        np.append(i, np.array([totalContactAreaInSubzone]))
+        if i == 0:
+            newItem["subzones"] = np.append(item["subzones"][i], np.array([totalContactAreaInSubzone]))
+        else:
+            newItem["subzones"] = np.vstack((newItem["subzones"], np.append(item["subzones"][i], np.array([totalContactAreaInSubzone]))))
     return newItem
 
 
@@ -243,7 +257,7 @@ def isWithinTruckHeight(item, truckHeight):
 
 
 # This function returns True if dimension constrains are met, False otherwise.
-def isWithinTruckDimensionsContrains(item, truckDimensions):
+def isWithinTruckDimensionsConstrains(item, truckDimensions):
     if isWithinTruckLength(item, truckDimensions["length"]) and isWithinTruckWidth(item, truckDimensions[
         "width"]) and isWithinTruckHeight(item, truckDimensions["Height"]):
         return True
@@ -254,8 +268,8 @@ def isWithinTruckDimensionsContrains(item, truckDimensions):
 # This function checks if a potential point is feasible for placing the item, meaning it satisfies all the conditions
 def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight, truck):
     item = setItemMassCenter(newItem,potentialPoint)
-    # Conditions to be checked secuentially to improve performance.
-    if isWeightExceeded(placedItems, item, truck) and isWithinTruckDimensionsContrains(item, truck["dimensions"]) and isADRSuitable(item, getTruckBRR(truck)[2]):
+    # Conditions to be checked sequentially to improve performance.
+    if isWeightExceeded(placedItems, item, truck) and isWithinTruckDimensionsConstrains(item, truck["dimensions"]) and isADRSuitable(item, getTruckBRR(truck)[2]):
         subzones = getContainerSubzones(truck)
         itemWithSubzones = setItemSubzones(item)
         # This item is [condition, itemWithContactAreaForEachSubzone]
@@ -304,7 +318,7 @@ def fillInitialList(candidateList, potentialPoints, truck):
             if feasibility[0] and isBetterPP(pp, pp_best, feasibility[1]):
                 pp_best = pp
         if pp_best != np.array([truck["width"], truck["height"], truck["length"]]):
-            
+
 
 # This function is the main function of the module M2_2
 def main_m2_2(truck, candidateList):
