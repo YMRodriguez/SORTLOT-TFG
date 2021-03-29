@@ -2,6 +2,7 @@ import numpy as np
 import math
 from .geometryHelpers import *
 from copy import deepcopy
+from scipy.spatial import Delaunay
 
 
 # --------------------- Weight Limit - C1 -------------------------------------------------------------
@@ -223,7 +224,7 @@ def isStable(item, placedItems):
     return np.array([False, itemWithContactArea])
 
 
-# ------------------ Dimension requirements ----------------------------------------
+# ------------------ Physical constrains - Truck-related ----------------------------------------
 # This function returns True if the packet inserted in a potentialPoint does not exceed the length of the truck, False otherwise.
 def isWithinTruckLengthAux(item):
     return item["lengthFitting"]
@@ -257,14 +258,30 @@ def isWithinTruckDimensionsConstrains(item, truckDimensions):
         return True
     return False
 
-# TODO, may be overlapping issues between items for those PP which are the projection of some extreme points which are in a exceeding area.
 
+# ------------------ Physical constrains - Items-related ----------------------------------------
+# TODO, may be overlapping issues between items for those PP which are the projection of some extreme points which are in a exceeding area.
+# This function returns True if the item does not overlap other items around it, False otherwise.
+def isNotOverlapping(item, placedItems):
+    # Corners of the item evaluated for insertion in PP.
+    points = np.array((getBLF(item), getTLF(item), getTRF(item), getBRF(item), getBRR(item), getBLR(item), getTRR(item), getTLR(item)))
+    for i in placedItems:
+        poly = np.array((getBLF(i), getTLF(i), getTRF(i), getBRF(i), getBRR(i), getBLR(i), getTRR(i), getTLR(i)))
+        outsideFromPoly = list(map(lambda x: True if x == -1 else False, Delaunay(poly).find_simplex(points)))
+        if all(outsideFromPoly):
+            continue
+        else:
+            return False
+    return True
+
+
+#--------------------- Helpers to the main module function -----------------------------------
 # This function checks if a potential point is feasible for placing the item, meaning it satisfies all the conditions.
 # Returns the state of feasibility condition and the item after processing it for all the constrains.
 def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight, truck):
     item = setItemMassCenter(newItem, potentialPoint)
     # Conditions to be checked sequentially to improve performance.
-    if isWeightExceeded(placedItems, item, truck) and isWithinTruckDimensionsConstrains(item, truck["dimensions"]) and isADRSuitable(item, getTruckBRR(truck)[2]):
+    if isWeightExceeded(placedItems, item, truck) and isWithinTruckDimensionsConstrains(item, truck["dimensions"]) and isADRSuitable(item, getTruckBRR(truck)[2]) and isNotOverlapping(item, placedItems):
         subzones = getContainerSubzones(truck)
         itemWithSubzones = setItemSubzones(subzones, item)
         # This item is [condition, itemWithContactAreaForEachSubzone]
@@ -340,10 +357,12 @@ def fillInitialList(candidateList, potentialPoints, truck):
             # Add pp in which the object is inserted.
             i["pp_in"] = pp_best
             # Remove pp_best from potentialPoints list.
-            # TODO, check if an insertion means deleting not only that PP but others.
+            # TODO, check if an insertion means deleting not only that PP but others. Solved with overlapping condition.
 
             # Generate new PPs to add to P
-            i["pp_out"] = generateNewPPs(feasibility[1], placedItems)
+            newPPs = generateNewPPs(feasibility[1], placedItems)
+            i["pp_out"] = newPPs
+            potentialPoints = np.vstack((potentialPoints, newPPs))
 
 
 # This function is the main function of the module M2_2

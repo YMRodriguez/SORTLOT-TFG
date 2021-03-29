@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.spatial import Delaunay
+
 
 # --------------------------------- Item geometric helpers -----------------------------------
 # This function adds the spacial center of mass to a packet solution inserted in a PP
