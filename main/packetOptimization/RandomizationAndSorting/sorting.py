@@ -1,5 +1,6 @@
 import random
 
+
 # -------------- Types -----------------------------------------
 # This function will sort by decreasing taxability
 def taxSorting(packets):

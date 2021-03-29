@@ -1,5 +1,5 @@
 import numpy as np
-
+from scipy.spatial import Delaunay
 
 # --------------------------------- Item geometric helpers -----------------------------------
 # This function adds the spacial center of mass to a packet solution inserted in a PP
@@ -7,6 +7,7 @@ def setItemMassCenter(item, potentialPoint):
     mc = potentialPoint + np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
     item["mass_center"] = mc
     return item
+
 
 # This function returns if an item is in the floor.
 def isInFloor(item):
@@ -16,51 +17,91 @@ def isInFloor(item):
 
 
 # This function returns the spacial Bottom-Left-Front of the item.
-def getItemBLF(item):
+def getBLF(item):
     blf = item["mass_center"] - np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
     return blf
 
 
 # This function returns the spacial Bottom-Right-Front of the item.
-def getItemBRF(item):
+def getBRF(item):
     brf = item["mass_center"] - np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
     return brf
 
 
 # This function returns the spacial Bottom-Right-Rear of the item.
-def getItemBRR(item):
+def getBRR(item):
     brr = item["mass_center"] + np.array([item["width"] / 2, -item["height"] / 2, item["length"] / 2])
     return brr
 
 
 # This function returns the spacial Bottom-Left-Rear of the item.
-def getItemBLR(item):
+def getBLR(item):
     blr = item["mass_center"] + np.array([-item["width"] / 2, -item["height"] / 2, item["length"] / 2])
     return blr
 
 
-# This function returns the height of the bottom plain of an item.
-def getBottomPlainHeight(item):
-    h = item["mass_center"][1] - np.array([item["height"] / 2])
+# This function return the spacial Top-Left-Front of the item.
+def getTLF(item):
+    tlf = item["mass_center"] - np.array([-item["width"] / 2, -item["height"] / 2, item["length"] / 2])
+    return tlf
+
+
+# This function returns the spacial Top-Right-Front of the item.
+def getTRF(item):
+    trf = item["mass_center"] + np.array([item["width"] / 2, item["height"] / 2, -item["length"] / 2])
+    return trf
+
+
+# This function return the spacial Top-Right-Rear of the item.
+def getTRR(item):
+    trr = item["mass_center"] + np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
+    return trr
+
+
+# This function returns the spacial Top-Left-Rear of the item.
+def getTLR(item):
+    tlr = item["mass_center"] + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
+    return tlr
+
+
+# This function returns the height of the bottom Plane of an item.
+def getBottomPlaneHeight(item):
+    h = item["mass_center"][1] - np.array([item["height"] / 2])[0]
     return h
 
 
-# This function returns the height of the top plain of an item.
-def getTopPlainHeight(item):
-    h = item["mass_center"][1] + np.array([item["height"] / 2])
+# This function returns the height(y-axis) of the top Plane of an item.
+def getTopPlaneHeight(item):
+    h = item["mass_center"][1] + np.array([item["height"] / 2])[0]
     return h
 
 
-# This function returns the area of the base face of an item.
-def getBottomPlainArea(item):
-    return (getItemBRF(item)[0] - getItemBLF(item)[0]) * (getItemBLR(item[2]) - getItemBLF(item[2]))
+# This function returns the area(m2) of the base face of an item.
+def getBottomPlaneArea(item):
+    return (getBRF(item)[0] - getBLF(item)[0]) * (getBLR(item[2]) - getBLF(item[2]))
 
 
-# This function returns the intersection area between two items none in plain x(width), z(length).
+# This function returns the intersection area(m2) between two items in Plane x(width), z(length).
 def getIntersectionArea(i1, i2):
-    dx = min(getItemBRR(i1)[0], getItemBRR(i2)[0]) - max(getItemBLF(i1)[0], getItemBLF(i2)[0])
-    dz = min(getItemBRR(i1)[2], getItemBRR(i2)[2]) - max(getItemBLF(i1)[2], getItemBLF(i2)[2])
+    dx = min(getBRR(i1)[0], getBRR(i2)[0]) - max(getBLF(i1)[0], getBLF(i2)[0])
+    dz = min(getBRR(i1)[2], getBRR(i2)[2]) - max(getBLF(i1)[2], getBLF(i2)[2])
     return dx * dz
+
+
+# This function returns True if the point is inside the Plane for the same y-axis value.
+# PlaneLF/RR could be both the bottom and top Plane of an item.
+def pointInPlane(point, planeLF, planeRR):
+    return planeRR[0] >= point[0] >= planeLF[0] and planeRR[2] >= point[2] >= planeLF[2]
+
+
+# This function returns the projection in y-axis over the nearest item top plane for a point.
+def getNearestProjectionPointFor(point, placedItems):
+    # Reduce the scope to those items whose top or bottom plane contains the point in (x,z)-axis.
+    pointIntoPlaneItems = list(filter(lambda x: pointInPlane(point, getBLF(x), getBRR(x)), placedItems))
+    # Sort and get the item with the nearest y-axis value.
+    itemWithNearestProj = sorted(pointIntoPlaneItems, key=lambda x: getTopPlaneHeight(x))[0]
+    # Return the same point but with y-axis value projected.
+    return np.array([point[0], getTopPlaneHeight(itemWithNearestProj), point[2]])
 
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------
