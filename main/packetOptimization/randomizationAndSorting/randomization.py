@@ -1,5 +1,6 @@
 import random
 from main.packetAdapter.adapter import getAverageTaxability
+from copy import deepcopy
 
 
 # --------------- Helpers -----------------------------------------------------------
@@ -10,9 +11,9 @@ from main.packetAdapter.adapter import getAverageTaxability
 #                                        |o4 -> (h, l, w) |
 #                                        |o5 -> (l, w, h) |
 #                                        |o6 -> (h, w, l) |
-def changeItemOrientation(item):
-    orientation = random.randint(0, 6)
-    i = item.copy()
+def changeItemOrientation(item, validOrientations):
+    orientation = random.choice(validOrientations)
+    i = deepcopy(item)
     item["orientation"] = orientation
     if orientation == 2:
         item["width"] = i["length"]
@@ -101,8 +102,8 @@ def swapByTaxability(packets):
 
 # ------------------- Main Function ---------------------------------------------------------------------
 # This function is in charge of the randomization of a list of packets
-def randomization(packets):
-    random_oriented_packets = list(map(lambda x: changeItemOrientation(x), packets))
+def randomization(packets, validOrientations):
+    random_oriented_packets = list(map(lambda x: changeItemOrientation(x, validOrientations), packets))
     swapped_v = swapByVolume(random_oriented_packets)
     swapped_w = swapByWeight(swapped_v)
     swapped_p = swapByPriority(swapped_w)

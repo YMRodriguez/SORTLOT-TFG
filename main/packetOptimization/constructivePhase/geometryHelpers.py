@@ -1,4 +1,5 @@
 import numpy as np
+from ..randomizationAndSorting.randomization import changeItemOrientation
 
 
 # --------------------------------- Item geometric helpers -----------------------------------
@@ -102,6 +103,11 @@ def getNearestProjectionPointFor(point, placedItems):
     itemWithNearestProj = sorted(pointIntoPlaneItems, key=lambda x: getTopPlaneHeight(x))[0]
     # Return the same point but with y-axis value projected.
     return np.array([point[0], getTopPlaneHeight(itemWithNearestProj), point[2]])
+
+
+# This function randomly reorients a given item.
+def reorient(item):
+    return changeItemOrientation(item, list(filter(lambda x: x != item["orientation"], list(range(1, 7)))))
 
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------
