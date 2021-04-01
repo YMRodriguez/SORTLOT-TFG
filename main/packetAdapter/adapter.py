@@ -31,4 +31,6 @@ def areTaxed(packets):
 # This function adapts packets to be taxed.
 def adaptPackets(packets, alpha):
     if not areTaxed(packets):
-        addTaxToDataset(packets, alpha)
+        return addTaxToDataset(packets, alpha)
+    else:
+        print("Packets are already taxed")

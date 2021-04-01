@@ -1,5 +1,5 @@
 import numpy as np
-from ..randomizationAndSorting.randomization import changeItemOrientation
+from main.packetOptimization.randomizationAndSorting.randomization import changeItemOrientation
 
 
 # --------------------------------- Item geometric helpers -----------------------------------

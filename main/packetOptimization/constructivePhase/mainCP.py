@@ -1,6 +1,6 @@
 import numpy as np
 import math
-from .geometryHelpers import *
+from main.packetOptimization.constructivePhase.geometryHelpers import *
 from copy import deepcopy
 from scipy.spatial import Delaunay
 
@@ -19,20 +19,6 @@ def amountWeightExceeded(placedItems, newItem, truck):
 
 
 # ----------------- Weight Distribution and load balancing - C2 --------------------------------------
-# This function adapts truck container surface to longitudinal zone separation. Creates the subzones in the truck object.
-# [Xin, Zin, Xend, Zend] which is the diagonal of a square
-# TODO, this goes into Truck Adapter Module
-def setContainerSubzones(truck, nZones):
-    truck["subzones"] = []
-    for i in range(nZones):
-        subzone = {"id": i + 1, "blf": np.array([0, 0, i * truck["length"] / nZones], dtype=float),
-                   "brr": np.array([truck["width"], 0, (i + 1) * truck["length"] / nZones], dtype=float), "weight": 0,
-                   # TODO, cannot be hardcoded
-                   "weight_limit": truck["tonnage"] / nZones}
-        truck["subzones"].append(subzone)
-    return truck
-
-
 # This function gets subzone length.
 def getSubzoneLength(subzones):
     return subzones[0]["blf"][2]
@@ -292,7 +278,7 @@ def isNotOverlapping(item, placedItems):
 def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight, truck):
     item = setItemMassCenter(newItem, potentialPoint)
     # Conditions to be checked sequentially to improve performance.
-    if isWeightExceeded(placedItems, item, truck) and isWithinTruckDimensionsConstrains(item, truck[
+    if not isWeightExceeded(placedItems, item, truck) and isWithinTruckDimensionsConstrains(item, truck[
         "dimensions"]) and isADRSuitable(item, getTruckBRR(truck)[2]) and isNotOverlapping(item, placedItems):
         truckSubzones = getContainerSubzones(truck)
         itemWithSubzones = setItemSubzones(truckSubzones, item)
@@ -392,6 +378,8 @@ def fillList(candidateList, potentialPoints, truck, retry, placedItems):
             newPPs = generateNewPPs(feasibleItem, placedItems)
             feasibleItem["pp_out"] = newPPs
             potentialPoints = np.vstack((potentialPoints, newPPs))
+            # Add insertion order to item.
+            feasibleItem["in_id"] = len(placedItems)
             # Add item to placedItems.
             placedItems.append(feasibleItem)
             # Update truck weight status
