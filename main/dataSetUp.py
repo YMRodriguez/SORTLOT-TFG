@@ -79,7 +79,7 @@ trucks_dataset["width"] = trucks_dataset.apply(lambda x: x.width * 10 / 1000, ax
 trucks_dataset["height"] = trucks_dataset.apply(lambda x: x.height * 10 / 1000, axis=1)
 trucks_dataset["tonnage"] = trucks_dataset.apply(lambda x: x.tonnage * 1000, axis=1)
 trucks_dataset["dimensions"] = trucks_dataset.apply(
-    lambda x: {"lenght": x.length, "width": x.width, "height": x.height}, axis=1)
+    lambda x: {"length": x.length, "width": x.width, "height": x.height}, axis=1)
 
 # Lo que saca esta celda es lo que se va a meter en mongo
 trucks_to_db = trucks_dataset.to_dict(orient='records')

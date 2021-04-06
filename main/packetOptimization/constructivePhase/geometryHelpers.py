@@ -43,7 +43,7 @@ def getBLR(item):
 
 # This function return the spacial Top-Left-Front of the item.
 def getTLF(item):
-    tlf = item["mass_center"] - np.array([-item["width"] / 2, -item["height"] / 2, item["length"] / 2])
+    tlf = item["mass_center"] - np.array([item["width"] / 2, -item["height"] / 2, item["length"] / 2])
     return tlf
 
 
@@ -79,7 +79,7 @@ def getTopPlaneHeight(item):
 
 # This function returns the area(m2) of the base face of an item.
 def getBottomPlaneArea(item):
-    return (getBRF(item)[0] - getBLF(item)[0]) * (getBLR(item[2]) - getBLF(item[2]))
+    return (getBRF(item)[0] - getBLF(item)[0]) * (getBLR(item)[2] - getBLF(item)[2])
 
 
 # This function returns the intersection area(m2) between two items in Plane x(width), z(length).

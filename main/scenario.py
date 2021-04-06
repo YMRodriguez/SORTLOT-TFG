@@ -29,11 +29,11 @@ wharehouses_titles = list(map(lambda x: x["name"], wharehouses_col.find({}, {'_i
 
 def random_packet_generator(max_dimensions, max_weight, places):
     packet = {"subgroup_id": random.choices([0, 1, 2], [90, 5, 5])[0],
-              "length": random.randint(10, max_dimensions[0]) / 100,
-              "width": random.randint(10, max_dimensions[1]) / 100,
-              "height": random.randint(10, max_dimensions[2]) / 100}
+              "length": random.randint(30, max_dimensions[0]) / 100,
+              "width": random.randint(30, max_dimensions[1]) / 100,
+              "height": random.randint(30, max_dimensions[2]) / 100}
     packet["volume"] = round((packet["length"] * packet["width"] * packet["height"]), 3)
-    packet["weight"] = random.randint(1, max_weight) / 1000
+    packet["weight"] = random.randint(10000, max_weight) / 1000
     packet["src"] = places[5]
     packet["src_code"] = 5  # Fixed main wharehouse
     packet["dst"] = random.choice([p for p in places if p != packet["src"]])
@@ -46,7 +46,7 @@ def random_packet_generator(max_dimensions, max_weight, places):
     return packet
 
 
-max_dimensions_var = [200, 200, 200]
+max_dimensions_var = [160, 160, 160]
 max_weight_var = 50000
 
 packets_var = []
