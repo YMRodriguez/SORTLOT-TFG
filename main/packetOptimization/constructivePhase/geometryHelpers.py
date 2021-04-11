@@ -4,9 +4,14 @@ from main.packetOptimization.randomizationAndSorting.randomization import change
 
 # --------------------------------- Item geometric helpers -----------------------------------
 # This function adds the spacial center of mass to a packet solution inserted in a PP
-def setItemMassCenter(item, potentialPoint):
-    mc = potentialPoint + np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
-    item["mass_center"] = mc
+def setItemMassCenter(item, potentialPoint, truckWidth):
+    # TODO, limit in which to iterate to determine best solutions.
+    print(potentialPoint[0])
+    if truckWidth * 0.85 <= potentialPoint[0] <= truckWidth:
+        item["mass_center"] = potentialPoint + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
+    else:
+        item["mass_center"] = potentialPoint + np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
+    print(item)
     return item
 
 

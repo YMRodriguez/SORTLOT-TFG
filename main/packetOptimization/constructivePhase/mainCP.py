@@ -3,6 +3,7 @@ import math
 from main.packetOptimization.constructivePhase.geometryHelpers import *
 from copy import deepcopy
 from scipy.spatial import Delaunay
+import random
 
 
 # --------------------- Weight Limit - C1 -------------------------------------------------------------
@@ -265,17 +266,11 @@ def isWithinTruckDimensionsConstrains(item, truckDimensions):
 # TODO, may be overlapping issues between items for those PP which are the projection of some extreme points which are in a exceeding area.
 # This function returns True if the item does not overlap other items around it, False otherwise.
 def isNotOverlapping(item, placedItems):
-    #print("PlacedItems en overlapping checking")
-    #print(placedItems)
     # Corners of the item evaluated for insertion in PP.
     points = np.array([getBLF(item), getTLF(item), getTRF(item), getBRF(item), getBRR(item), getBLR(item), getTRR(item),
                        getTLR(item)])
-    #print("Puntos del nuevo item \n")
-    #print(points)
     for i in placedItems:
         poly = np.array([getBLF(i), getTLF(i), getTRF(i), getBRF(i), getBRR(i), getBLR(i), getTRR(i), getTLR(i)])
-        #print("Puntos de cada uno de los placedItems \n")
-        #print(poly)
         outsideFromPoly = list(map(lambda x: True if x == -1 else False, Delaunay(poly).find_simplex(points)))
         if all(outsideFromPoly):
             continue
@@ -288,7 +283,7 @@ def isNotOverlapping(item, placedItems):
 # This function checks if a potential point is feasible for placing the item, meaning it satisfies all the conditions.
 # Returns the state of feasibility condition and the item after processing it for all the constrains.
 def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight, truck):
-    item = setItemMassCenter(newItem, potentialPoint)
+    item = setItemMassCenter(newItem, potentialPoint, truck["width"])
     # Conditions to be checked sequentially to improve performance.
     if not isWeightExceeded(placedItems, item, truck) \
             and isWithinTruckDimensionsConstrains(item, truck["dimensions"])\
@@ -321,9 +316,14 @@ def isBetterPP(newPP, currentBest, item, placedItems):
         return True
     # In case of tie, take the one which implies the object to have more contact area with the object/objects underneath.
     elif newPP[2] == currentBest[2]:
+        # If there are only two(first points) with the same z-y axis but different x. Choose randomly.
+        # This will always occur in the beginning.
+        if newPP[0] != currentBest[0] and newPP[1] == currentBest[1]:
+            return bool(random.getrandbits(1))
         # If the new potential point is in the floor is better than any other.
-        if isInFloor(item):
+        elif isInFloor(item):
             return True
+        # TODO, make fitness function comparing both bottom plane area and y-axis value.
         else:
             bottomPlaneArea = getBottomPlaneArea(item)
             newPPItem = list(filter(lambda x: any(list(map(lambda y: all(y == newPP), x["pp_out"]))), placedItems))[0]
@@ -379,18 +379,13 @@ def fillList(candidateList, potentialPoints, truck, retry, placedItems):
         pp_best = np.array([truck["width"], truck["height"], truck["length"]])
         # Try to get the best PP for an item.
         for pp in potentialPoints:
-            #print("PotentialPoints para comprobar la viabilidad")
-            #print(potentialPoints)
             # [condition, item]
             feasibility = isFeasible(pp, placedItems, i, candidateListAverageWeight, truck)
-            #print("Item despues de ponerle el mass center")
-            #print(feasibility[0][1])
-            #print(feasibility[0][0])
             if feasibility[0][0] and isBetterPP(pp, pp_best, feasibility[0][1], placedItems):
                 pp_best = pp
                 feasibleItem = feasibility[0][1]
         # If the best is different from the worst there is a PP to insert the item.
-        if all(pp_best != np.array([truck["width"], truck["height"], truck["length"]])):
+        if any(pp_best != np.array([truck["width"], truck["height"], truck["length"]])):
             # Add pp in which the object is inserted.
             feasibleItem["pp_in"] = pp_best
             # Remove pp_best from potentialPoints list.
@@ -399,8 +394,6 @@ def fillList(candidateList, potentialPoints, truck, retry, placedItems):
             newPPs = generateNewPPs(feasibleItem, placedItems)
             feasibleItem["pp_out"] = newPPs
             potentialPoints = np.vstack((potentialPoints, newPPs))
-            #print("potentialPoints despues de insertar objeto")
-            #print(potentialPoints)
             # Add insertion order to item.
             feasibleItem["in_id"] = len(placedItems)
             # Add item to placedItems.
@@ -416,5 +409,6 @@ def fillList(candidateList, potentialPoints, truck, retry, placedItems):
 def main_m2_2(truck, candidateList):
     potentialPoints = truck["pp"]
     filling = fillList(candidateList, potentialPoints, truck, 0, [])
+    print(filling)
     refilling = fillList(filling["discard"], filling["potentialPoints"], filling["truck"], 1, filling["placed"])
     return refilling
