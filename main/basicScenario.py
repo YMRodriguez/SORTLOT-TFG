@@ -1,12 +1,16 @@
 import random
 import pymongo
 import pandas as pd
+import numpy as np
+import json
 from copy import deepcopy
 from main.truckAdapter.adapter import adaptTruck
 from main.packetAdapter.adapter import adaptPackets
 from main.packetOptimization.randomizationAndSorting.randomization import randomization
 from main.packetOptimization.randomizationAndSorting.sorting import sorting
 from main.packetOptimization.constructivePhase.mainCP import main_m2_2
+from main.statistics.main import main_statistics
+from main.packetOptimization.constructivePhase.mainCP import isNotOverlapping
 
 # ----------------------- MongoDB extraction ----------------------
 myclient = pymongo.MongoClient("mongodb://localhost:27017/",
@@ -50,7 +54,7 @@ max_dimensions_var = [160, 160, 160]
 max_weight_var = 50000
 
 packets_var = []
-for i in range(50):
+for i in range(100):
     packets_var.append(random_packet_generator(max_dimensions_var, max_weight_var, wharehouses_titles))
 
 packets_dataset = pd.DataFrame(packets_var)
@@ -71,4 +75,19 @@ def main(packets, truck):
     return main_m2_2(truck, rand_output)
 
 
+# ------------------ Translation to Application -------------------
+def adaptNdarrayToList(item):
+    item["mass_center"] = item["mass_center"].tolist()
+    item["subzones"] = item["subzones"].tolist()
+    item["pp_in"] = item["pp_in"].tolist()
+    item["pp_out"] = item["pp_out"].tolist()
+    return item
+
+
+# ------------------ Solution processing --------------------------
 solution = main(deepcopy(packets_to_db), truck_var)
+serializableSolutionPlaced = deepcopy(solution["placed"])
+serializableSolutionPlaced = list(map(lambda x: adaptNdarrayToList(x), serializableSolutionPlaced))
+pandasDataframe = main_statistics(solution)
+with open('/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/placedpackets.json', 'w') as file:
+    json.dump(serializableSolutionPlaced, file)

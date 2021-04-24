@@ -4,6 +4,7 @@ from main.packetOptimization.constructivePhase.geometryHelpers import *
 from copy import deepcopy
 from scipy.spatial import Delaunay
 import random
+import json
 
 
 # --------------------- Weight Limit - C1 -------------------------------------------------------------
@@ -149,22 +150,23 @@ def getAverageWeight(items):
 def isStackable(item, averageWeight, placedItems):
     if isInFloor(item):
         # For a optimum solution it is better to reward the algorithm to put the weightier items on the floor.
-        if item["weight"] > (1.15 * averageWeight):
+        if item["weight"] > (1.1 * averageWeight):
             return True
         else:
             return False
     else:
+        # TODO, we may want to change this to take into account accumulated weight(i.e 2 packets above another)
         # Reduce the scope of items to those sharing their top y Plane with bottom y Plane of the new item.
         sharePlaneItems = list(filter(lambda x: getBottomPlaneHeight(item) == getTopPlaneHeight(x), placedItems))
         # This ndarray will store if the conditions are met for every item the newItem is above.
-        stackableForSharePlaneItems = np.array([[]], dtype=bool)
+        stackableForSharePlaneItems = np.array([], dtype=bool)
         for i in sharePlaneItems:
             # % of area between the newItem and the placed items underneath * newItem["weight"]
             itemWeightContribution = (getIntersectionArea(i, item) / getBottomPlaneArea(item)) * item["weight"]
             # Portion of weight above fragile item cannot be more than 50% of the weight of the fragile item.
             if i["breakability"] and itemWeightContribution <= 0.5 * i["weight"]:
                 stackableForSharePlaneItems = np.append(stackableForSharePlaneItems, True)
-            elif not i["breakabitily"] and itemWeightContribution <= i["weight"]:
+            elif not i["breakability"] and itemWeightContribution <= i["weight"]:
                 stackableForSharePlaneItems = np.append(stackableForSharePlaneItems, True)
             else:
                 stackableForSharePlaneItems = np.append(stackableForSharePlaneItems, False)
@@ -194,7 +196,6 @@ def isADRSuitable(item, truckBRR_z):
 def addContactAreaTo(item, placedItems):
     newItem = deepcopy(item)
     newItem["subzones"] = np.array([[]])
-    print(item["subzones"])
     # Go over the subzones the item is in.
     for i in range(item["subzones"].shape[0]):
         if isInFloor(item):
@@ -204,7 +205,7 @@ def addContactAreaTo(item, placedItems):
             placedItemsSubzone = list(filter(lambda x: item["subzones"][i][0] in getItemSubzones(x), placedItems))
             # Reduce the scope of items to those sharing their top y-axis Plane with bottom y-axis Plane of the new item.
             sharePlaneItems = list(
-                filter(lambda x: getBottomPlaneHeight(item) == getTopPlaneHeight(x), placedItemsSubzone))
+                filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.003, placedItemsSubzone))
             # Calculate the area of intersection between the sharedPlaneItems and the new item.
             totalContactAreaInSubzone = sum(list(map(lambda x: getIntersectionArea(x, item), sharePlaneItems)))
         # For each subzone the item is in we also have the contact area which is not the same as the percentage within the subzone.
@@ -266,9 +267,11 @@ def isWithinTruckDimensionsConstrains(item, truckDimensions):
 # TODO, may be overlapping issues between items for those PP which are the projection of some extreme points which are in a exceeding area.
 # This function returns True if the item does not overlap other items around it, False otherwise.
 def isNotOverlapping(item, placedItems):
-    # Corners of the item evaluated for insertion in PP.
+    # Corners of the item evaluated for insertion in PP. Add some mid points between corners.
     points = np.array([getBLF(item), getTLF(item), getTRF(item), getBRF(item), getBRR(item), getBLR(item), getTRR(item),
-                       getTLR(item)])
+                       getTLR(item), getBFMid(item), getBRMid(item), getTFMid(item), getTRMid(item), getMCRight(item), getMCLeft(item),
+                       getMCFront(item), getMCRear(item), getMCBottom(item), getMCTop(item), getBFMidDifferential(item), getMidBottomRight(item),
+                       getMidBottomLeft(item), getMidTopRight(item), getMidTopLeft(item)])
     for i in placedItems:
         poly = np.array([getBLF(i), getTLF(i), getTRF(i), getBRF(i), getBRR(i), getBLR(i), getTRR(i), getTLR(i)])
         outsideFromPoly = list(map(lambda x: True if x == -1 else False, Delaunay(poly).find_simplex(points)))
@@ -321,8 +324,8 @@ def isBetterPP(newPP, currentBest, item, placedItems):
         if newPP[0] != currentBest[0] and newPP[1] == currentBest[1]:
             return bool(random.getrandbits(1))
         # If the new potential point is in the floor is better than any other.
-        elif isInFloor(item):
-            return True
+        # elif isInFloor(item):
+        #     return True
         # TODO, make fitness function comparing both bottom plane area and y-axis value.
         else:
             bottomPlaneArea = getBottomPlaneArea(item)
@@ -409,6 +412,6 @@ def fillList(candidateList, potentialPoints, truck, retry, placedItems):
 def main_m2_2(truck, candidateList):
     potentialPoints = truck["pp"]
     filling = fillList(candidateList, potentialPoints, truck, 0, [])
-    print(filling)
     refilling = fillList(filling["discard"], filling["potentialPoints"], filling["truck"], 1, filling["placed"])
+
     return refilling
