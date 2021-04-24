@@ -6,12 +6,10 @@ from main.packetOptimization.randomizationAndSorting.randomization import change
 # This function adds the spacial center of mass to a packet solution inserted in a PP
 def setItemMassCenter(item, potentialPoint, truckWidth):
     # TODO, limit in which to iterate to determine best solutions.
-    print(potentialPoint[0])
     if truckWidth * 0.85 <= potentialPoint[0] <= truckWidth:
         item["mass_center"] = potentialPoint + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
     else:
         item["mass_center"] = potentialPoint + np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
-    print(item)
     return item
 
 
@@ -24,62 +22,127 @@ def isInFloor(item):
 
 # This function returns the spacial Bottom-Left-Front of the item.
 def getBLF(item):
-    blf = item["mass_center"] - np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
-    return blf
+    return item["mass_center"] - np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
 
 
 # This function returns the spacial Bottom-Right-Front of the item.
 def getBRF(item):
-    brf = item["mass_center"] - np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
-    return brf
+    return item["mass_center"] - np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
 
 
 # This function returns the spacial Bottom-Right-Rear of the item.
 def getBRR(item):
-    brr = item["mass_center"] + np.array([item["width"] / 2, -item["height"] / 2, item["length"] / 2])
-    return brr
+    return item["mass_center"] + np.array([item["width"] / 2, -item["height"] / 2, item["length"] / 2])
 
 
 # This function returns the spacial Bottom-Left-Rear of the item.
 def getBLR(item):
-    blr = item["mass_center"] + np.array([-item["width"] / 2, -item["height"] / 2, item["length"] / 2])
-    return blr
+    return item["mass_center"] + np.array([-item["width"] / 2, -item["height"] / 2, item["length"] / 2])
 
 
 # This function return the spacial Top-Left-Front of the item.
 def getTLF(item):
-    tlf = item["mass_center"] - np.array([item["width"] / 2, -item["height"] / 2, item["length"] / 2])
-    return tlf
+    return item["mass_center"] - np.array([item["width"] / 2, -item["height"] / 2, item["length"] / 2])
 
 
 # This function returns the spacial Top-Right-Front of the item.
 def getTRF(item):
-    trf = item["mass_center"] + np.array([item["width"] / 2, item["height"] / 2, -item["length"] / 2])
-    return trf
+    return item["mass_center"] + np.array([item["width"] / 2, item["height"] / 2, -item["length"] / 2])
 
 
 # This function return the spacial Top-Right-Rear of the item.
 def getTRR(item):
-    trr = item["mass_center"] + np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
-    return trr
+    return item["mass_center"] + np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
 
 
 # This function returns the spacial Top-Left-Rear of the item.
 def getTLR(item):
-    tlr = item["mass_center"] + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
-    return tlr
+    return item["mass_center"] + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
+
+
+# This function gets the mid point in the bottom front intersection of the item.
+def getBFMid(item):
+    return item["mass_center"] - np.array([0, item["height"] / 2, item["length"] / 2])
+
+
+# This function gets the mid point in the bottom front intersection of the item plus a differential.
+def getBFMidDifferential(item):
+    return item["mass_center"] - np.array([0, item["height"] / 2, item["length"] * 0.45])
+
+
+# This function gets the mid point in the bottom rear intersection of the item.
+def getBRMid(item):
+    return item["mass_center"] - np.array([0, item["height"] / 2, -item["length"] / 2])
+
+
+# This function gets the mid point in the top front intersection of the item.
+def getTFMid(item):
+    return item["mass_center"] + np.array([0, item["height"] / 2, -item["length"] / 2])
+
+
+# This function gets the mid point in the top rear intersection of the item.
+def getTRMid(item):
+    return item["mass_center"] + np.array([0, item["height"] / 2, item["length"] / 2])
+
+
+# This function returns the extended right mass center of an item.
+def getMCRight(item):
+    return item["mass_center"] + np.array([item["width"] / 4, 0, 0])
+
+
+# This function returns the extended left mass center of an item.
+def getMCLeft(item):
+    return item["mass_center"] - np.array([item["width"] / 4, 0, 0])
+
+
+# This function returns the extended front mass center of an item.
+def getMCFront(item):
+    return item["mass_center"] - np.array([0, 0, item["length"] / 4])
+
+
+# This function returns the extended rear mass center of an item.
+def getMCRear(item):
+    return item["mass_center"] + np.array([0, 0, item["length"] / 4])
+
+
+# This function returns the extended bottom mass center of an item.
+def getMCBottom(item):
+    return item["mass_center"] - np.array([0, item["height"] / 4, 0])
+
+
+# This function returns the extended top mass center of an item.
+def getMCTop(item):
+    return item["mass_center"] + np.array([0, item["height"] / 4, 0])
+
+
+# This function returns the mid point of the right bottom part between rear and front.
+def getMidBottomRight(item):
+    return item["mass_center"] - np.array([item["width"]/2, item["height"]/2, 0])
+
+
+# This function returns the mid point of the right bottom part between rear and front.
+def getMidBottomLeft(item):
+    return item["mass_center"] - np.array([-item["width"]/2, item["height"]/2, 0])
+
+
+# This function returns the mid point of the right bottom part between rear and front.
+def getMidTopRight(item):
+    return item["mass_center"] + np.array([-item["width"]/2, item["height"]/2, 0])
+
+
+# This function returns the mid point of the right bottom part between rear and front.
+def getMidTopLeft(item):
+    return item["mass_center"] + np.array([item["width"]/2, item["height"]/2, 0])
 
 
 # This function returns the height of the bottom Plane of an item.
 def getBottomPlaneHeight(item):
-    h = item["mass_center"][1] - np.array([item["height"] / 2])[0]
-    return h
+    return item["mass_center"][1] - np.array([item["height"] / 2])[0]
 
 
 # This function returns the height(y-axis) of the top Plane of an item.
 def getTopPlaneHeight(item):
-    h = item["mass_center"][1] + np.array([item["height"] / 2])[0]
-    return h
+    return item["mass_center"][1] + np.array([item["height"] / 2])[0]
 
 
 # This function returns the area(m2) of the base face of an item.

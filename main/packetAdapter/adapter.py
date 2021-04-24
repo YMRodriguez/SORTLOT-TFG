@@ -1,8 +1,7 @@
 # ------------------ Taxability --------------------------------------------
 # This function takes the taxability from a given item
 def getTaxability(item, alpha):
-    tax = max(item["weight"], alpha * item["volume"])
-    return tax
+    return max(item["weight"], alpha * item["volume"])
 
 
 # This function takes the taxability from a given item
@@ -18,8 +17,7 @@ def addTaxToDataset(packets, alpha):
 
 # This function calculates the average taxability from a group of items
 def getAverageTaxability(packets):
-    average = sum(list(map(lambda x: x["taxability"] if "taxability" in x else 0, packets))) / len(packets)
-    return average
+    return sum(list(map(lambda x: x["taxability"] if "taxability" in x else 0, packets))) / len(packets)
 
 
 # This function returns if a group of packets are taxed or not
