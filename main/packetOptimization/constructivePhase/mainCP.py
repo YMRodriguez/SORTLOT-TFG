@@ -1,10 +1,9 @@
-import numpy as np
-import math
 from main.packetOptimization.constructivePhase.geometryHelpers import *
 from copy import deepcopy
 from scipy.spatial import Delaunay
 import random
-import json
+import numpy as np
+import math
 
 
 # --------------------- Weight Limit - C1 -------------------------------------------------------------
@@ -100,7 +99,8 @@ def addWeightContributionTo(item):
         # Is not the same the contactAreaIn than the percentage because not all the percentage may be supported, thus in contact.
         if i == 0:
             newItem["subzones"] = np.array([np.append(item["subzones"][i],
-                                            np.array([[(item["subzones"][i][2] / bottomPlaneArea) * item["weight"]]]))])
+                                                      np.array([[(item["subzones"][i][2] / bottomPlaneArea) * item[
+                                                          "weight"]]]))])
         else:
             newItem["subzones"] = np.vstack((newItem["subzones"], np.append(item["subzones"][i], np.array([
                 [(item["subzones"][i][2] / bottomPlaneArea) * item["weight"]]]))))
@@ -205,7 +205,8 @@ def addContactAreaTo(item, placedItems):
             placedItemsSubzone = list(filter(lambda x: item["subzones"][i][0] in getItemSubzones(x), placedItems))
             # Reduce the scope of items to those sharing their top y-axis Plane with bottom y-axis Plane of the new item.
             sharePlaneItems = list(
-                filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.003, placedItemsSubzone))
+                filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.003,
+                       placedItemsSubzone))
             # Calculate the area of intersection between the sharedPlaneItems and the new item.
             totalContactAreaInSubzone = sum(list(map(lambda x: getIntersectionArea(x, item), sharePlaneItems)))
         # For each subzone the item is in we also have the contact area which is not the same as the percentage within the subzone.
@@ -257,29 +258,48 @@ def isWithinTruckHeight(item, truckHeight):
 # This function returns True if dimension constrains are met, False otherwise.
 def isWithinTruckDimensionsConstrains(item, truckDimensions):
     if isWithinTruckLength(item, truckDimensions["length"]) \
-        and isWithinTruckWidth(item, truckDimensions["width"])\
+            and isWithinTruckWidth(item, truckDimensions["width"]) \
             and isWithinTruckHeight(item, truckDimensions["height"]):
         return True
     return False
 
 
 # ------------------ Physical constrains - Items-related ----------------------------------------
+# This function returns average diagonal between the current item and the placed items.
+def getAverageBaseDiagonal(item, placedItems):
+    return sum(list(map(lambda x: round(getEuclideanDistance(x["width"], x["length"])),
+                        placedItems + [item]))) / len(placedItems + [item])
+
+
+# This function returns a ndarray with all the vertices of an item.
+def generatePointsFrom(item):
+    return np.array([getBLF(item), getTLF(item), getTRF(item), getBRF(item),
+                     getBRR(item), getBLR(item), getTRR(item), getTLR(item)])
+
+
+# This function returns True if any of the vertices of pointsItem is inside of a polyItem.
+def overlapper(itemPoints, polyItemPoints):
+    return all(list(map(lambda x: True if x == -1 else False,
+                        Delaunay(polyItemPoints).find_simplex(itemPoints))))
+
+
 # TODO, may be overlapping issues between items for those PP which are the projection of some extreme points which are in a exceeding area.
 # This function returns True if the item does not overlap other items around it, False otherwise.
 def isNotOverlapping(item, placedItems):
-    # Corners of the item evaluated for insertion in PP. Add some mid points between corners.
-    points = np.array([getBLF(item), getTLF(item), getTRF(item), getBRF(item), getBRR(item), getBLR(item), getTRR(item),
-                       getTLR(item), getBFMid(item), getBRMid(item), getTFMid(item), getTRMid(item), getMCRight(item), getMCLeft(item),
-                       getMCFront(item), getMCRear(item), getMCBottom(item), getMCTop(item), getBFMidDifferential(item), getMidBottomRight(item),
-                       getMidBottomLeft(item), getMidTopRight(item), getMidTopLeft(item)])
-    for i in placedItems:
-        poly = np.array([getBLF(i), getTLF(i), getTRF(i), getBRF(i), getBRR(i), getBLR(i), getTRR(i), getTLR(i)])
-        outsideFromPoly = list(map(lambda x: True if x == -1 else False, Delaunay(poly).find_simplex(points)))
-        if all(outsideFromPoly):
-            continue
-        else:
-            return False
-    return True
+    # Reduce the scope of the placedItems to those around.
+    # The average diagonal is a real and efficient approximation to make a sweep of the items around.
+    avgDiagonal = getAverageBaseDiagonal(item, placedItems)
+    nearItems = list(filter(lambda x:
+                            getEuclideanDistance(abs(x["mass_center"][0]-item["mass_center"][0]),
+                                                 abs(x["mass_center"][1]-item["mass_center"][1])) <= avgDiagonal,
+                            placedItems))
+    itemAsPoints = generatePointsFrom(item)
+    itemToNearItemsOverlapping = all(list(map(lambda x: overlapper(itemAsPoints, generatePointsFrom(x)), nearItems)))
+    nearItemsOverlappingItem = all(list(map(lambda x: overlapper(generatePointsFrom(x), itemAsPoints), nearItems)))
+    if itemToNearItemsOverlapping and nearItemsOverlappingItem:
+        return True
+    else:
+        return False
 
 
 # --------------------- Helpers to the main module function -----------------------------------
@@ -289,7 +309,7 @@ def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight,
     item = setItemMassCenter(newItem, potentialPoint, truck["width"])
     # Conditions to be checked sequentially to improve performance.
     if not isWeightExceeded(placedItems, item, truck) \
-            and isWithinTruckDimensionsConstrains(item, truck["dimensions"])\
+            and isWithinTruckDimensionsConstrains(item, truck["dimensions"]) \
             and isADRSuitable(item, getTruckBRR(truck)[2]) \
             and isNotOverlapping(item, placedItems):
         truckSubzones = getContainerSubzones(truck)

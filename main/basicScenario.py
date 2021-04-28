@@ -25,6 +25,7 @@ wharehouses_col = db['wharehouses']
 trucks_col = db['trucks']
 packets_col = db['packets']
 
+# Extract relevant data
 truck_var = trucks_col.find_one()
 wharehouses_titles = list(map(lambda x: x["name"], wharehouses_col.find({}, {'_id': 0, 'name': 1})))
 

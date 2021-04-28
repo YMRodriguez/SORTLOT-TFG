@@ -1,5 +1,6 @@
 import numpy as np
 from main.packetOptimization.randomizationAndSorting.randomization import changeItemOrientation
+import math
 
 
 # --------------------------------- Item geometric helpers -----------------------------------
@@ -176,6 +177,11 @@ def getNearestProjectionPointFor(point, placedItems):
 # This function randomly reorients a given item.
 def reorient(item):
     return changeItemOrientation(item, list(filter(lambda x: x != item["orientation"], list(range(1, 7)))))
+
+
+# This function gets the euclidean distance between two given points.
+def getEuclideanDistance(a, b):
+    return round(math.sqrt(a ** 2 + b ** 2))
 
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------

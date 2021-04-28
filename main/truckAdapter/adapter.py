@@ -10,7 +10,7 @@ def setContainerSubzones(truck, nZones):
     for i in range(nZones):
         subzone = {"id": i + 1, "blf": np.array([0, 0, i * truck["length"] / nZones], dtype=float),
                    "brr": np.array([truck["width"], 0, (i + 1) * truck["length"] / nZones], dtype=float), "weight": 0,
-                   # TODO, cannot be hardcoded, this will depend on the opetator introducing packets.
+                   # TODO, cannot be hardcoded, this will depend on the operator introducing packets.
                    "weight_limit": truck["tonnage"] / nZones}
         truck["subzones"].append(subzone)
     return truck
