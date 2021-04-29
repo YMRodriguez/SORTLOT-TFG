@@ -8,22 +8,18 @@ from main.truckAdapter.adapter import adaptTruck
 from main.packetAdapter.adapter import adaptPackets
 from main.packetOptimization.randomizationAndSorting.randomization import randomization
 from main.packetOptimization.randomizationAndSorting.sorting import sorting
-from main.packetOptimization.constructivePhase.mainCP import main_m2_2
-from main.statistics.main import main_statistics
-from main.packetOptimization.constructivePhase.mainCP import isNotOverlapping
+from main.packetOptimization.constructivePhase.mainCP import main_cp
+from main.statistics.main import solution_statistics
+import time
 
 # ----------------------- MongoDB extraction ----------------------
+# Connect to database
 myclient = pymongo.MongoClient("mongodb://localhost:27017/",
                                username="mongoadmin",
                                password="admin")
-
-# Creamos la base de datos
 db = myclient['SpainVRP']
-
-# Creamos las colecciones dentro de la base de datos
 wharehouses_col = db['wharehouses']
 trucks_col = db['trucks']
-packets_col = db['packets']
 
 # Extract relevant data
 truck_var = trucks_col.find_one()
@@ -65,15 +61,21 @@ packets_to_db = packets_dataset.to_dict(orient='records')
 
 
 # -------------------- Main Processes -----------------------------
-def main(packets, truck):
+def main_scenario(packets, truck, rangeOrientations=[1, 2, 3, 4]):
     # ------ Packet adaptation------
-    packets = adaptPackets(packets, 0.6)
+    packets = adaptPackets(packets, 10)
     # ------ Truck adaptation ------
     truck = adaptTruck(truck, 4)
     sort_output = sorting(packets)
-    rand_output = randomization(deepcopy(sort_output["solution"]), list(range(1, 7)))
+    rand_output = randomization(deepcopy(sort_output["solution"]), rangeOrientations)
     # ------- Solution builder --------
-    return main_m2_2(truck, rand_output)
+    startTime = time.time()
+    iteration = main_cp(truck, rand_output)
+    endTime = time.time()
+    # It may be relevant to know the sorting method used.
+    return {"solution": iteration,
+            "sorting_method": sort_output["sort_type"],
+            "time": str(endTime-startTime)}
 
 
 # ------------------ Translation to Application -------------------
@@ -86,9 +88,14 @@ def adaptNdarrayToList(item):
 
 
 # ------------------ Solution processing --------------------------
-solution = main(deepcopy(packets_to_db), truck_var)
-serializableSolutionPlaced = deepcopy(solution["placed"])
+solutions = []
+
+solution = main_scenario(deepcopy(packets_to_db), truck_var)
+statistics = solution_statistics(solution["solution"])
+
+serializableSolutionPlaced = deepcopy(solution["solution"]["placed"])
 serializableSolutionPlaced = list(map(lambda x: adaptNdarrayToList(x), serializableSolutionPlaced))
-pandasDataframe = main_statistics(solution)
-with open('/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/placedpackets.json', 'w') as file:
+with open(
+        '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/placedpackets.json',
+        'w') as file:
     json.dump(serializableSolutionPlaced, file)

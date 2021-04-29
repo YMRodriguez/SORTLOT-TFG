@@ -2,7 +2,7 @@ import numpy as np
 from main.packetOptimization.constructivePhase.geometryHelpers import getTruckBLF
 from main.packetOptimization.constructivePhase.geometryHelpers import getTruckBRF
 
-
+# TODO, add distribution for each subzone
 # This function adapts truck container surface to longitudinal zone separation. Creates the subzones in the truck object.
 # [Xin, Zin, Xend, Zend] which is the diagonal of a square
 def setContainerSubzones(truck, nZones):

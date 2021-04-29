@@ -43,16 +43,12 @@ def changeItemOrientation(item, validOrientations):
 # ------------------------- Comparators --------------------------------------
 # This function compares the volume of two give items, returns true if is in range false otherwise
 def volumeComp(i0, i1):
-    if 0.7 < (i0["volume"] / i1["volume"]) < 1.3:
-        return True
-    return False
+    return 0.7 < (i0["volume"] / i1["volume"]) < 1.3
 
 
 # This function compares the weight of two give items, returns true if is in range false otherwise
 def weightComp(i0, i1):
-    if 0.7 < (i0["weight"] / i1["weight"]) < 1.3:
-        return True
-    return False
+    return 0.7 < (i0["weight"] / i1["weight"]) < 1.3
 
 
 # ------------------------------ Swappers --------------------------------------

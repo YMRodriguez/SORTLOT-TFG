@@ -274,7 +274,7 @@ def getAverageBaseDiagonal(item, placedItems):
 # This function returns a ndarray with all the vertices of an item.
 def generatePointsFrom(item):
     return np.array([getBLF(item), getTLF(item), getTRF(item), getBRF(item),
-                     getBRR(item), getBLR(item), getTRR(item), getTLR(item)])
+                     getBRR(item), getBLR(item), getTRR(item), getTLR(item), item["mass_center"]])
 
 
 # This function returns True if any of the vertices of pointsItem is inside of a polyItem.
@@ -429,9 +429,9 @@ def fillList(candidateList, potentialPoints, truck, retry, placedItems):
 
 
 # This function is the main function of the module M2_2
-def main_m2_2(truck, candidateList):
+def main_cp(truck, candidateList):
     potentialPoints = truck["pp"]
     filling = fillList(candidateList, potentialPoints, truck, 0, [])
+    print(filling)
     refilling = fillList(filling["discard"], filling["potentialPoints"], filling["truck"], 1, filling["placed"])
-
     return refilling
