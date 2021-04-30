@@ -118,22 +118,22 @@ def getMCTop(item):
 
 # This function returns the mid point of the right bottom part between rear and front.
 def getMidBottomRight(item):
-    return item["mass_center"] - np.array([item["width"]/2, item["height"]/2, 0])
+    return item["mass_center"] - np.array([item["width"] / 2, item["height"] / 2, 0])
 
 
 # This function returns the mid point of the right bottom part between rear and front.
 def getMidBottomLeft(item):
-    return item["mass_center"] - np.array([-item["width"]/2, item["height"]/2, 0])
+    return item["mass_center"] - np.array([-item["width"] / 2, item["height"] / 2, 0])
 
 
 # This function returns the mid point of the right bottom part between rear and front.
 def getMidTopRight(item):
-    return item["mass_center"] + np.array([-item["width"]/2, item["height"]/2, 0])
+    return item["mass_center"] + np.array([-item["width"] / 2, item["height"] / 2, 0])
 
 
 # This function returns the mid point of the right bottom part between rear and front.
 def getMidTopLeft(item):
-    return item["mass_center"] + np.array([item["width"]/2, item["height"]/2, 0])
+    return item["mass_center"] + np.array([item["width"] / 2, item["height"] / 2, 0])
 
 
 # This function returns the height of the bottom Plane of an item.
@@ -153,9 +153,8 @@ def getBottomPlaneArea(item):
 
 # This function returns the intersection area(m2) between two items in Plane x(width), z(length).
 def getIntersectionArea(i1, i2):
-    dx = min(getBRR(i1)[0], getBRR(i2)[0]) - max(getBLF(i1)[0], getBLF(i2)[0])
-    dz = min(getBRR(i1)[2], getBRR(i2)[2]) - max(getBLF(i1)[2], getBLF(i2)[2])
-    return dx * dz
+    return (min(getBRR(i1)[0], getBRR(i2)[0]) - max(getBLF(i1)[0], getBLF(i2)[0])) * \
+           (min(getBRR(i1)[2], getBRR(i2)[2]) - max(getBLF(i1)[2], getBLF(i2)[2]))
 
 
 # This function returns True if the point is inside the Plane for the same y-axis value.

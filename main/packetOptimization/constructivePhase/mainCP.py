@@ -56,7 +56,7 @@ def getNeededExtraSubzonesForItem(subzonesLength, itemLength, outSubzone):
 def setItemSubzones(subzones, item):
     item_blf_z = getBLF(item)[2]
     item_brr_z = getBRR(item)[2]
-    # TODO, this may go inside the for block is the length of the subzones is not equal.
+    # TODO, this may go inside the for block if the length of the subzones is not equal.
     subzonesLength = getSubzoneLength(subzones)
     item["subzones"] = None
     for i in range(len(subzones)):
@@ -207,8 +207,8 @@ def addContactAreaTo(item, placedItems):
             sharePlaneItems = list(
                 filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.003,
                        placedItemsSubzone))
-            # Calculate the area of intersection between the sharedPlaneItems and the new item.
-            totalContactAreaInSubzone = sum(list(map(lambda x: getIntersectionArea(x, item), sharePlaneItems)))
+            # Calculate the area of intersection between the sharedPlaneItems and the new item in a subzone.
+            totalContactAreaInSubzone = sum(list(map(lambda x: getIntersectionArea(x, item), sharePlaneItems))) * item["subzones"][i][1]
         # For each subzone the item is in we also have the contact area which is not the same as the percentage within the subzone.
         if i == 0:
             newItem["subzones"] = np.array([np.append(item["subzones"][i], np.array([[totalContactAreaInSubzone]]))])
@@ -218,12 +218,12 @@ def addContactAreaTo(item, placedItems):
     return newItem
 
 
-# This function returns a ndarray with the item and True if the item has at least 70% of supported area, False otherwise.
+# This function returns a ndarray with the item and True if the item has at least 80% of supported area, False otherwise.
 def isStable(item, placedItems):
     itemWithContactArea = addContactAreaTo(item, placedItems)
     totalItemContactArea = sum(list(map(lambda x: x[2], itemWithContactArea["subzones"])))
     contactAreaPercentage = totalItemContactArea / getBottomPlaneArea(item)
-    if contactAreaPercentage > 0.7:
+    if contactAreaPercentage > 0.8:
         return np.array([[True, itemWithContactArea]])
     return np.array([[False, itemWithContactArea]])
 
