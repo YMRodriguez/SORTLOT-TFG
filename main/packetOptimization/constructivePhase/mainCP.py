@@ -4,7 +4,6 @@ from scipy.spatial import Delaunay
 import random
 import numpy as np
 import math
-from multiprocessing import Pool
 
 
 # --------------------- Weight Limit - C1 -------------------------------------------------------------
@@ -47,8 +46,7 @@ def getPercentageOutSubzone(itemBRRz, subzoneBRRz, itemLength):
 def getNeededExtraSubzonesForItem(subzonesLength, itemLength, outSubzone):
     # Percentage * length(m)
     outzoneItemLength = outSubzone * itemLength
-    neededSubzones = outzoneItemLength / subzonesLength
-    return neededSubzones
+    return outzoneItemLength / subzonesLength
 
 
 # This function sets in which zones is the item, for those, it returns an array with the id and the percentage of the base in.
@@ -151,10 +149,7 @@ def getAverageWeight(items):
 def isStackable(item, averageWeight, placedItems):
     if isInFloor(item):
         # For a optimum solution it is better to reward the algorithm to put the weightier items on the floor.
-        if item["weight"] > (1.1 * averageWeight):
-            return True
-        else:
-            return False
+        return item["weight"] > (1.1 * averageWeight)
     else:
         # TODO, we may want to change this to take into account accumulated weight(i.e 2 packets above another)
         # Reduce the scope of items to those sharing their top y Plane with bottom y Plane of the new item.
@@ -181,10 +176,7 @@ def isADRSuitable(item, truckBRR_z):
         itemBRR_z = getBRR(item)[2]
         # The item must have its extreme between the rear of the truck and one meter behind.
         # TODO, make tests on this predefined condition.
-        if (itemBRR_z >= truckBRR_z - 1) and (itemBRR_z <= truckBRR_z):
-            return True
-        else:
-            return False
+        return (itemBRR_z >= truckBRR_z - 1) and (itemBRR_z <= truckBRR_z)
     else:
         return True
 
@@ -225,8 +217,8 @@ def isStable(item, placedItems):
     totalItemContactArea = sum(list(map(lambda x: x[2], itemWithContactArea["subzones"])))
     contactAreaPercentage = totalItemContactArea / getBottomPlaneArea(item)
     if contactAreaPercentage > 0.8:
-        return np.array([[True, itemWithContactArea]])
-    return np.array([[False, itemWithContactArea]])
+        return np.array([[1, itemWithContactArea]])
+    return np.array([[0, itemWithContactArea]])
 
 
 # ------------------ Physical constrains - Truck-related ----------------------------------------
@@ -237,48 +229,34 @@ def isWithinTruckLengthAux(item):
 
 # This function returns True if the packet inserted in a potentialPoint does not exceed the length of the truck, False otherwise.
 def isWithinTruckLength(item, truckLength):
-    if getBRR(item)[2] <= truckLength:
-        return True
-    return False
+    return getBRR(item)[2] <= truckLength
 
 
 # This function returns True if the packet inserted in a potentialPoint does not exceed the width of the truck, False otherwise.
 def isWithinTruckWidth(item, truckWidth):
-    if getBRR(item)[0] <= truckWidth:
-        return True
-    return False
+    return getBRR(item)[0] <= truckWidth
 
 
 # This function returns True if the packet inserted in a potentialPoint does not exceed the height of the truck, False otherwise.
 def isWithinTruckHeight(item, truckHeight):
-    if getTopPlaneHeight(item) <= truckHeight:
-        return True
-    return False
+    return getTopPlaneHeight(item) <= truckHeight
 
 
 # This function returns True if dimension constrains are met, False otherwise.
 def isWithinTruckDimensionsConstrains(item, truckDimensions):
-    if isWithinTruckLength(item, truckDimensions["length"]) \
+    return isWithinTruckLength(item, truckDimensions["length"]) \
             and isWithinTruckWidth(item, truckDimensions["width"]) \
-            and isWithinTruckHeight(item, truckDimensions["height"]):
-        return True
-    return False
+            and isWithinTruckHeight(item, truckDimensions["height"])
 
 
 # ------------------ Physical constrains - Items-related ----------------------------------------
-# This function returns average diagonal between the current item and the placed items.
-def getAverageBaseDiagonal(item, placedItems):
-    return sum(list(map(lambda x: round(getEuclideanDistance(x["width"], x["length"])),
-                        placedItems + [item]))) / len(placedItems + [item])
-
-
 # This function returns a ndarray with all the vertices of an item.
 def generatePointsFrom(item):
     return np.array([getBLF(item), getTLF(item), getTRF(item), getBRF(item),
                      getBRR(item), getBLR(item), getTRR(item), getTLR(item), item["mass_center"]])
 
 
-# This function returns True if any of the vertices of pointsItem is inside of a polyItem.
+# This function returns True if none of the vertices of pointsItem is inside of a polyItem.
 def overlapper(itemPoints, polyItemPoints):
     return all(list(map(lambda x: x == -1,
                         Delaunay(polyItemPoints).find_simplex(itemPoints))))
@@ -287,22 +265,23 @@ def overlapper(itemPoints, polyItemPoints):
 # TODO, may be overlapping issues between items for those PP which are the projection of some extreme points which are in a exceeding area.
 # This function returns True if the item does not overlap other items around it, False otherwise.
 def isNotOverlapping(item, placedItems):
-    # Reduce the scope of the placedItems to those around.
-    # The average diagonal is a real and efficient approximation to make a sweep of the items around.
-    avgDiagonal = getAverageBaseDiagonal(item, placedItems)
-    nearItems = list(filter(lambda x:
-                            getEuclideanDistance(abs(x["mass_center"][0]-item["mass_center"][0]),
-                                                 abs(x["mass_center"][2]-item["mass_center"][2])) <= avgDiagonal * 2,
-                            placedItems))
-    print(len(placedItems))
-    print(len(nearItems))
-    itemAsPoints = generatePointsFrom(item)
-    itemToNearItemsOverlapping = all(list(map(lambda x: overlapper(itemAsPoints, generatePointsFrom(x)), nearItems)))
-    nearItemsOverlappingItem = all(list(map(lambda x: overlapper(generatePointsFrom(x), itemAsPoints), nearItems)))
-    if itemToNearItemsOverlapping and nearItemsOverlappingItem:
-        return True
+    if len(placedItems):
+        # Extract the mass center of all placed items.
+        itemsMCs = np.array(list(map(lambda x: x["mass_center"], placedItems)))
+        # Compute and sort the distances between the new item mass center and the rest.
+        distances = ((itemsMCs-item["mass_center"])**2).sum(axis=1)
+        ndx = distances.argsort()
+        # Get the nearest mass centers and its items.
+        nearestMCs = itemsMCs[ndx[:min(len(placedItems), 10)]]
+        nearItems = list(filter(lambda x: any((list(map(lambda y: all(y == x["mass_center"]), nearestMCs)))), placedItems))
+        # Generate points for item evaluated.
+        itemAsPoints = generatePointsFrom(item)
+        # Validate overlapping conditions item vs. placedItems and vice versa.
+        itemToNearItemsOverlapping = all(list(map(lambda x: overlapper(itemAsPoints, generatePointsFrom(x)), nearItems)))
+        nearItemsOverlappingItem = all(list(map(lambda x: overlapper(generatePointsFrom(x), itemAsPoints), nearItems)))
+        return itemToNearItemsOverlapping and nearItemsOverlappingItem
     else:
-        return False
+        return True
 
 
 # --------------------- Helpers to the main module function -----------------------------------
@@ -324,13 +303,13 @@ def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight,
             # Way of keeping the modified object and if the condition state. TODO, maybe is not necessary to keep the item.
             i4WithCondition = itemContributionExceedsSubzonesWeightLimit(i3WithCondition[0][1], truckSubzones)
             if i4WithCondition[0][0]:
-                return np.array([[True, i4WithCondition[0][1]]])
+                return np.array([[1, i4WithCondition[0][1]]])
             else:
-                return np.array([[False, newItem]])
+                return np.array([[0, newItem]])
         else:
-            return np.array([[False, newItem]])
+            return np.array([[0, newItem]])
     else:
-        return np.array([[False, newItem]])
+        return np.array([[0, newItem]])
 
 
 # This function determines if a potential point if better than other using the following criteria:
@@ -349,7 +328,9 @@ def isBetterPP(newPP, currentBest, item, placedItems):
         # If the new potential point is in the floor is better than any other.
         # elif isInFloor(item):
         #     return True
-        # TODO, make fitness function comparing both bottom plane area and y-axis value.
+        # TODO, make fitness function comparing both bottom plane area and y-axis value. Even weight.
+        # For example, if the item weight if at higher y-value and its weight is far below the average it will be a better point.
+        # The fitness function has to take into account the part of bigger supporting area.
         else:
             bottomPlaneArea = getBottomPlaneArea(item)
             newPPItem = list(filter(lambda x: any(list(map(lambda y: all(y == newPP), x["pp_out"]))), placedItems))[0]
@@ -378,10 +359,10 @@ def generateNewPPs(item, placedItems):
     else:
         # Reduce the scope of items to those sharing their top y-axis Plane with bottom y-axis Plane of the new item.
         sharePlaneItems = list(
-            filter(lambda x: getBottomPlaneHeight(item) == getTopPlaneHeight(x), placedItems))
+            filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.003, placedItems))
         # Check which points are not supported.
-        isBLRinPlane = all(list(map(lambda x: pointInPlane(BLR, getBLF(x), getBRR(x)), sharePlaneItems)))
-        isBRFinPlane = all(list(map(lambda x: pointInPlane(BRF, getBLF(x), getBRR(x)), sharePlaneItems)))
+        isBLRinPlane = any(list(map(lambda x: pointInPlane(BLR, getBLF(x), getBRR(x)), sharePlaneItems)))
+        isBRFinPlane = any(list(map(lambda x: pointInPlane(BRF, getBLF(x), getBRR(x)), sharePlaneItems)))
         # Modify not supported points to its projection.
         if not isBRFinPlane:
             BRF = getNearestProjectionPointFor(BRF, placedItems)
