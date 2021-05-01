@@ -153,8 +153,12 @@ def getBottomPlaneArea(item):
 
 # This function returns the intersection area(m2) between two items in Plane x(width), z(length).
 def getIntersectionArea(i1, i2):
-    return (min(getBRR(i1)[0], getBRR(i2)[0]) - max(getBLF(i1)[0], getBLF(i2)[0])) * \
-           (min(getBRR(i1)[2], getBRR(i2)[2]) - max(getBLF(i1)[2], getBLF(i2)[2]))
+    dx = min(getBRR(i1)[0], getBRR(i2)[0]) - max(getBLF(i1)[0], getBLF(i2)[0])
+    dz = min(getBRR(i1)[2], getBRR(i2)[2]) - max(getBLF(i1)[2], getBLF(i2)[2])
+    if (dx >= 0) and (dz >= 0):
+        return dx*dz
+    else:
+        return 0
 
 
 # This function returns True if the point is inside the Plane for the same y-axis value.
@@ -180,7 +184,7 @@ def reorient(item):
 
 # This function gets the euclidean distance between two given points.
 def getEuclideanDistance(a, b):
-    return round(math.sqrt(a ** 2 + b ** 2))
+    return round(np.sqrt(a ** 2 + b ** 2))
 
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------

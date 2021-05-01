@@ -4,6 +4,7 @@ from scipy.spatial import Delaunay
 import random
 import numpy as np
 import math
+from multiprocessing import Pool
 
 
 # --------------------- Weight Limit - C1 -------------------------------------------------------------
@@ -157,7 +158,7 @@ def isStackable(item, averageWeight, placedItems):
     else:
         # TODO, we may want to change this to take into account accumulated weight(i.e 2 packets above another)
         # Reduce the scope of items to those sharing their top y Plane with bottom y Plane of the new item.
-        sharePlaneItems = list(filter(lambda x: getBottomPlaneHeight(item) == getTopPlaneHeight(x), placedItems))
+        sharePlaneItems = list(filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.003, placedItems))
         # This ndarray will store if the conditions are met for every item the newItem is above.
         stackableForSharePlaneItems = np.array([], dtype=bool)
         for i in sharePlaneItems:
@@ -279,7 +280,7 @@ def generatePointsFrom(item):
 
 # This function returns True if any of the vertices of pointsItem is inside of a polyItem.
 def overlapper(itemPoints, polyItemPoints):
-    return all(list(map(lambda x: True if x == -1 else False,
+    return all(list(map(lambda x: x == -1,
                         Delaunay(polyItemPoints).find_simplex(itemPoints))))
 
 
@@ -291,8 +292,10 @@ def isNotOverlapping(item, placedItems):
     avgDiagonal = getAverageBaseDiagonal(item, placedItems)
     nearItems = list(filter(lambda x:
                             getEuclideanDistance(abs(x["mass_center"][0]-item["mass_center"][0]),
-                                                 abs(x["mass_center"][1]-item["mass_center"][1])) <= avgDiagonal,
+                                                 abs(x["mass_center"][2]-item["mass_center"][2])) <= avgDiagonal * 2,
                             placedItems))
+    print(len(placedItems))
+    print(len(nearItems))
     itemAsPoints = generatePointsFrom(item)
     itemToNearItemsOverlapping = all(list(map(lambda x: overlapper(itemAsPoints, generatePointsFrom(x)), nearItems)))
     nearItemsOverlappingItem = all(list(map(lambda x: overlapper(generatePointsFrom(x), itemAsPoints), nearItems)))
