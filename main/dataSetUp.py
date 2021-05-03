@@ -77,6 +77,7 @@ trucks_dataset = pd.DataFrame(
 trucks_dataset["length"] = trucks_dataset.apply(lambda x: x.length * 10 / 1000, axis=1)
 trucks_dataset["width"] = trucks_dataset.apply(lambda x: x.width * 10 / 1000, axis=1)
 trucks_dataset["height"] = trucks_dataset.apply(lambda x: x.height * 10 / 1000, axis=1)
+trucks_dataset["volume"] = trucks_dataset.apply(lambda x: x.length*x.width*x.height, axis=1)
 trucks_dataset["tonnage"] = trucks_dataset.apply(lambda x: x.tonnage * 1000, axis=1)
 trucks_dataset["dimensions"] = trucks_dataset.apply(
     lambda x: {"length": x.length, "width": x.width, "height": x.height}, axis=1)
