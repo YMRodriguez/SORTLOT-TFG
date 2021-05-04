@@ -15,11 +15,6 @@ def addTaxToDataset(packets, alpha):
     return list(map(lambda x: setTaxability(x, alpha), packets))
 
 
-# This function calculates the average taxability from a group of items
-def getAverageTaxability(packets):
-    return sum(list(map(lambda x: x["taxability"] if "taxability" in x else 0, packets))) / len(packets)
-
-
 # This function returns if a group of packets are taxed or not
 def areTaxed(packets):
     return all(list(map(lambda x: "taxability" in x, packets)))

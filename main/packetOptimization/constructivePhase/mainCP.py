@@ -1,4 +1,5 @@
 from main.packetOptimization.constructivePhase.geometryHelpers import *
+from main.packetAdapter.helpers import getAverageWeight
 from copy import deepcopy
 from scipy.spatial import Delaunay
 import random
@@ -139,11 +140,6 @@ def itemContributionExceedsSubzonesWeightLimit(item, truckSubzones):
 
 
 # ------------------ Stackability - C5 ---------------------------------------------
-# This function return the average weight for a list of items.
-def getAverageWeight(items):
-    return sum(list(map(lambda x: x["weight"], items))) / len(items)
-
-
 # This function returns true if a item is stackable, false otherwise.
 # An item is stackable if the contributions of weight for every object underneath does not exceed certain conditions.
 def isStackable(item, averageWeight, placedItems):
@@ -175,7 +171,7 @@ def isADRSuitable(item, truckBRR_z):
     if item["ADR"]:
         itemBRR_z = getBRR(item)[2]
         # The item must have its extreme between the rear of the truck and one meter behind.
-        # TODO, make tests on this predefined condition.
+        # TODO, make tests on this predefined condition(1 meter).
         return (itemBRR_z >= truckBRR_z - 1) and (itemBRR_z <= truckBRR_z)
     else:
         return True
@@ -311,11 +307,19 @@ def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight,
     else:
         return np.array([[0, newItem]])
 
+# This function computes the fitness value for a potential point.
+def fitnessFor(PP, item, placedItems, avgWeight, maxHeight, maxLength):
+    # Item not in floor.
+    if PP[1]:
+        percentageArea = list(filter(lambda x: any(list(map(lambda y: all(y == PP), x["pp_out"]))), placedItems))[0]
+        return (1- PP[2]/ maxLength + )
+
+
 
 # This function determines if a potential point if better than other using the following criteria:
 # - PP is better than another PP if it has a lower Z-coordinate.
 # - In case of tie, if inserting an item in the best implies more contact surface with the underlying object.
-def isBetterPP(newPP, currentBest, item, placedItems):
+def isBetterPP(newPP, currentBest, item, placedItems, avgWeight, maxHeight, maxLength):
     # Lower z-coordinate meaning closer to the front of the truck, increases volume.
     if newPP[2] < currentBest[2]:
         return True
@@ -378,19 +382,21 @@ def fillList(candidateList, potentialPoints, truck, retry, placedItems):
     discardList = []
     for i in candidateList:
         # Update average list excluding those items which have been already placed.
-        candidateListAverageWeight = getAverageWeight(list(filter(lambda x: x not in placedItems, candidateList)))
+        notPlacedAvgWeight = getAverageWeight(list(filter(lambda x: x not in placedItems, candidateList)))
         # Using the method as a retryList fill.
         if retry:
             i = reorient(i)
-        # Initialization of best point as be the worst, in this context the TRR of the truck.
-        pp_best = np.array([truck["width"], truck["height"], truck["length"]])
+        # Initialization of best point as be the worst, in this context the TRR of the truck. And worse fitness value.
+        pp_best = np.array([truck["width"], truck["height"], truck["length"], 0])
         # Try to get the best PP for an item.
         for pp in potentialPoints:
             # [condition, item]
-            feasibility = isFeasible(pp, placedItems, i, candidateListAverageWeight, truck)
-            if feasibility[0][0] and isBetterPP(pp, pp_best, feasibility[0][1], placedItems):
-                pp_best = pp
-                feasibleItem = feasibility[0][1]
+            feasibility = isFeasible(pp, placedItems, i, notPlacedAvgWeight, truck)
+            if feasibility[0][0]:
+                betterPP = isBetterPP(pp, pp_best, feasibility[0][1], placedItems, notPlacedAvgWeight, truck["height"], truck["length"])
+                if betterPP[0]:
+                    pp_best = pp
+                    feasibleItem = feasibility[0][1]
         # If the best is different from the worst there is a PP to insert the item.
         if any(pp_best != np.array([truck["width"], truck["height"], truck["length"]])):
             # Add pp in which the object is inserted.
