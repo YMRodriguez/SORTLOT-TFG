@@ -1,5 +1,5 @@
 import random
-from main.packetAdapter.adapter import getAverageTaxability
+from main.packetAdapter.helpers import getAverageTaxability
 from copy import deepcopy
 
 
