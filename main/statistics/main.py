@@ -1,35 +1,33 @@
 import pandas as pd
 
 
-# TODO, in this module will also have the statistics of the container.
-
-
-# This function will return the main statistics for a solution.
-# TODO, we may want to include priority by customer.
-def solution_statistics(solution):
+# TODO, may want to include priority by customer.
+def solutionStatistics(solution):
+    """
+    This function returns main statistics for a solution.
+    :param solution: solution object.
+    :return: Object of stats.
+    """
     placed = pd.DataFrame(solution["placed"])
-    discard = pd.DataFrame(solution["discard"])
-    return {"p_mean_weight": placed.weight.mean(), "d_mean_weight": discard.weight.mean(),
-            "p_mean_taxability": placed.weight.mean(), "d_mean_taxability": discard.weight.mean(),
-            "p_mean_volume": placed.volume.mean(), "d_mean_volume": discard.volume.mean(),
-            "p_cumulative_priority:": placed.priority.sum(), "p_mean_priority": placed.priority.mean(),
-            "d_max_priority": discard.priority.max(),
-            "used_volume": placed.volume.sum()/solution.truck["volume"],
-            "used_volume_s1": "" ,
-            "used_volume_s2": "",
-            "used_volume_s3": "",
-            "used_volume_s4": "",
-            "used_weight": placed.weight.sum()/solution.truck["tonnage"],
-            "used_weight_s1": "",
-            "used_weight_s2": "",
-            "used_weight_s3": "",
-            "used_weight_s4": "",
-    }
+    discard = pd.DataFrame(solution["discard"]) if len(solution["discard"]) else placed.iloc[0:1].apply(lambda x: 0, axis=0)
+    return {"iteration": solution["iteration"], "time": solution["time"],
+            "p_mean_weight": float(placed.weight.mean()), "d_mean_weight": discard.weight.mean(),
+            "p_total_weight": float(placed.weight.sum()), "d_total_weight": discard.weight.sum(),
+            "p_mean_taxability": float(placed.weight.mean()), "d_mean_taxability": discard.weight.mean(),
+            "p_total_taxability": float(placed.taxability.sum()), "d_total_taxability": discard.taxability.sum(),
+            "p_mean_volume": float(placed.volume.mean()), "d_mean_volume": discard.volume.mean(),
+            "p_cumulative_priority": int(placed.priority.sum()), "p_mean_priority": placed.priority.mean(),
+            "d_max_priority": int(discard.priority.max()),
+            "used_volume": placed.volume.sum() / solution["truck"]["volume"],
+            "used_weight": placed.weight.sum() / solution["truck"]["tonnage"]
+            }
 
 
-# This function will return the statistics from a scenario.
-# Evaluates the context:
-# - Relevant statistics of the population of items: heterogeneity, volume, ...
-# - Relevant statistics of the set of solutions.
-def scenario_statistics():
+def scenarioStatistics(solutionsStatistics):
+    """
+    This function computes a set of unfiltered solutions statistics and return some
+    insights on them.
+    :param solutionsStatistics:
+    :return: Object with statistics.
+    """
     return

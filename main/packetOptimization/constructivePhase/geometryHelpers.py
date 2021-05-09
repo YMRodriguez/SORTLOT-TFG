@@ -98,12 +98,12 @@ def getMCLeft(item):
 
 # This function returns the extended front mass center of an item.
 def getMCFront(item):
-    return item["mass_center"] - np.array([0, 0, item["length"] / 4])
+    return item["mass_center"] - np.array([0, 0, item["length"] / 2])
 
 
 # This function returns the extended rear mass center of an item.
 def getMCRear(item):
-    return item["mass_center"] + np.array([0, 0, item["length"] / 4])
+    return item["mass_center"] + np.array([0, 0, item["length"] / 2])
 
 
 # This function returns the extended bottom mass center of an item.
@@ -148,7 +148,7 @@ def getTopPlaneHeight(item):
 
 # This function returns the area(m2) of the base face of an item.
 def getBottomPlaneArea(item):
-    return (getBRF(item)[0] - getBLF(item)[0]) * (getBLR(item)[2] - getBLF(item)[2])
+    return item["length"]*item["width"]
 
 
 # This function returns the intersection area(m2) between two items in Plane x(width), z(length).

@@ -52,7 +52,9 @@ def main_scenario(packets, truck, nDst, prime, nIteration, rangeOrientations=Non
     iteration = main_cp(truck, rand_output)
     endTime = time.time()
     # It may be relevant to know the sorting method used.
-    return {"solution": iteration,
+    return {"placed": iteration["placed"],
+            "discard": iteration["discard"],
+            "truck": iteration["truck"],
             "sorted": sort_output,
             "rand": rand_output,
             "iteration": nIteration,
@@ -61,7 +63,7 @@ def main_scenario(packets, truck, nDst, prime, nIteration, rangeOrientations=Non
 
 # ------------------ Translation of nested ndarrays -------------------
 # TODO, this may go into a process data module which will be needed when implementing flask.
-def serializeItem(item):
+def serializePlacedItem(item):
     """
     This function adapts nested ndarrays in a object.
     :param item: item object.
@@ -74,14 +76,42 @@ def serializeItem(item):
     return item
 
 
-def serializeSolution(sol):
+def serializeDiscardItem(item):
+    """
+    This function adapts nested ndarrays in a object.
+    :param item: item object.
+    :return: item object with nested numpy arrays jsonified.
+    """
+    item["mass_center"] = item["mass_center"].tolist()
+    item["subzones"] = item["subzones"].tolist()
+    return item
+
+
+def serializeTruck(truck):
+    """
+    This function serializes ndarrays in object
+    :param truck: truck object.
+    :return: serialized object.
+    """
+    for s in truck["subzones"]:
+        s['blf'] = s['blf'].tolist()
+        s['brr'] = s['brr'].tolist()
+    truck['pp'] = truck['pp'].tolist()
+    truck['_id'] = str(truck['_id'])
+    return truck
+
+
+def serializeSolutions(sols):
     """
     This function serializes solution.
-    :param: sol: list of solutions to be serialized.
+    :param: sols: list of solutions to be serialized.
     :return: serialized solution.
     """
-    return list(map(lambda y: list(map(lambda z: serializeItem(z), y)),
-                    list(map(lambda x: x["solution"]["placed"], sol))))
+    for s in sols:
+        s["placed"] = list(map(lambda x: serializePlacedItem(x), s["placed"]))
+        s["discard"] = list(map(lambda x: serializeDiscardItem(x), s["discard"]))
+        s["truck"] = serializeTruck(s["truck"])
+    return sols
 
 
 # ------------------ Solution processing ----------------------------------
@@ -96,19 +126,21 @@ items, ndst = getDataFromJSONWith(ID)
 
 # ------ Iterations ------------
 for i in range(iterations):
-    solution = main_scenario(deepcopy(items), truck_var, ndst, False, i)
+    solution = main_scenario(deepcopy(items), deepcopy(truck_var), ndst, False, i)
     solutions.append(solution)
-    solutionStats = solutionStatistics(solution["solution"], solution["iteration"], solution["time"])
+    solutionStats = solutionStatistics(solution)
     solutionsStats.append(solutionStats)
 
 # ------- Process set of solutions --------
 # Clean solutions
-solutionsCleaned = list(map(lambda x: {"solution": x["solution"],
+solutionsCleaned = list(map(lambda x: {"placed": x["placed"],
+                                       "discard": x["discard"],
+                                       "truck": x["truck"],
                                        "iteration": x["iteration"],
-                                       "time": x["time"]}, deepcopy(solutions)))
+                                       "time": x["time"]}, solutions))
 
 # Get best filtered and unfiltered.
-serializedSolutions = list(map(lambda x: serializeSolution(x), solutionsCleaned))
+serializedSolutions = serializeSolutions(solutionsCleaned)
 filteredSolutions, filteredStats = filterSolutions(serializedSolutions, solutionsStats)
 bestFiltered = getBest(filteredSolutions, filteredStats, 5)
 bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 5)
@@ -121,29 +153,26 @@ bestStatsFiltered = bestFiltered["volume"][1] + bestFiltered["weight"][1] + \
 
 bestSolsUnfiltered = bestUnfiltered["volume"][0] + bestUnfiltered["weight"][0] + \
                      bestUnfiltered["priority"][0] + bestUnfiltered["taxability"][0]
-bestSolsUnfilteredSerialized = serializeSolution(bestSolsUnfiltered)
-bestStatsUnfiltered = bestUnfiltered["volume"][0] + bestUnfiltered["weight"][0] + \
-                      bestUnfiltered["priority"][0] + bestUnfiltered["taxability"][0]
+bestStatsUnfiltered = bestUnfiltered["volume"][1] + bestUnfiltered["weight"][1] + \
+                      bestUnfiltered["priority"][1] + bestUnfiltered["taxability"][1]
 
-# # Pass the data to visualization. This will be made in a flask api not in local.
-# with open(
-#         '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + ID + 'bestUnfilteredSols.json',
-#         'w') as file:
-#     json.dump(
-#         list(map(lambda x: list(map(lambda y: serializeSolution(y), x["solution"]["placed"]), bestUnfilteredSolsWO))),
-#         file, ensure_ascii=False)
-#
-# with open(
-#         '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + ID + 'bestUnFilteredStats.json',
-#         'w') as file:
-#     json.dump(serializableSolutionPlaced, file, ensure_ascii=False)
-#
-# with open(
-#         '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + ID + 'bestFilteredSols.json',
-#         'w') as file:
-#     json.dump(serializableSolutionPlaced, file, ensure_ascii=False)
-#
-# with open(
-#         '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + ID + 'bestUnfilteredStats.json',
-#         'w') as file:
-#     json.dump(serializableSolutionPlaced, file, ensure_ascii=False)
+# Pass the data to visualization. This will be made in a flask api not in local.
+with open(
+        '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + str(ID) + 'bestSolsFiltered.json',
+        'w') as file:
+    json.dump(bestSolsFiltered, file, indent=2, ensure_ascii=False)
+
+with open(
+        '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + str(ID) + 'bestStatsFiltered.json',
+        'w') as file:
+    json.dump(bestStatsFiltered, file, indent=2, ensure_ascii=False)
+
+with open(
+        '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + str(ID) + 'bestUnfilteredSols.json',
+        'w') as file:
+    json.dump(bestSolsUnfiltered, file, indent=2, ensure_ascii=False)
+
+with open(
+        '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + str(ID) + 'bestUnfilteredStats.json',
+        'w') as file:
+    json.dump(bestStatsUnfiltered, file, indent=2, ensure_ascii=False)

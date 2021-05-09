@@ -14,11 +14,11 @@ def filterSolutions(solutions, solutionsStatistics):
     :return: two set of filtered conditions.
     """
     # Keep those that satisfies horizontal stability.
-    solutions = list(filter(lambda x: isHorizontallyStable(x["solution"]["placed"], x["solution"]["truck"]["width"]), solutions))
+    solutions = list(filter(lambda x: isHorizontallyStable(x["placed"], x["truck"]["width"]), solutions))
     iterations = list(map(lambda x: x["iteration"], solutions))
     solutionsStatistics = list(filter(lambda x: x["iteration"] in iterations, solutionsStatistics))
     # Filter those which has not been able to place all priority items.
-    maxPriority = max(solutions[0]["solution"]["placed"] + solutions[0]["solution"]["discard"],
+    maxPriority = max(solutions[0]["placed"] + solutions[0]["discard"],
                       key=lambda x: x["priority"])["priority"]
     solStatsWithPrio = list(filter(lambda x: x["d_max_priority"] != maxPriority, solutionsStatistics))
     iterWithPrio = list(map(lambda x: x["iteration"], solStatsWithPrio))

@@ -30,7 +30,7 @@ def mainSortByFitness(items, avgWeight, avgTaxability, avgVolume, avgPriority, n
 
 # This function returns sorted items by a fitness function designed for the main sorting phase
 def mainSortByFitnessPrime(items, maxWeight, maxTax, maxVol, maxPrio, nDst):
-    return sorted(items, key=lambda x: (x["taxability"] / maxTax + x["volume"]*0.2 / maxVol*0.2 + x[
+    return sorted(items, key=lambda x: (x["taxability"] / maxTax*0.2 + x["volume"] / maxVol*0.2 + x[
         "weight"] / maxWeight*0.3 + x["priority"] / maxPrio * 0.3) * (1 - x["dst_code"] * 0.5 / nDst), reverse=True)
 
 
