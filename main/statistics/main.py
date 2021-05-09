@@ -8,6 +8,7 @@ def solutionStatistics(solution):
     :param solution: solution object.
     :return: Object of stats.
     """
+    print("hola")
     placed = pd.DataFrame(solution["placed"])
     discard = pd.DataFrame(solution["discard"]) if len(solution["discard"]) else placed.iloc[0:1].apply(lambda x: 0, axis=0)
     return {"iteration": solution["iteration"], "time": solution["time"],
