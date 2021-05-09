@@ -116,21 +116,15 @@ def addItemWeightToTruckSubzones(itemSubzones, truck):
 # Output Format: [condition, item]
 def itemContributionExceedsSubzonesWeightLimit(item, truckSubzones):
     # This list stores the state of the condition for each subzone.
-    weightNotExceeded = np.array((), dtype=bool)
+    weightNotExceeded = []
     # Once known the contribution area(contactAreaIn), supposing an homogeneous density, calculate the weight contribution.
     itemWithWeightContribution = addWeightContributionTo(item)
-    if isInFloor(item):
-        # Check if for each subzone the weight is exceeded.
-        for i in item["subzones"]:
-            weightNotExceeded = np.array(np.append(weightNotExceeded, list(filter(lambda x: x is not None, map(
-                lambda x: (i[1] * item["weight"] + x["weight"]) <= x["weight_limit"] if i[0] == x["id"] else None,
+    # Check if for each subzone the weight is exceeded.
+    for i in item["subzones"]:
+        weightNotExceeded.append(all(list(filter(lambda x: x is not None, map(
+                lambda x: (i[3] + x["weight"]) <= x["weight_limit"] if i[0] == x["id"] else None,
                 truckSubzones)))))
-    else:
-        for i in itemWithWeightContribution["subzones"]:
-            # Check if adding the weight to the subzone current weight exceeds its limit.
-            weightNotExceeded = np.array(np.append(weightNotExceeded, list(filter(lambda x: x is not None, map(
-                lambda x: (i[3] + x["weight"]) <= x["weight_limit"] if i[0] == x["id"] else None, truckSubzones)))))
-    return np.array([[all(weightNotExceeded), itemWithWeightContribution]])
+    return np.array([[weightNotExceeded[0], itemWithWeightContribution]])
 
 
 # ------------------ Stackability - C5 ---------------------------------------------
@@ -146,18 +140,18 @@ def isStackable(item, averageWeight, placedItems):
         # Reduce the scope of items to those sharing their top y Plane with bottom y Plane of the new item.
         sharePlaneItems = list(filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.003, placedItems))
         # This ndarray will store if the conditions are met for every item the newItem is above.
-        stackableForSharePlaneItems = np.array([], dtype=bool)
+        stackableForSharePlaneItems = []
         for i in sharePlaneItems:
             # % of area between the newItem and the placed items underneath * newItem["weight"]
             itemWeightContribution = (getIntersectionArea(i, item) / getBottomPlaneArea(item)) * item["weight"]
             # Portion of weight above fragile item cannot be more than 50% of the weight of the fragile item.
             if i["breakability"] and itemWeightContribution <= 0.5 * i["weight"]:
-                stackableForSharePlaneItems = np.append(stackableForSharePlaneItems, True)
+                stackableForSharePlaneItems.append(True)
             elif not i["breakability"] and itemWeightContribution <= i["weight"]:
-                stackableForSharePlaneItems = np.append(stackableForSharePlaneItems, True)
+                stackableForSharePlaneItems.append(True)
             else:
-                stackableForSharePlaneItems = np.append(stackableForSharePlaneItems, False)
-    return all(stackableForSharePlaneItems)
+                stackableForSharePlaneItems.append(False)
+    return np.all(np.asarray(stackableForSharePlaneItems))
 
 
 # ------------------ ADR cargo - C6 ------------------------------------------------
@@ -179,26 +173,23 @@ def isADRSuitable(item, truckBRR_z):
 # Output Item Subzone Format: [[id_subzone, percentageIn, contactAreaIn],...]
 def addContactAreaTo(item, placedItems):
     newItem = deepcopy(item)
-    newItem["subzones"] = np.array([[]])
+    itemSubzones = deepcopy(item["subzones"].tolist())
     # Go over the subzones the item is in.
-    for i in range(item["subzones"].shape[0]):
+    for i in itemSubzones:
         if isInFloor(item):
-            totalContactAreaInSubzone = getBottomPlaneArea(item) * item["subzones"][i][1]
+            totalContactAreaInSubzone = getBottomPlaneArea(item) * i[1]
         else:
             # Reduce the scope of items to those in the same subzone
-            placedItemsSubzone = list(filter(lambda x: item["subzones"][i][0] in getItemSubzones(x), placedItems))
+            placedItemsSubzone = list(filter(lambda x: i[0] in getItemSubzones(x), placedItems))
             # Reduce the scope of items to those sharing their top y-axis Plane with bottom y-axis Plane of the new item.
             sharePlaneItems = list(
                 filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.003,
                        placedItemsSubzone))
             # Calculate the area of intersection between the sharedPlaneItems and the new item in a subzone.
-            totalContactAreaInSubzone = sum(list(map(lambda x: getIntersectionArea(x, item), sharePlaneItems))) * item["subzones"][i][1]
+            totalContactAreaInSubzone = sum(list(map(lambda x: getIntersectionArea(x, item), sharePlaneItems))) * i[1]
         # For each subzone the item is in we also have the contact area which is not the same as the percentage within the subzone.
-        if i == 0:
-            newItem["subzones"] = np.array([np.append(item["subzones"][i], np.array([[totalContactAreaInSubzone]]))])
-        else:
-            newItem["subzones"] = np.vstack(
-                (newItem["subzones"], np.append(item["subzones"][i], np.array([[totalContactAreaInSubzone]]))))
+        i.append(totalContactAreaInSubzone)
+    newItem["subzones"] = np.asarray(itemSubzones)
     return newItem
 
 
@@ -390,7 +381,7 @@ def fillList(candidateList, potentialPoints, truck, retry, placedItems):
         # If the best is different from the worst there is a PP to insert the item.
         if ppBest[3] != 0:
             # Add pp in which the object is inserted.
-            feasibleItem["pp_in"] = ppBest
+            feasibleItem["pp_in"] = ppBest[0:3]
             # Remove pp_best from potentialPoints list.
             potentialPoints = np.array(list(filter(lambda x: any(x != ppBest[0:3]), potentialPoints)))
             # Generate new PPs to add to item and potentialPoints.
