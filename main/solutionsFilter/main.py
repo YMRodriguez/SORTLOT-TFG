@@ -9,6 +9,7 @@ def filterSolutions(solutions, solutionsStatistics):
     This function filters a set of solutions and its statistics by this constrains:
     - Not horizontal stability in the truck.
     - Left priority items unloaded.
+    
     :param solutions: set of solutions in this format [{"solution":'', "iteration":'', "time":''}, ...]
     :param solutionsStatistics: set of statistics.
     :return: two set of filtered conditions.
@@ -29,6 +30,7 @@ def filterSolutions(solutions, solutionsStatistics):
 def getBest(solutions, solutionsStatistics, nSol):
     """
     This function gets the best solutions by different criteria.
+    
     :param nSol: number of solutions.
     :param solutions: set of solutions in this format [{"solution":'', "iteration":'', "time":''}, ...]
     :param solutionsStatistics: set of statistics.
@@ -45,6 +47,7 @@ def getBest(solutions, solutionsStatistics, nSol):
 def convertCriteria(criteria):
     """
     This function gets attribute for the object following a criteria.
+    
     :param criteria: Human readable criteria, i.e, taxability.
     :return: string attribute of an object.
     """
@@ -56,13 +59,14 @@ def convertCriteria(criteria):
 def getBestBy(criteria, solutions, solutionStatistics, nSol):
     """
     This function gets nSol best solutions by criteria.
+    
     :param criteria: String with the criteria.
     :param solutions: list of solutions.
     :param solutionStatistics: list of statistics.
     :param nSol: number of best solutions.
     :return: tuple of list of nSol solutions and its stats.
     """
-    bestStats = sorted(solutionStatistics, key=lambda x: x[criteria], reverse=True)[:nSol + 1]
+    bestStats = sorted(solutionStatistics, key=lambda x: x[criteria], reverse=True)[:nSol]
     nIterFromBestStats = list(map(lambda x: x["iteration"], bestStats))
     bestSolutions = list(filter(lambda x: x["iteration"] in nIterFromBestStats, solutions))
     return bestSolutions, bestStats
@@ -72,6 +76,7 @@ def getBestBy(criteria, solutions, solutionStatistics, nSol):
 def isHorizontallyStable(solutionPlacedItems, truckWidth):
     """
     This function evaluates horizontal stability constrain.
+    
     :param solutionPlacedItems: set of placed items from a solution.
     :param truckWidth: truck's width.
     :return: True if satisfies condition, False otherwise.

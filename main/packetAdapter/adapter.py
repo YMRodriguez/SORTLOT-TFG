@@ -10,20 +10,32 @@ def setTaxability(item, alpha):
     return item
 
 
-# This function sets taxability for each item in a group of packets
-def addTaxToDataset(packets, alpha):
-    return list(map(lambda x: setTaxability(x, alpha), packets))
+# This function sets taxability for each item in a group of items
+def addTaxToDataset(items, alpha):
+    return list(map(lambda x: setTaxability(x, alpha), items))
 
 
-# This function returns if a group of packets are taxed or not
-def areTaxed(packets):
-    return all(list(map(lambda x: "taxability" in x, packets)))
+# This function returns if a group of items are taxed or not
+def areTaxed(items):
+    return all(list(map(lambda x: "taxability" in x, items)))
 
 
 # -------------------- Adapter ----------------------------------------
-# This function adapts packets to be taxed.
-def adaptPackets(packets, alpha):
-    if not areTaxed(packets):
-        return addTaxToDataset(packets, alpha)
+# This function adapts items to be taxed.
+def adaptPackets(items, alpha):
+    if not areTaxed(items):
+        return addTaxToDataset(items, alpha)
     else:
-        print("Packets are already taxed")
+        print("Items are already taxed")
+
+
+def cleanDestinationAndSource(items):
+    """
+    This function return set of items without destination and source strings.
+    :param items: set of packets.
+    :return: cleaned packets.
+    """
+    for i in items:
+        del i["dst"]
+        del i["src"]
+    return items

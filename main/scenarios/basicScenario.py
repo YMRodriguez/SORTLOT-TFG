@@ -4,13 +4,15 @@ import time
 import pymongo
 from copy import deepcopy
 from main.truckAdapter.adapter import adaptTruck
-from main.packetAdapter.adapter import adaptPackets
+from main.packetAdapter.adapter import adaptPackets, cleanDestinationAndSource
 from main.packetOptimization.randomizationAndSorting.randomization import randomization
 from main.packetOptimization.randomizationAndSorting.sorting import sortingPhase, sortingPhasePrime
 from main.packetOptimization.constructivePhase.mainCP import main_cp
 from main.statistics.main import solutionStatistics, scenarioStatistics
 from main.solutionsFilter.main import filterSolutions, getBest
+from main.scenarios.dataSaver import persistInLocal
 import glob
+
 # ----------------------- MongoDB extraction ----------------------
 # Connect to database
 myclient = pymongo.MongoClient("mongodb://localhost:27017/",
@@ -41,7 +43,7 @@ def main_scenario(packets, truck, nDst, prime, nIteration, rangeOrientations=Non
         rangeOrientations = [1, 2, 3, 4]
     # ------ Packet adaptation------
     # Alpha is 333 for terrestrial transport
-    packets = adaptPackets(packets, 333)
+    packets = adaptPackets(cleanDestinationAndSource(packets), 333)
     # ------ Truck adaptation ------
     truck = adaptTruck(truck, 4)
     sort_output = sortingPhasePrime(packets, nDst) if prime else sortingPhase(packets, nDst)
@@ -124,7 +126,8 @@ items, ndst = getDataFromJSONWith(ID)
 # ------ Iterations ------------
 with parallel_backend(backend="loky", n_jobs=10):
     parallel = Parallel(verbose=100)
-    solutions = parallel([delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, False, i) for i in range(iterations)])
+    solutions = parallel(
+        [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, False, i) for i in range(iterations)])
     solutionsStats = list(map(lambda x: solutionStatistics(x), solutions))
 
     # ------- Process set of solutions --------
@@ -142,33 +145,23 @@ with parallel_backend(backend="loky", n_jobs=10):
     bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 5)
 
     # Make it json serializable
-    bestSolsFiltered = bestFiltered["volume"][0] + bestFiltered["weight"][0] + \
-                       bestFiltered["priority"][0] + bestFiltered["taxability"][0]
-    bestStatsFiltered = bestFiltered["volume"][1] + bestFiltered["weight"][1] + \
-                        bestFiltered["priority"][1] + bestFiltered["taxability"][1]
+    bestSolsFiltered = {"volume": bestFiltered["volume"][0],
+                        "weight": bestFiltered["weight"][0],
+                        "priority": bestFiltered["priority"][0],
+                        "taxability": bestFiltered["taxability"][0]}
+    bestStatsFiltered = {"volume": bestFiltered["volume"][1],
+                         "weight": bestFiltered["weight"][1],
+                         "priority": bestFiltered["priority"][1],
+                         "taxability": bestFiltered["taxability"][1]}
 
-    bestSolsUnfiltered = bestUnfiltered["volume"][0] + bestUnfiltered["weight"][0] + \
-                         bestUnfiltered["priority"][0] + bestUnfiltered["taxability"][0]
-    bestStatsUnfiltered = bestUnfiltered["volume"][1] + bestUnfiltered["weight"][1] + \
-                          bestUnfiltered["priority"][1] + bestUnfiltered["taxability"][1]
+    bestSolsUnfiltered = {"volume": bestUnfiltered["volume"][0],
+                          "weight": bestUnfiltered["weight"][0],
+                          "priority": bestUnfiltered["priority"][0],
+                          "taxability": bestUnfiltered["taxability"][0]}
+    bestStatsUnfiltered = {"volume": bestUnfiltered["volume"][1],
+                           "weight": bestUnfiltered["weight"][1],
+                           "priority": bestUnfiltered["priority"][1],
+                           "taxability": bestUnfiltered["taxability"][1]}
 
-    # Pass the data to visualization. This will be made in a flask api not in local.
-    with open(
-            '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + str(ID) + 'bestSolsFiltered.json',
-            'w') as file:
-        json.dump(bestSolsFiltered, file, indent=2, ensure_ascii=False)
-
-    with open(
-            '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + str(ID) + 'bestStatsFiltered.json',
-            'w') as file:
-        json.dump(bestStatsFiltered, file, indent=2, ensure_ascii=False)
-
-    with open(
-            '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + str(ID) + 'bestUnfilteredSols.json',
-            'w') as file:
-        json.dump(bestSolsUnfiltered, file, indent=2, ensure_ascii=False)
-
-    with open(
-            '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + str(ID) + 'bestUnfilteredStats.json',
-            'w') as file:
-        json.dump(bestStatsUnfiltered, file, indent=2, ensure_ascii=False)
+    # TODO, determine best by looking at which one is in every characteristic.
+    persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)

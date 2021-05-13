@@ -232,21 +232,39 @@ def isWithinTruckDimensionsConstrains(item, truckDimensions):
 
 
 # ------------------ Physical constrains - Items-related ----------------------------------------
-# This function returns a ndarray with all the vertices of an item.
 def generatePointsFrom(item):
+    """
+    This function generates and ndarray with all the vertices of an item.
+
+    :param item: item object.
+    :return: numpy array.
+    """
     return np.array([getBLF(item), getTLF(item), getTRF(item), getBRF(item),
                      getBRR(item), getBLR(item), getTRR(item), getTLR(item),
                      getMCFront(item), getMCFront(item), item["mass_center"]])
 
 
-# This function returns True if none of the vertices of pointsItem is inside of a polyItem.
 def overlapper(itemPoints, polyItemPoints):
+    """
+    This function checks whether an item overlaps other or not.
+
+    :param itemPoints: ndarray with vertices of an item.
+    :param polyItemPoints: ndarray with vertices of the item that forms the convex hull.
+    :return: True if the item overlaps the polyItem, False otherwise.
+    """
     return all(list(map(lambda x: x == -1,
                         Delaunay(polyItemPoints).find_simplex(itemPoints))))
 
 
-# This function returns a list with specified length around the massCenter.
 def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
+    """
+    This function gets the neighbours of an item.
+
+    :param massCenter: ndarray with the coordinates of an item mass center.
+    :param placedItems: list of item objects.
+    :param amountOfNearItems: int with the number of desired neighbours.
+    :return: list of N neighbours, with N specified.
+    """
     if placedItems:
         # Extract the mass center of all placed items.
         itemsMCs = np.array(list(map(lambda x: x["mass_center"], placedItems)))
@@ -260,9 +278,14 @@ def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
     return []
 
 
-# TODO, may be overlapping issues between items for those PP which are the projection of some extreme points which are in a exceeding area.
-# This function returns True if the item does not overlap other items around it, False otherwise.
 def isNotOverlapping(item, placedItems):
+    """
+    This function checks if an item is overlapping others and vice versa.
+
+    :param item: item object.
+    :param placedItems: list of placed item objects.
+    :return: True if the item does not overlap other items around it, False otherwise.
+    """
     if len(placedItems):
         nearItems = getSurroundingItems(item["mass_center"], placedItems, 8)
         # Generate points for item evaluated.
