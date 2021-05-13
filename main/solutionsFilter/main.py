@@ -68,7 +68,7 @@ def getBestBy(criteria, solutions, solutionStatistics, nSol):
     """
     bestStats = sorted(solutionStatistics, key=lambda x: x[criteria], reverse=True)[:nSol]
     nIterFromBestStats = list(map(lambda x: x["iteration"], bestStats))
-    bestSolutions = list(filter(lambda x: x["iteration"] in nIterFromBestStats, solutions))
+    bestSolutions = list(map(lambda x: list(filter(lambda y: y["iteration"] == x, solutions))[0], nIterFromBestStats))
     return bestSolutions, bestStats
 
 

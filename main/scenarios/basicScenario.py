@@ -1,3 +1,5 @@
+from typing import List, Any
+
 from joblib import Parallel, delayed, parallel_backend
 import json
 import time
@@ -12,6 +14,7 @@ from main.statistics.main import solutionStatistics, scenarioStatistics
 from main.solutionsFilter.main import filterSolutions, getBest
 from main.scenarios.dataSaver import persistInLocal
 import glob
+import os
 
 # ----------------------- MongoDB extraction ----------------------
 # Connect to database
@@ -32,7 +35,7 @@ def getDataFromJSONWith(Id):
     :param Id: the id of the dataset, not the name.
     :return: object mapped from json file.
     """
-    filepath = glob.glob("./scenarios/packetsDatasets/" + str(Id) + "*.json")[0]
+    filepath = glob.glob(os.path.dirname(__file__) + "/packetsDatasets/" + str(Id) + "*.json")[0]
     nDst = int(filepath.split("Datasets/")[1].split("-")[4][3])
     return json.load(open(filepath)), nDst
 
@@ -84,7 +87,8 @@ def serializeDiscardItem(item):
     :return: item object with nested numpy arrays jsonified.
     """
     item["mass_center"] = item["mass_center"].tolist()
-    item["subzones"] = item["subzones"].tolist()
+    if "subzones" in item:
+        item["subzones"] = item["subzones"].tolist()
     return item
 
 
@@ -117,14 +121,14 @@ def serializeSolutions(sols):
 
 # ------------------ Solution processing ----------------------------------
 # ------ Common variables ----------
-iterations = 10
+iterations = 100
 
 # ------ Get packets dataset -------
-ID = 1
+ID = 7
 items, ndst = getDataFromJSONWith(ID)
 
 # ------ Iterations ------------
-with parallel_backend(backend="loky", n_jobs=10):
+with parallel_backend(backend="loky", n_jobs=5):
     parallel = Parallel(verbose=100)
     solutions = parallel(
         [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, False, i) for i in range(iterations)])

@@ -4,12 +4,12 @@ import json
 import pandas as pd
 
 # ----------------------- General variables -----------------------
-ID = 10
-difDim = 10
-noPackets = 150
-maxDim = [150, 150, 150]
-minD = 40
-nDestinations = 1
+ID = 7
+difDim = 30
+noPackets = 200
+maxDim = [100, 100, 100]
+minD = 30
+nDestinations = 6
 ADRc = 0
 subgrouping = 0
 

@@ -1,6 +1,5 @@
 import numpy as np
 from main.packetOptimization.randomizationAndSorting.randomization import changeItemOrientation
-import math
 
 
 # --------------------------------- Item geometric helpers -----------------------------------
@@ -61,81 +60,6 @@ def getTLR(item):
     return item["mass_center"] + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
 
 
-# This function gets the mid point in the bottom front intersection of the item.
-def getBFMid(item):
-    return item["mass_center"] - np.array([0, item["height"] / 2, item["length"] / 2])
-
-
-# This function gets the mid point in the bottom front intersection of the item plus a differential.
-def getBFMidDifferential(item):
-    return item["mass_center"] - np.array([0, item["height"] / 2, item["length"] * 0.45])
-
-
-# This function gets the mid point in the bottom rear intersection of the item.
-def getBRMid(item):
-    return item["mass_center"] - np.array([0, item["height"] / 2, -item["length"] / 2])
-
-
-# This function gets the mid point in the top front intersection of the item.
-def getTFMid(item):
-    return item["mass_center"] + np.array([0, item["height"] / 2, -item["length"] / 2])
-
-
-# This function gets the mid point in the top rear intersection of the item.
-def getTRMid(item):
-    return item["mass_center"] + np.array([0, item["height"] / 2, item["length"] / 2])
-
-
-# This function returns the extended right mass center of an item.
-def getMCRight(item):
-    return item["mass_center"] + np.array([item["width"] / 4, 0, 0])
-
-
-# This function returns the extended left mass center of an item.
-def getMCLeft(item):
-    return item["mass_center"] - np.array([item["width"] / 4, 0, 0])
-
-
-# This function returns the extended front mass center of an item.
-def getMCFront(item):
-    return item["mass_center"] - np.array([0, 0, item["length"] / 2])
-
-
-# This function returns the extended rear mass center of an item.
-def getMCRear(item):
-    return item["mass_center"] + np.array([0, 0, item["length"] / 2])
-
-
-# This function returns the extended bottom mass center of an item.
-def getMCBottom(item):
-    return item["mass_center"] - np.array([0, item["height"] / 4, 0])
-
-
-# This function returns the extended top mass center of an item.
-def getMCTop(item):
-    return item["mass_center"] + np.array([0, item["height"] / 4, 0])
-
-
-# This function returns the mid point of the right bottom part between rear and front.
-def getMidBottomRight(item):
-    return item["mass_center"] - np.array([item["width"] / 2, item["height"] / 2, 0])
-
-
-# This function returns the mid point of the right bottom part between rear and front.
-def getMidBottomLeft(item):
-    return item["mass_center"] - np.array([-item["width"] / 2, item["height"] / 2, 0])
-
-
-# This function returns the mid point of the right bottom part between rear and front.
-def getMidTopRight(item):
-    return item["mass_center"] + np.array([-item["width"] / 2, item["height"] / 2, 0])
-
-
-# This function returns the mid point of the right bottom part between rear and front.
-def getMidTopLeft(item):
-    return item["mass_center"] + np.array([item["width"] / 2, item["height"] / 2, 0])
-
-
 # This function returns the height of the bottom Plane of an item.
 def getBottomPlaneHeight(item):
     return item["mass_center"][1] - np.array([item["height"] / 2])[0]
@@ -148,7 +72,7 @@ def getTopPlaneHeight(item):
 
 # This function returns the area(m2) of the base face of an item.
 def getBottomPlaneArea(item):
-    return item["length"]*item["width"]
+    return item["length"] * item["width"]
 
 
 # This function returns the intersection area(m2) between two items in Plane x(width), z(length).
@@ -156,9 +80,38 @@ def getIntersectionArea(i1, i2):
     dx = min(getBRR(i1)[0], getBRR(i2)[0]) - max(getBLF(i1)[0], getBLF(i2)[0])
     dz = min(getBRR(i1)[2], getBRR(i2)[2]) - max(getBLF(i1)[2], getBLF(i2)[2])
     if (dx >= 0) and (dz >= 0):
-        return dx*dz
+        return dx * dz
     else:
         return 0
+
+
+def generalIntersectionArea(p1, p2):
+    """
+    This function returns intersection area between two planes.
+
+    :param p1: plane with format [cord1, cord2, difAxis1, difAxis2]
+    :param p2: plane with format [cord1, cord2, difAxis1, difAxis2]
+    :return: intersection area in m2.
+    """
+    d1 = min(p1[0]+p1[2], p2[0]+p2[2]) - max(p1[0], p2[0])
+    d2 = min(p1[1]+p1[3], p2[1]+p2[3]) - max(p1[1], p2[1])
+    if (d1 >= 0) and (d2 >= 0):
+        return d1 * d2
+    else:
+        return 0
+
+
+def getPlanesFor(item):
+    """
+    This function generates XY, ZY, ZX planes represented in ndarrays.
+
+    :param item: item object.
+    :return: tuple of 3 planes.
+    """
+    blf = getBLF(item)
+    return np.array([blf[0], blf[1], item["width"], item["height"]]), \
+           np.array([blf[2], blf[1], item["length"], item["height"]]), \
+           np.array([blf[2], blf[0], item["length"], item["width"]])
 
 
 # This function returns True if the point is inside the Plane for the same y-axis value.

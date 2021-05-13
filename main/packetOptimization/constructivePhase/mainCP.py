@@ -2,7 +2,6 @@ from main.packetOptimization.constructivePhase.geometryHelpers import *
 from main.packetAdapter.helpers import getAverageWeight
 from main.packetOptimization.randomizationAndSorting.sorting import sortingRefillingPhase
 from copy import deepcopy
-from scipy.spatial import Delaunay
 import random
 import numpy as np
 import math
@@ -232,28 +231,20 @@ def isWithinTruckDimensionsConstrains(item, truckDimensions):
 
 
 # ------------------ Physical constrains - Items-related ----------------------------------------
-def generatePointsFrom(item):
-    """
-    This function generates and ndarray with all the vertices of an item.
-
-    :param item: item object.
-    :return: numpy array.
-    """
-    return np.array([getBLF(item), getTLF(item), getTRF(item), getBRF(item),
-                     getBRR(item), getBLR(item), getTRR(item), getTLR(item),
-                     getMCFront(item), getMCFront(item), item["mass_center"]])
-
-
-def overlapper(itemPoints, polyItemPoints):
+def overlapper(p1all, p2all):
     """
     This function checks whether an item overlaps other or not.
 
-    :param itemPoints: ndarray with vertices of an item.
-    :param polyItemPoints: ndarray with vertices of the item that forms the convex hull.
+    :param p1all: tuple of 3 planes,
+    :param p2all:
     :return: True if the item overlaps the polyItem, False otherwise.
     """
-    return all(list(map(lambda x: x == -1,
-                        Delaunay(polyItemPoints).find_simplex(itemPoints))))
+    for i, j in zip(p1all, p2all):
+        if generalIntersectionArea(i, j):
+            continue
+        else:
+            return True
+    return False
 
 
 def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
@@ -289,10 +280,10 @@ def isNotOverlapping(item, placedItems):
     if len(placedItems):
         nearItems = getSurroundingItems(item["mass_center"], placedItems, 8)
         # Generate points for item evaluated.
-        itemAsPoints = generatePointsFrom(item)
+        p1all = getPlanesFor(item)
         # Validate overlapping conditions item vs. placedItems and vice versa.
-        itemToNearItemsOverlapping = all(list(map(lambda x: overlapper(itemAsPoints, generatePointsFrom(x)), nearItems)))
-        nearItemsOverlappingItem = all(list(map(lambda x: overlapper(generatePointsFrom(x), itemAsPoints), nearItems)))
+        itemToNearItemsOverlapping = all(list(map(lambda x: overlapper(p1all, getPlanesFor(x)), nearItems)))
+        nearItemsOverlappingItem = all(list(map(lambda x: overlapper(getPlanesFor(x), p1all), nearItems)))
         return itemToNearItemsOverlapping and nearItemsOverlappingItem
     else:
         return True
