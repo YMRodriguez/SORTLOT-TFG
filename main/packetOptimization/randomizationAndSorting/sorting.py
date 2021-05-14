@@ -30,13 +30,15 @@ def mainSortByFitness(items, avgWeight, avgTaxability, avgVolume, avgPriority, n
 
 # This function returns sorted items by a fitness function designed for the main sorting phase
 def mainSortByFitnessPrime(items, maxWeight, maxTax, maxVol, maxPrio, nDst):
-    return sorted(items, key=lambda x: (x["taxability"] / maxTax*0.2 + x["volume"] / maxVol*0.2 + x[
-        "weight"] / maxWeight*0.3 + x["priority"] / maxPrio * 0.3) * (1 - x["dst_code"] * 0.5 / nDst), reverse=True)
+    return sorted(items, key=lambda x: (((x["taxability"] / maxTax) * 0.35 + (x["volume"] / maxVol) * 0.1 + (x[
+        "weight"] / maxWeight) * 0.35 + (x["priority"] / maxPrio) * 0.2) * (1 - (x["dst_code"] * 0.8 / nDst))), reverse=True)
 
 
 # This function returns sorted items based on a fitness function.
-def refillingSortByFitness(items, maxWeight, maxTaxability):
-    return sorted(items, key=lambda x: x["priority"] + x["taxability"] / maxTaxability + x["weight"] / maxWeight, reverse=True)
+def refillingSortByFitness(items, maxWeight, maxTaxability, maxPrio, nDst):
+    return sorted(items, key=lambda x: ((x["priority"]/maxPrio) * 0.5 + (x["taxability"] / maxTaxability)*0.25
+                                        + (x["weight"] / maxWeight)*0.25) * (1 - (x["dst_code"] * 0.8 / nDst)),
+                  reverse=True)
 
 
 # ----------- Main functions ----------------------------------
@@ -49,11 +51,13 @@ def sortingPhase(items, nDst):
 
 # This function is in charge of sorting the packets choosing the sorting method randomly.
 def sortingPhasePrime(items, nDst):
-    return mainSortByFitness(items, getMaxWeight(items),
-                             getMaxTaxability(items), getMaxVolume(items),
-                             getMaxPriority(items), nDst)
+    return mainSortByFitnessPrime(items, getMaxWeight(items),
+                                  getMaxTaxability(items), getMaxVolume(items),
+                                  getMaxPriority(items), nDst)
 
 
 # This function returns sorted by a fitness function in resorting process.
-def sortingRefillingPhase(items):
-    return refillingSortByFitness(items, getMaxWeight(items), getMaxTaxability(items))
+def sortingRefillingPhase(items, nDst):
+    return refillingSortByFitness(items, getMaxWeight(items),
+                                  getMaxTaxability(items),
+                                  getMaxPriority(items), nDst)

@@ -43,12 +43,12 @@ def changeItemOrientation(item, validOrientations):
 # ------------------------- Comparators --------------------------------------
 # This function compares the volume of two give items, returns true if is in range false otherwise
 def volumeComp(i0, i1):
-    return 0.7 < (i0["volume"] / i1["volume"]) < 1.3
+    return 0.8 < (i0["volume"] / i1["volume"]) < 1.2
 
 
 # This function compares the weight of two give items, returns true if is in range false otherwise
 def weightComp(i0, i1):
-    return 0.7 < (i0["weight"] / i1["weight"]) < 1.3
+    return 0.8 < (i0["weight"] / i1["weight"]) < 1.2
 
 
 # ------------------------------ Swappers --------------------------------------
@@ -73,11 +73,19 @@ def swapByWeight(packets):
     return packets
 
 
-# This function swaps an item with another item in the list with 50% prob if they have the same level of priority
 def swapByPriority(packets):
+    """
+    This function swaps an item with another in the list with 50% prob if they have the
+    same priority an destination code.
+
+    :param packets: list of packets.
+    :return: modified list of packets.
+    """
     for i in range(len(packets)):
         same_priority_packets = list(
-            filter(lambda x: (x["priority"] == packets[i]["priority"] and x["id"] != packets[i]["id"]), packets))
+            filter(lambda x: (x["priority"] == packets[i]["priority"]
+                              and x["id"] != packets[i]["id"]
+                              and x["dst_code"] == packets[i]["dst_code"]), packets))
         if bool(random.getrandbits(1)) and (len(same_priority_packets) != 0):
             item_j = random.choice(same_priority_packets)
             j = packets.index(item_j)
@@ -103,5 +111,5 @@ def randomization(packets, validOrientations):
     swapped_v = swapByVolume(random_oriented_packets)
     swapped_w = swapByWeight(swapped_v)
     swapped_p = swapByPriority(swapped_w)
-    swapped_t = swapByTaxability(swapped_p)
-    return swapped_t
+    # swapped_t = swapByTaxability(swapped_p)
+    return swapped_p

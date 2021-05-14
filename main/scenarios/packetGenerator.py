@@ -9,7 +9,7 @@ difDim = 30
 noPackets = 200
 maxDim = [100, 100, 100]
 minD = 30
-nDestinations = 6
+nDestinations = 5
 ADRc = 0
 subgrouping = 0
 
@@ -19,17 +19,17 @@ myclient = pymongo.MongoClient("mongodb://localhost:27017/",
                                username="mongoadmin",
                                password="admin")
 db = myclient['SpainVRP']
-wharehouses_col = db['wharehouses']
+warehouses_col = db['wharehouses']
 trucks_col = db['trucks']
 
 # Extract relevant data
 truck_var = trucks_col.find_one()
-wharehouses_titles = list(
-    map(lambda x: x["name"], wharehouses_col.find({}, {'_id': 0, 'name': 1})[5:(6 + nDestinations)]))
+warehouses_titles = list(
+    map(lambda x: x["name"], warehouses_col.find({}, {'_id': 0, 'name': 1})[5:(6 + nDestinations)]))
 
 # Adapt data to input in generator
-src = wharehouses_titles[0]
-dests = wharehouses_titles[1:]
+src = warehouses_titles[0]
+dests = warehouses_titles[1:]
 
 
 # --------------- Packet Generator ------------------------------------------
@@ -53,8 +53,8 @@ def randomPacketGenerator(dimensions, destinations, source, ADR):
     packet["dst_code"] = destinations.index(packet["dst"])
     # We do not care, if it is frozen it will go in a different truck
     packet["frozen"] = random.choices([0, 1], [100, 0])[0]
-    packet["priority"] = random.choices([0, 1, 2], [70, 20, 10])[0]
-    packet["breakability"] = random.choices([0, 1], [85, 15])[0]
+    packet["priority"] = random.choices([1, 2], [85, 15])[0]
+    packet["breakability"] = random.choices([0, 1], [95, 5])[0]
     packet["ADR"] = random.choices([0, 1], [95, 5])[0] if ADR else random.choices([0, 1], [100, 0])[0]
     return packet
 

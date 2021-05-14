@@ -1,9 +1,6 @@
-from typing import List, Any
-
 from joblib import Parallel, delayed, parallel_backend
 import json
 import time
-import pymongo
 from copy import deepcopy
 from main.truckAdapter.adapter import adaptTruck
 from main.packetAdapter.adapter import adaptPackets, cleanDestinationAndSource
@@ -17,15 +14,16 @@ import glob
 import os
 
 # ----------------------- MongoDB extraction ----------------------
-# Connect to database
-myclient = pymongo.MongoClient("mongodb://localhost:27017/",
-                               username="mongoadmin",
-                               password="admin")
-db = myclient['SpainVRP']
-trucks_col = db['trucks']
-
-# Extract relevant data
-truck_var = trucks_col.find_one()
+# # Connect to database
+# myclient = pymongo.MongoClient("mongodb://localhost:27017/",
+#                                username="mongoadmin",
+#                                password="admin")
+# db = myclient['SpainVRP']
+# trucks_col = db['trucks']
+#
+# # Extract relevant data
+# truck_var = trucks_col.find_one()
+truck_var = json.load(open(os.path.dirname(__file__) + "/packetsDatasets/truckvar.json"))
 
 
 # --------------- Packet Generator ------------------------------------------
@@ -53,7 +51,7 @@ def main_scenario(packets, truck, nDst, prime, nIteration, rangeOrientations=Non
     rand_output = randomization(deepcopy(sort_output), rangeOrientations)
     # ------- Solution builder --------
     startTime = time.time()
-    iteration = main_cp(truck, rand_output)
+    iteration = main_cp(truck, rand_output, nDst)
     endTime = time.time()
     # It may be relevant to know the sorting method used.
     return {"placed": iteration["placed"],
@@ -102,7 +100,7 @@ def serializeTruck(truck):
         s['blf'] = s['blf'].tolist()
         s['brr'] = s['brr'].tolist()
     truck['pp'] = truck['pp'].tolist()
-    truck['_id'] = str(truck['_id'])
+    #truck['_id'] = str(truck['_id'])
     return truck
 
 
@@ -121,7 +119,7 @@ def serializeSolutions(sols):
 
 # ------------------ Solution processing ----------------------------------
 # ------ Common variables ----------
-iterations = 100
+iterations = 60
 
 # ------ Get packets dataset -------
 ID = 7
@@ -131,7 +129,7 @@ items, ndst = getDataFromJSONWith(ID)
 with parallel_backend(backend="loky", n_jobs=5):
     parallel = Parallel(verbose=100)
     solutions = parallel(
-        [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, False, i) for i in range(iterations)])
+        [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, True, i) for i in range(iterations)])
     solutionsStats = list(map(lambda x: solutionStatistics(x), solutions))
 
     # ------- Process set of solutions --------
