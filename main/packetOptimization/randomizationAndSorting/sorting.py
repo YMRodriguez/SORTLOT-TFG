@@ -31,13 +31,16 @@ def mainSortByFitness(items, avgWeight, avgTaxability, avgVolume, avgPriority, n
 # This function returns sorted items by a fitness function designed for the main sorting phase
 def mainSortByFitnessPrime(items, maxWeight, maxTax, maxVol, maxPrio, nDst):
     return sorted(items, key=lambda x: (((x["taxability"] / maxTax) * 0.35 + (x["volume"] / maxVol) * 0.1 + (x[
-        "weight"] / maxWeight) * 0.35 + (x["priority"] / maxPrio) * 0.2) * (1 - (x["dst_code"] * 0.8 / nDst))), reverse=True)
+        "weight"] / maxWeight) * 0.35 + (x["priority"] / max(maxPrio, 1)) * 0.2) * (1 - (x["dst_code"] * 0.8 / nDst))), reverse=True)
 
 
 # This function returns sorted items based on a fitness function.
-def refillingSortByFitness(items, maxWeight, maxTaxability, maxPrio, nDst):
-    return sorted(items, key=lambda x: ((x["priority"]/maxPrio) * 0.5 + (x["taxability"] / maxTaxability)*0.25
-                                        + (x["weight"] / maxWeight)*0.25) * (1 - (x["dst_code"] * 0.8 / nDst)),
+def refillingSortByFitness(items, maxWeight, maxTaxability, maxPrio, nDst, stage):
+    weights = [[0.2, 0.2, 0.6], [0.1, 0.1, 0.8], [0.25, 0.25, 0.5]]
+    weightsByStage = weights[0] #TODO
+    return sorted(items, key=lambda x: ((x["taxability"] / maxTaxability)*weightsByStage[0] +
+                                        (x["weight"] / maxWeight) * weightsByStage[1] +
+                                        (x["priority"]/max(maxPrio, 1)) * weightsByStage[2]) * (1 - (x["dst_code"] * 0.8 / nDst)),
                   reverse=True)
 
 
@@ -57,7 +60,7 @@ def sortingPhasePrime(items, nDst):
 
 
 # This function returns sorted by a fitness function in resorting process.
-def sortingRefillingPhase(items, nDst):
+def sortingRefillingPhase(items, nDst, stage):
     return refillingSortByFitness(items, getMaxWeight(items),
                                   getMaxTaxability(items),
-                                  getMaxPriority(items), nDst)
+                                  getMaxPriority(items), nDst, stage)

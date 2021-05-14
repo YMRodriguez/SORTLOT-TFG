@@ -330,7 +330,7 @@ def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight,
 # This function computes the fitness value for a potential point.
 # PP format [x, y, z, fitnessValue]
 def fitnessFor(PP, item, placedItems, avgWeight, maxHeight, maxLength, stage):
-    fitWeights = [[0.3, 0.35, 0.2, 0.15], [0.35, 0.3, 0.2, 0.15], [0.1, 0.8, 0.05, 0.05]]
+    fitWeights = [[0.35, 0.35, 0.25, 0.05], [0.3, 0.3, 0.25, 0.15], [0.2, 0.6, 0.1, 0.]]
     # Take the weights of the stage.
     stageFW = fitWeights[stage-1]
     # Common conditions in the fitness function.
@@ -368,9 +368,9 @@ def generateNewPPs(item, placedItems, truckHeight, truckWidth):
     BLR = getBLR(item) + np.array([0, 0, 0.003])
     # BRR if 0.92*truckWidth, BRF otherwise
     BRF = getBRF(item) + np.array([0.003, 0, 0])
-    BxF = getBRR(item) + np.array([0, 0, 0.003]) if BRF[0] >= 0.92 * truckWidth else BRF
+    BxF = getBRR(item) + np.array([0, 0, 0.003]) if BRF[0] >= 0.98 * truckWidth else BRF
     TLF = getTLF(item) + np.array([0, 0.003, 0])
-    result = np.array([TLF]) if TLF[1] < 0.92*truckHeight else []
+    result = np.array([TLF]) if TLF[1] < 0.92 * truckHeight else []
     if not isInFloor(item):
         # Reduce the scope of items to those sharing their top y-axis Plane with bottom y-axis Plane of the new item.
         sharePlaneItems = list(
@@ -440,10 +440,11 @@ def main_cp(truck, candidateList, nDst):
     stage = 1
     filling = fillList(candidateList, potentialPoints, truck, 0, stage, [])
     stage = stage + 1
-    refilling = fillList(filling["discard"], filling["potentialPoints"],
+    refilling = fillList(filling["discard"],
+                         filling["potentialPoints"],
                          filling["truck"], 0, stage, filling["placed"])
     stage = stage + 1
-    rerefilling = fillList(sortingRefillingPhase(refilling["discard"], nDst),
+    rerefilling = fillList(sortingRefillingPhase(refilling["discard"], nDst, stage),
                            refilling["potentialPoints"],
                            refilling["truck"], 1, stage, refilling["placed"])
     return rerefilling

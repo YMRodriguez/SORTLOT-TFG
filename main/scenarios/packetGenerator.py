@@ -53,7 +53,7 @@ def randomPacketGenerator(dimensions, destinations, source, ADR):
     packet["dst_code"] = destinations.index(packet["dst"])
     # We do not care, if it is frozen it will go in a different truck
     packet["frozen"] = random.choices([0, 1], [100, 0])[0]
-    packet["priority"] = random.choices([1, 2], [85, 15])[0]
+    packet["priority"] = random.choices([0, 1], [85, 15])[0]
     packet["breakability"] = random.choices([0, 1], [95, 5])[0]
     packet["ADR"] = random.choices([0, 1], [95, 5])[0] if ADR else random.choices([0, 1], [100, 0])[0]
     return packet
