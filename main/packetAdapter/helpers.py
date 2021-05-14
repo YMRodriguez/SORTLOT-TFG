@@ -30,7 +30,7 @@ def getMaxPriority(items):
 
 # This function returns max volume value in a list of items.
 def getMaxVolume(items):
-    return max(item["taxability"] for item in items)
+    return max(item["volume"] for item in items)
 
 
 # This function returns max weight value in a list of items.
