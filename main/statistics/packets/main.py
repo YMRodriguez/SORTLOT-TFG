@@ -12,6 +12,8 @@ def main(items):
     items = pd.DataFrame(items)
     return {"min_w": items.weight.min(), "max_w": items.weight.max(), "min_v": items.volume.min(),
             "max_v": items.volume.max(), "n_by_dst": items.dst_code.value_counts().sort_index().to_dict(),
+            "n_by_prio": items.priority.value_counts().sort_index().to_dict(),
+            "n_by_br": items.breakability.value_counts().sort_index().to_dict(),
             "unique": len(items[['width', "length", "height", "weight"]].drop_duplicates())}
 
 

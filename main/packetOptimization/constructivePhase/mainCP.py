@@ -200,11 +200,12 @@ def addContactAreaTo(item, placedItems):
 
 
 # This function returns a ndarray with the item and True if the item has at least 80% of supported area, False otherwise.
-def isStable(item, placedItems):
+def isStable(item, placedItems, stage):
+    threshold = 0.85 if stage == 1 else 0.75
     itemWithContactArea = addContactAreaTo(item, placedItems)
     totalItemContactArea = sum(list(map(lambda x: x[2], itemWithContactArea["subzones"])))
     contactAreaPercentage = totalItemContactArea / getBottomPlaneArea(item)
-    if contactAreaPercentage > 0.8:
+    if contactAreaPercentage >= threshold:
         return np.array([[1, itemWithContactArea]])
     return np.array([[0, itemWithContactArea]])
 
@@ -311,7 +312,7 @@ def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight,
         truckSubzones = getContainerSubzones(truck)
         itemWithSubzones = setItemSubzones(truckSubzones, item)
         # This item is [condition, itemWithContactAreaForEachSubzone]
-        i3WithCondition = isStable(itemWithSubzones, placedItems)
+        i3WithCondition = isStable(itemWithSubzones, placedItems, stage)
         # Checks if it is stable and stackable.
         if i3WithCondition[0][0] and isStackable(item, candidateListAverageWeight, placedItems, stage):
             # Way of keeping the modified object and if the condition state. TODO, maybe is not necessary to keep the item.
@@ -361,11 +362,13 @@ def isBetterPP(newPP, currentBest):
 
 
 # This function creates a list of potential points generated after inserting an item.
-# Output format: [[TLF],[BLR],[BRF]]
-def generateNewPPs(item, placedItems, truckHeight):
+# Output format: [[TLF],[BLR],[BxF]]
+def generateNewPPs(item, placedItems, truckHeight, truckWidth):
     # Add margin to the point of the surface.
     BLR = getBLR(item) + np.array([0, 0, 0.003])
+    # BRR if 0.92*truckWidth, BRF otherwise
     BRF = getBRF(item) + np.array([0.003, 0, 0])
+    BxF = getBRR(item) + np.array([0, 0, 0.003]) if BRF[0] >= 0.92 * truckWidth else BRF
     TLF = getTLF(item) + np.array([0, 0.003, 0])
     result = np.array([TLF]) if TLF[1] < 0.92*truckHeight else []
     if not isInFloor(item):
@@ -374,16 +377,16 @@ def generateNewPPs(item, placedItems, truckHeight):
             filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.003, placedItems))
         # Check which points are not supported.
         isBLRinPlane = any(list(map(lambda x: pointInPlane(BLR, getBLF(x), getBRR(x)), sharePlaneItems)))
-        isBRFinPlane = any(list(map(lambda x: pointInPlane(BRF, getBLF(x), getBRR(x)), sharePlaneItems)))
+        isBxFinPlane = any(list(map(lambda x: pointInPlane(BRF, getBLF(x), getBRR(x)), sharePlaneItems)))
         # Modify not supported points to its projection.
-        if not isBRFinPlane:
-            BRF = getNearestProjectionPointFor(BRF, placedItems)
+        if not isBxFinPlane:
+            BxF = getNearestProjectionPointFor(BxF, placedItems)
         if not isBLRinPlane:
             BLR = getNearestProjectionPointFor(BLR, placedItems)
     if len(result):
-        result = np.vstack((result, BLR, BRF))
+        result = np.vstack((result, BLR, BxF))
     else:
-        result.extend((BLR, BRF))
+        result.extend((BLR, BxF))
         result = np.asarray(result)
     return result
 
@@ -416,7 +419,7 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, placedItems):
             # Remove pp_best from potentialPoints list.
             potentialPoints = np.array(list(filter(lambda x: any(x != ppBest[0:3]), potentialPoints)))
             # Generate new PPs to add to item and potentialPoints.
-            newPPs = generateNewPPs(feasibleItem, placedItems, truck["height"])
+            newPPs = generateNewPPs(feasibleItem, placedItems, truck["height"], truck["width"])
             feasibleItem["pp_out"] = newPPs
             potentialPoints = np.vstack((potentialPoints, newPPs))
             # Add insertion order to item.
