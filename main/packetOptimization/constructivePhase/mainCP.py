@@ -330,9 +330,9 @@ def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight,
 # This function computes the fitness value for a potential point.
 # PP format [x, y, z, fitnessValue]
 def fitnessFor(PP, item, placedItems, avgWeight, maxHeight, maxLength, stage):
-    fitWeights = [[0.35, 0.35, 0.25, 0.05], [0.3, 0.3, 0.25, 0.15], [0.2, 0.6, 0.1, 0.]]
+    fitWeights = [[0.35, 0.35, 0.25, 0.05], [0.3, 0.3, 0.2, 0.2], [0.1, 0.45, 0.15, 0.3]]
     # Take the weights of the stage.
-    stageFW = fitWeights[stage-1]
+    stageFW = fitWeights[stage - 1]
     # Common conditions in the fitness function.
     lengthCondition = 1 - (PP[2] / maxLength)
     # For the surrounding customer code objects.
@@ -347,11 +347,13 @@ def fitnessFor(PP, item, placedItems, avgWeight, maxHeight, maxLength, stage):
         areaCondition = abs(getBottomPlaneArea(item) / getBottomPlaneArea(itemBehind) - 1)
         return np.concatenate((PP,
                                np.array([
-                                   lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + areaCondition * stageFW[2] + heightWeightRelation * stageFW[3]])))
+                                   lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + areaCondition *
+                                   stageFW[2] + heightWeightRelation * stageFW[3]])))
     else:
         return np.concatenate((PP,
                                np.array([
-                                   lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + stageFW[2] + heightWeightRelation * stageFW[3]])))
+                                   lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + stageFW[
+                                       2] + heightWeightRelation * stageFW[3]])))
 
 
 # This function returns if the new potential point is better than the former based on a fitness function value.
@@ -442,7 +444,7 @@ def main_cp(truck, candidateList, nDst):
     stage = stage + 1
     refilling = fillList(filling["discard"],
                          filling["potentialPoints"],
-                         filling["truck"], 0, stage, filling["placed"])
+                         filling["truck"], 1, stage, filling["placed"])
     stage = stage + 1
     rerefilling = fillList(sortingRefillingPhase(refilling["discard"], nDst, stage),
                            refilling["potentialPoints"],

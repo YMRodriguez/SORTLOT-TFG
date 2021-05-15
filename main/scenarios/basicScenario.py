@@ -48,7 +48,7 @@ def main_scenario(packets, truck, nDst, prime, nIteration, rangeOrientations=Non
     # ------ Truck adaptation ------
     truck = adaptTruck(truck, 4)
     sort_output = sortingPhasePrime(packets, nDst) if prime else sortingPhase(packets, nDst)
-    rand_output = randomization(deepcopy(sort_output), rangeOrientations)
+    rand_output = randomization(deepcopy(sort_output), rangeOrientations, nDst)
     # ------- Solution builder --------
     startTime = time.time()
     iteration = main_cp(truck, rand_output, nDst)
@@ -119,14 +119,14 @@ def serializeSolutions(sols):
 
 # ------------------ Solution processing ----------------------------------
 # ------ Common variables ----------
-iterations = 80
+iterations = 48
 
 # ------ Get packets dataset -------
 ID = 7
 items, ndst = getDataFromJSONWith(ID)
 
 # ------ Iterations ------------
-with parallel_backend(backend="loky", n_jobs=4):
+with parallel_backend(backend="loky", n_jobs=5):
     parallel = Parallel(verbose=100)
     solutions = parallel(
         [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, True, i) for i in range(iterations)])

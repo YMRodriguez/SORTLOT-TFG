@@ -106,10 +106,11 @@ def swapByTaxability(packets):
 
 # ------------------- Main Function ---------------------------------------------------------------------
 # This function is in charge of the randomization of a list of packets
-def randomization(packets, validOrientations):
+def randomization(packets, validOrientations, nDst):
     random_oriented_packets = list(map(lambda x: changeItemOrientation(x, validOrientations), packets))
     swapped_v = swapByVolume(random_oriented_packets)
     swapped_w = swapByWeight(swapped_v)
     swapped_p = swapByPriority(swapped_w)
-    # swapped_t = swapByTaxability(swapped_p)
+    if nDst == 1:
+        return swapByTaxability(swapped_p)
     return swapped_p

@@ -135,7 +135,7 @@ def getNearestProjectionPointFor(point, placedItems):
 
 # This function randomly reorients a given item.
 def reorient(item):
-    return changeItemOrientation(item, list(filter(lambda x: x != item["orientation"], list(range(1, 7)))))
+    return changeItemOrientation(item, list(filter(lambda x: x != item["orientation"], [1, 2, 3, 4])))
 
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------
