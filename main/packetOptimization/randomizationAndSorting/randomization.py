@@ -60,7 +60,9 @@ def genericSwapper(lst, i, j):
 # This function swaps an item with its consecutive with 50% prob in case vi/vi+1 in [0.7, 1.3]
 def swapByVolume(packets):
     for i in range(len(packets) - 1):
-        if volumeComp(packets[i], packets[i + 1]) and bool(random.getrandbits(1)):
+        if volumeComp(packets[i], packets[i + 1]) \
+                and packets[i]["dst_code"] == packets[i+1]["dst_code"]\
+                and bool(random.getrandbits(1)):
             genericSwapper(packets, i, i + 1)
     return packets
 
@@ -68,7 +70,9 @@ def swapByVolume(packets):
 # This function swaps an item with its consecutive with 50% prob in case wi/wi+1 in [0.7, 1.3]
 def swapByWeight(packets):
     for i in range(len(packets) - 1):
-        if weightComp(packets[i], packets[i + 1]) and bool(random.getrandbits(1)):
+        if weightComp(packets[i], packets[i + 1]) \
+                and packets[i]["dst_code"] == packets[i+1]["dst_code"]\
+                and bool(random.getrandbits(1)):
             genericSwapper(packets, i, i + 1)
     return packets
 
@@ -106,11 +110,10 @@ def swapByTaxability(packets):
 
 # ------------------- Main Function ---------------------------------------------------------------------
 # This function is in charge of the randomization of a list of packets
-def randomization(packets, validOrientations, nDst):
+def randomization(packets, validOrientations):
     random_oriented_packets = list(map(lambda x: changeItemOrientation(x, validOrientations), packets))
     swapped_v = swapByVolume(random_oriented_packets)
     swapped_w = swapByWeight(swapped_v)
     swapped_p = swapByPriority(swapped_w)
-    if nDst == 1:
-        return swapByTaxability(swapped_p)
+    # swapByTaxability(swapped_p)
     return swapped_p

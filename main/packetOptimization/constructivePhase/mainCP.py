@@ -327,6 +327,10 @@ def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight,
         return np.array([[0, newItem]])
 
 
+def areEnoughPlacedItemsOfTheCstCode(dst_code, placedItems, nItems):
+    return len(list(filter(lambda x: dst_code == x["dst_code"], placedItems))) >= nItems
+
+
 # This function computes the fitness value for a potential point.
 # PP format [x, y, z, fitnessValue]
 def fitnessFor(PP, item, placedItems, avgWeight, maxHeight, maxLength, stage):
@@ -336,9 +340,15 @@ def fitnessFor(PP, item, placedItems, avgWeight, maxHeight, maxLength, stage):
     # Common conditions in the fitness function.
     lengthCondition = 1 - (PP[2] / maxLength)
     # For the surrounding customer code objects.
-    nearItems = getSurroundingItems(item["mass_center"], placedItems, 5)
+    nItems = 5
+    nearItems = getSurroundingItems(item["mass_center"], placedItems, nItems)
     nearItemsWithSameDstCode = list(filter(lambda x: x["dst_code"] == item["dst_code"], nearItems))
-    surroundingCondition = len(nearItemsWithSameDstCode) / max(len(nearItems), 1)
+    if len(nearItemsWithSameDstCode) == 0 \
+            and len(nearItems) >= 5 and areEnoughPlacedItemsOfTheCstCode(item["dst_code"], placedItems, nItems):
+        surroundingCondition = -0.5
+    else:
+        surroundingCondition = len(nearItemsWithSameDstCode) / max(len(nearItems), 1)
+
     heightWeightRelation = 1 - (item["height"] / maxHeight) / (item["weight"] / avgWeight)
 
     # Item not in floor.

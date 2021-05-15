@@ -31,17 +31,17 @@ def mainSortByFitness(items, avgWeight, avgTaxability, avgVolume, avgPriority, n
 # This function returns sorted items by a fitness function designed for the main sorting phase
 def mainSortByFitnessPrime(items, maxWeight, maxTax, maxVol, maxPrio, nDst):
     return sorted(items, key=lambda x: (((x["taxability"] / maxTax) * 0.35 + (x["volume"] / maxVol) * 0.1 + (x[
-        "weight"] / maxWeight) * 0.4 + (x["priority"] / max(maxPrio, 1)) * 0.15) * (1 - (x["dst_code"] * 0.9 / nDst))), reverse=True)
+        "weight"] / maxWeight) * 0.4 + (x["priority"] / max(maxPrio, 1)) * 0.15) * (1 - (x["dst_code"] * 0.8 / nDst))), reverse=True)
 
 
 # This function returns sorted items based on a fitness function.
 def refillingSortByFitness(items, maxWeight, maxTaxability, maxPrio, maxVol, nDst, stage):
-    weights = [[0.35, 0.25, 0.4], [0.2, 0.2, 0.2, 0.4], [0.25, 0.25, 0.5]]
+    weights = [[0.35, 0.25, 0.4], [0.2, 0.0, 0.2, 0.6], [0.25, 0.25, 0.5]]
     weightsByStage = weights[1] #TODO
     return sorted(items, key=lambda x: ((x["taxability"] / maxTaxability)*weightsByStage[0] +
-                                        (x["volume"] / maxVol) + weightsByStage[3] +
-                                        (x["weight"] / maxWeight) * weightsByStage[1] +
-                                        (x["priority"]/max(maxPrio, 1)) * weightsByStage[2]) * (1 - (x["dst_code"] * 0.8 / nDst)),
+                                        (x["volume"] / maxVol) + weightsByStage[1] +
+                                        (x["weight"] / maxWeight) * weightsByStage[2] +
+                                        (x["priority"]/max(maxPrio, 1)) * weightsByStage[3]) * (1 - (x["dst_code"] * 0.8 / nDst)),
                   reverse=True)
 
 
