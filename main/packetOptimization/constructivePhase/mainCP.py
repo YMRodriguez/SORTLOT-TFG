@@ -345,7 +345,7 @@ def fitnessFor(PP, item, placedItems, avgWeight, maxHeight, maxLength, stage):
     nearItemsWithSameDstCode = list(filter(lambda x: x["dst_code"] == item["dst_code"], nearItems))
     if len(nearItemsWithSameDstCode) == 0 \
             and len(nearItems) >= 5 and areEnoughPlacedItemsOfTheCstCode(item["dst_code"], placedItems, nItems):
-        surroundingCondition = -0.5
+        surroundingCondition = -0.15
     else:
         surroundingCondition = len(nearItemsWithSameDstCode) / max(len(nearItems), 1)
 

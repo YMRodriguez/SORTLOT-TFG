@@ -13,10 +13,11 @@ def solutionStatistics(solution):
     return {"iteration": solution["iteration"], "time": solution["time"],
             "p_mean_weight": float(placed.weight.mean()), "d_mean_weight": float(discard.weight.mean()),
             "p_total_weight": float(placed.weight.sum()), "d_total_weight": float(discard.weight.sum()),
-            "p_mean_taxability": float(placed.weight.mean()), "d_mean_taxability": float(discard.weight.mean()),
+            "p_mean_taxability": float(placed.taxability.mean()), "d_mean_taxability": float(discard.taxability.mean()),
             "p_total_taxability": float(placed.taxability.sum()), "d_total_taxability": float(discard.taxability.sum()),
             "p_mean_volume": float(placed.volume.mean()), "d_mean_volume": float(discard.volume.mean()),
-            "p_cumulative_priority": int(placed.priority.sum()), "p_mean_priority": int(placed.priority.mean()),
+            "p_total_volume": float(placed.volume.sum()), "d_total_volume": float(discard.volume.sum()),
+            "p_cumulative_priority": float(placed.priority.sum()), "p_mean_priority": float(placed.priority.mean()),
             "d_max_priority": int(discard.priority.max()),
             "used_volume": float(placed.volume.sum() / solution["truck"]["volume"]),
             "used_weight": float(placed.weight.sum() / solution["truck"]["tonnage"])
