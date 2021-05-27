@@ -2,9 +2,6 @@ import random
 from main.packetAdapter.helpers import *
 
 
-# ------------- Helpers ----------------------------------------
-
-
 # -------------- Types -----------------------------------------
 # This function will sort by decreasing taxability
 def taxSorting(items):
@@ -29,20 +26,18 @@ def mainSortByFitness(items, avgWeight, avgTaxability, avgVolume, avgPriority, n
 
 
 # This function returns sorted items by a fitness function designed for the main sorting phase
-def mainSortByFitnessPrime(items, maxWeight, maxTax, maxVol, maxPrio, nDst):
-    return sorted(items, key=lambda x: (((x["taxability"] / maxTax) * 0.35 + (x["volume"] / maxVol) * 0.1 + (x[
-        "weight"] / maxWeight) * 0.4 + (x["priority"] / max(maxPrio, 1)) * 0.15) * (1 - (x["dst_code"] * 0.8 / nDst))), reverse=True)
+def mainSortByFitnessPrime(items, maxWeight, maxVol, maxPrio, nDst):
+    return sorted(items, key=lambda x: (((x["volume"] / maxVol) * 0.35 + (x[
+        "weight"] / maxWeight) * 0.35 + (x["priority"] / max(maxPrio, 1)) * 0.3) * (1 - (x["dst_code"] * 0.8 / nDst))), reverse=True)
 
 
 # This function returns sorted items based on a fitness function.
-def refillingSortByFitness(items, maxWeight, maxTaxability, maxPrio, maxVol, nDst, stage):
-    weights = [[0.35, 0.25, 0.4], [0.2, 0.0, 0.2, 0.6], [0.25, 0.25, 0.5]]
+def refillingSortByFitness(items, maxWeight, maxPrio, maxVol, nDst, stage):
+    weights = [[0.35, 0.25, 0.4], [0.3, 0.3, 0.4], [0.25, 0.25, 0.5]]
     weightsByStage = weights[1] #TODO
-    return sorted(items, key=lambda x: ((x["taxability"] / maxTaxability)*weightsByStage[0] +
-                                        (x["volume"] / maxVol) + weightsByStage[1] +
-                                        (x["weight"] / maxWeight) * weightsByStage[2] +
-                                        (x["priority"]/max(maxPrio, 1)) * weightsByStage[3]) * (1 - (x["dst_code"] * 0.8 / nDst)),
-                  reverse=True)
+    return sorted(items, key=lambda x: (((x["volume"] / maxVol) + weightsByStage[0] +
+                                        (x["weight"] / maxWeight) * weightsByStage[1] +
+                                        (x["priority"]/max(maxPrio, 1)) * weightsByStage[2]) * (1 - (x["dst_code"] * 0.8 / nDst))), reverse=True)
 
 
 # ----------- Main functions ----------------------------------
@@ -56,13 +51,12 @@ def sortingPhase(items, nDst):
 # This function is in charge of sorting the packets choosing the sorting method randomly.
 def sortingPhasePrime(items, nDst):
     return mainSortByFitnessPrime(items, getMaxWeight(items),
-                                  getMaxTaxability(items), getMaxVolume(items),
+                                  getMaxVolume(items),
                                   getMaxPriority(items), nDst)
 
 
 # This function returns sorted by a fitness function in resorting process.
 def sortingRefillingPhase(items, nDst, stage):
     return refillingSortByFitness(items, getMaxWeight(items),
-                                  getMaxTaxability(items),
                                   getMaxPriority(items),
                                   getMaxVolume(items), nDst, stage)

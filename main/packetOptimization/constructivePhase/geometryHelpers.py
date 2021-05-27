@@ -1,12 +1,12 @@
 import numpy as np
-from main.packetOptimization.randomizationAndSorting.randomization import changeItemOrientation
+from main.packetAdapter.helpers import changeItemOrientation
 
 
 # --------------------------------- Item geometric helpers -----------------------------------
 # This function adds the spacial center of mass to a packet solution inserted in a PP
 def setItemMassCenter(item, potentialPoint, truckWidth):
     # TODO, limit in which to iterate to determine best solutions.
-    if truckWidth * 0.9 <= potentialPoint[0] <= truckWidth:
+    if truckWidth * 0.92 <= potentialPoint[0] <= truckWidth:
         item["mass_center"] = potentialPoint + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
     else:
         item["mass_center"] = potentialPoint + np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
@@ -133,8 +133,12 @@ def getNearestProjectionPointFor(point, placedItems):
     return np.array([point[0], 0, point[2]])
 
 
-# This function randomly reorients a given item.
 def reorient(item):
+    """
+    This function randomly reorients a given item.
+    :param item: item object.
+    :return: reoriented item.
+    """
     return changeItemOrientation(item, list(filter(lambda x: x != item["orientation"], [1, 2, 3, 4])))
 
 

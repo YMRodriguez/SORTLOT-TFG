@@ -1,5 +1,5 @@
 from main.packetOptimization.constructivePhase.geometryHelpers import *
-from main.packetAdapter.helpers import getAverageWeight
+from main.packetAdapter.helpers import getAverageWeight, getWeightStandardDeviation
 from main.packetOptimization.randomizationAndSorting.sorting import sortingRefillingPhase
 from copy import deepcopy
 import random
@@ -133,9 +133,8 @@ def itemContributionExceedsSubzonesWeightLimit(item, truckSubzones):
 def isStackable(item, averageWeight, placedItems, stage):
     if isInFloor(item):
         # For a optimum solution it is better to reward the algorithm to put the weightier items on the floor.
-        # TODO, changed this because it is considered in betterPP
         if stage == 1:
-            return item["weight"] > 1.3 * averageWeight
+            return item["weight"] > 1.2 * averageWeight
         elif stage == 2:
             return item["weight"] > averageWeight
         else:
@@ -201,7 +200,7 @@ def addContactAreaTo(item, placedItems):
 
 # This function returns a ndarray with the item and True if the item has at least 80% of supported area, False otherwise.
 def isStable(item, placedItems, stage):
-    threshold = 0.85 if stage == 1 else 0.75
+    threshold = 0.85 if stage == 1 else 0.80 if stage == 2 else 0.75
     itemWithContactArea = addContactAreaTo(item, placedItems)
     totalItemContactArea = sum(list(map(lambda x: x[2], itemWithContactArea["subzones"])))
     contactAreaPercentage = totalItemContactArea / getBottomPlaneArea(item)
@@ -328,46 +327,77 @@ def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight,
 
 
 def areEnoughPlacedItemsOfTheCstCode(dst_code, placedItems, nItems):
+    """
+    This function checks whether there are enough items with a customer code.
+    :param dst_code: The customer code to be checked.
+    :param placedItems: Set of items already placed in the container.
+    :param nItems: Threshold of items.
+    :return: True if there are more items placed than the threshold for the same customer.
+    """
     return len(list(filter(lambda x: dst_code == x["dst_code"], placedItems))) >= nItems
 
 
-# This function computes the fitness value for a potential point.
-# PP format [x, y, z, fitnessValue]
-def fitnessFor(PP, item, placedItems, avgWeight, maxHeight, maxLength, stage):
-    fitWeights = [[0.35, 0.35, 0.25, 0.05], [0.3, 0.3, 0.2, 0.2], [0.1, 0.45, 0.15, 0.3]]
+def fitnessFor(PP, item, placedItems, notPlacedAvgWeight, maxHeight, maxLength, stage, nDst):
+    """
+    This function computes the fitness value for a potential point.
+    :param nDst: number of destinations.
+    :param PP: potential point input, it only contains the coordinates in [x, y, z].
+    :param item: item object.
+    :param placedItems: set of placed items into the container.
+    :param notPlacedAvgWeight: average of not yet placed items.
+    :param maxHeight: maximum height of the truck.
+    :param maxLength: maximum length of the truck.
+    :param stage: stage in the algorithm.
+    :return: potential point with fitness, format [x, y, z, fitness].
+    """
+    fitWeights = [[0.3, 0.4, 0.2, 0.1], [0.2, 0.4, 0.2, 0.2], [0.0, 0.8, 0.1, 0.1]]
     # Take the weights of the stage.
     stageFW = fitWeights[stage - 1]
-    # Common conditions in the fitness function.
+    # Length condition in the fitness function.
     lengthCondition = 1 - (PP[2] / maxLength)
     # For the surrounding customer code objects.
     nItems = 5
     nearItems = getSurroundingItems(item["mass_center"], placedItems, nItems)
-    nearItemsWithSameDstCode = list(filter(lambda x: x["dst_code"] == item["dst_code"], nearItems))
-    if len(nearItemsWithSameDstCode) == 0 \
-            and len(nearItems) >= 5 and areEnoughPlacedItemsOfTheCstCode(item["dst_code"], placedItems, nItems):
+    # Consider valid dst code the same or the previous.
+    nearItemsWithValidDstCode = list(
+        filter(lambda x: x["dst_code"] == item["dst_code"] or x["dst_code"] == item["dst_code"] + 1, nearItems)) if nDst > 2 else list(
+        filter(lambda x: x["dst_code"] == item["dst_code"], nearItems))
+    if len(nearItemsWithValidDstCode) <= 1 \
+            and len(nearItems) == nItems and areEnoughPlacedItemsOfTheCstCode(item["dst_code"], placedItems, nItems):
         surroundingCondition = -0.15
     else:
-        surroundingCondition = len(nearItemsWithSameDstCode) / max(len(nearItems), 1)
-
-    heightWeightRelation = 1 - (item["height"] / maxHeight) / (item["weight"] / avgWeight)
+        surroundingCondition = len(nearItemsWithValidDstCode) / max(len(nearItems), 1)
+    # Height condition in the fitness function.
+    heightWeightRelation = 1 - (item["height"] / maxHeight) / (item["weight"] / notPlacedAvgWeight)
 
     # Item not in floor.
     if PP[1]:
+        # Get the that generated the potential point in which the new item is being inserted.
         itemBehind = list(filter(lambda x: any(list(map(lambda y: all(y == PP), x["pp_out"]))), placedItems))[0]
+        # Check how similar are the areas between the item being inserted and the item behind.
         areaCondition = abs(getBottomPlaneArea(item) / getBottomPlaneArea(itemBehind) - 1)
-        return np.concatenate((PP,
-                               np.array([
-                                   lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + areaCondition *
-                                   stageFW[2] + heightWeightRelation * stageFW[3]])))
+        fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
+                    areaCondition * stageFW[2] + heightWeightRelation * stageFW[3]
+        # Threshold in fitness value.
+        fitvalue = fitvalue if fitvalue > 0.3 else 0
+        return np.concatenate((PP, np.array([fitvalue])))
     else:
-        return np.concatenate((PP,
-                               np.array([
-                                   lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + stageFW[
-                                       2] + heightWeightRelation * stageFW[3]])))
+        fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
+                    stageFW[2] + heightWeightRelation * stageFW[3]
+        # Threshold in fitness value. TODO, maybe change the threshold depending on the stage.
+        fitvalue = fitvalue if fitvalue > 0.3 else 0
+        return np.concatenate((PP, np.array([fitvalue])))
 
 
-# This function returns if the new potential point is better than the former based on a fitness function value.
 def isBetterPP(newPP, currentBest):
+    """
+    This function decide which potential point is better. Criteria is:
+    - Give same fitness, randomly choose one.
+    - Choose the one with the best fitness value.
+    :param newPP: potential point being evaluated.
+    :param currentBest: current potential point for an item.
+    :return: True if the newPP is better than the current best, False otherwise.
+    """
     if newPP[3] == currentBest[3]:
         return random.getrandbits(1)
     return newPP[3] > currentBest[3]
@@ -378,9 +408,9 @@ def isBetterPP(newPP, currentBest):
 def generateNewPPs(item, placedItems, truckHeight, truckWidth):
     # Add margin to the point of the surface.
     BLR = getBLR(item) + np.array([0, 0, 0.003])
-    # BRR if 0.92*truckWidth, BRF otherwise
+    # BRR if x>=0.92*truckWidth(20cm) aprox, BRF otherwise
     BRF = getBRF(item) + np.array([0.003, 0, 0])
-    BxF = getBRR(item) + np.array([0, 0, 0.003]) if BRF[0] >= 0.98 * truckWidth else BRF
+    BxF = getBRR(item) + np.array([0, 0, 0.003]) if BRF[0] >= 0.92 * truckWidth else BRF
     TLF = getTLF(item) + np.array([0, 0.003, 0])
     result = np.array([TLF]) if TLF[1] < 0.92 * truckHeight else []
     if not isInFloor(item):
@@ -404,7 +434,7 @@ def generateNewPPs(item, placedItems, truckHeight, truckWidth):
 
 
 # This function creates a solution from a list of packets and a given potential points
-def fillList(candidateList, potentialPoints, truck, retry, stage, placedItems):
+def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, placedItems):
     discardList = []
     for i in candidateList:
         # Update average list excluding those items which have been already placed.
@@ -420,7 +450,7 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, placedItems):
             feasibility = isFeasible(pp, placedItems, i, notPlacedAvgWeight, truck, stage)
             if feasibility[0][0]:
                 ppWithFitness = fitnessFor(pp, feasibility[0][1], placedItems, notPlacedAvgWeight, truck["height"],
-                                           truck["length"], stage)
+                                           truck["length"], stage, nDst)
                 if isBetterPP(ppWithFitness, ppBest):
                     ppBest = ppWithFitness
                     feasibleItem = feasibility[0][1]
@@ -450,13 +480,13 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, placedItems):
 def main_cp(truck, candidateList, nDst):
     potentialPoints = truck["pp"]
     stage = 1
-    filling = fillList(candidateList, potentialPoints, truck, 0, stage, [])
+    filling = fillList(candidateList, potentialPoints, truck, 0, stage, nDst, [])
     stage = stage + 1
     refilling = fillList(filling["discard"],
                          filling["potentialPoints"],
-                         filling["truck"], 1, stage, filling["placed"])
+                         filling["truck"], 0, stage, nDst, filling["placed"])
     stage = stage + 1
     rerefilling = fillList(sortingRefillingPhase(refilling["discard"], nDst, stage),
                            refilling["potentialPoints"],
-                           refilling["truck"], 1, stage, refilling["placed"])
+                           refilling["truck"], 0, stage, nDst, refilling["placed"])
     return rerefilling

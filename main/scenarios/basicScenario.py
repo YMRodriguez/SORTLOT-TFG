@@ -41,14 +41,14 @@ def getDataFromJSONWith(Id):
 # -------------------- Main Processes -----------------------------
 def main_scenario(packets, truck, nDst, prime, nIteration, rangeOrientations=None):
     if rangeOrientations is None:
-        rangeOrientations = [1, 2, 3, 4]
+        rangeOrientations = [1, 2, 3, 4, 5, 6]
     # ------ Packet adaptation------
     # Alpha is 333 for terrestrial transport
     packets = adaptPackets(cleanDestinationAndSource(packets), 333)
     # ------ Truck adaptation ------
     truck = adaptTruck(truck, 4)
     sort_output = sortingPhasePrime(packets, nDst) if prime else sortingPhase(packets, nDst)
-    rand_output = randomization(deepcopy(sort_output), rangeOrientations)
+    rand_output = randomization(deepcopy(sort_output))
     # ------- Solution builder --------
     startTime = time.time()
     iteration = main_cp(truck, rand_output, nDst)
@@ -122,7 +122,7 @@ def serializeSolutions(sols):
 iterations = 64
 
 # ------ Get packets dataset -------
-ID = 5
+ID = 1
 items, ndst = getDataFromJSONWith(ID)
 
 # ------ Iterations ------------
@@ -155,7 +155,6 @@ with parallel_backend(backend="loky", n_jobs=8):
                          "weight": bestFiltered["weight"][1],
                          "priority": bestFiltered["priority"][1],
                          "taxability": bestFiltered["taxability"][1]}
-
     bestSolsUnfiltered = {"volume": bestUnfiltered["volume"][0],
                           "weight": bestUnfiltered["weight"][0],
                           "priority": bestUnfiltered["priority"][0],
