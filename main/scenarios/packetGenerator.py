@@ -2,15 +2,18 @@ import random
 import pymongo
 import json
 import pandas as pd
+from main.statistics.packets.main import datasetStats
 
 # ----------------------- General variables -----------------------
-ID = 5
+ID = 28
 difDim = 80
-noPackets = 180
-maxDim = [100, 100, 100]
-minD = 30
-nDestinations = 1
+noPackets = 400
+maxDimension = 100
+minD = 20
+nDestinations = 4
 ADRc = 0
+prioTrig = 1
+breakTrig = 1
 subgrouping = 0
 
 # ----------------------- MongoDB extraction ----------------------
@@ -33,13 +36,15 @@ dests = warehouses_titles[1:]
 
 
 # --------------- Packet Generator ------------------------------------------
-def randomPacketGenerator(dimensions, destinations, source, ADR):
+def randomPacketGenerator(dimensions, destinations, source, ADR, priority, breakability):
     """
     This function generates a item with specified conditions.
     :param dimensions: list dimensions [Width, Height, Length]
     :param destinations: list of destinations names.
     :param source: name of the source.
-    :param ADR: True if dangerous, False otherwise.
+    :param ADR: True if dangerous, false otherwise.
+    :param priority: True if there are priority items, false otherwise.
+    :param breakability: True if there are breakability items, false otherwise.
     :return: object representing a packet.
     """
     packet = {"length": dimensions[0],
@@ -53,8 +58,8 @@ def randomPacketGenerator(dimensions, destinations, source, ADR):
     packet["dst_code"] = destinations.index(packet["dst"])
     # We do not care, if it is frozen it will go in a different truck
     packet["frozen"] = random.choices([0, 1], [100, 0])[0]
-    packet["priority"] = random.choices([0, 1], [85, 15])[0]
-    packet["breakability"] = random.choices([0, 1], [95, 5])[0]
+    packet["priority"] = random.choices([0, 1], [94, 6])[0] if priority else 0
+    packet["breakability"] = random.choices([0, 1], [97, 3])[0] if breakability else 0
     packet["ADR"] = random.choices([0, 1], [95, 5])[0] if ADR else random.choices([0, 1], [100, 0])[0]
     return packet
 
@@ -82,7 +87,7 @@ def addIDs(items):
     return itemsDF.to_dict(orient="records")
 
 
-def generatePacketsDataset(difDimensions, nPackets, minDim, maxDimensions, destinations, source, ADR, subgroups):
+def generatePacketsDataset(difDimensions, nPackets, minDim, maxDim, destinations, source, ADR, subgroups, priority, breakability):
     """
     This function generates a dataset of packets.
     :param difDimensions: distinct dimensions.
@@ -92,32 +97,56 @@ def generatePacketsDataset(difDimensions, nPackets, minDim, maxDimensions, desti
     :param destinations: list of destinations names.
     :param source: name of the source
     :param ADR: True if dangerous in set, False otherwise.
+    :param priority: True if there are priority items, false otherwise.
+    :param breakability: True if there are breakability items, false otherwise.
     :param subgroups: True if subgroups in set, False otherwise.
     :return: set of items.
     """
     packets = []
     dimensions = []
     for i in range(difDimensions):
-        dimensions.append([random.randint(minDim, maxDimensions[0]) / 100,
-                           random.randint(minDim, maxDimensions[1]) / 100,
-                           random.randint(minDim, maxDimensions[2]) / 100])
+        dimensions.append([random.randint(minDim, maxDim) / 100,
+                           random.randint(minDim, maxDim) / 100,
+                           random.randint(minDim, maxDim) / 100])
         # Tries to generate more realistic items in terms of volume/weight relations.
         dimensions[i].append(round(random.uniform(25, 50) * (dimensions[i][0] * dimensions[i][1] * dimensions[i][2]), 3))
     for i in range(nPackets):
-        packets.append(randomPacketGenerator(random.choice(dimensions), destinations, source, ADR))
+        packets.append(randomPacketGenerator(random.choice(dimensions), destinations, source, ADR, priority, breakability))
     if subgroups:
         packets = addSubgroups(packets)
     return addIDs(packets)
 
 
 # ------------------------ Generation and saving ----------------------------------------
-packets_dataset = generatePacketsDataset(difDim, noPackets, minD, maxDim, dests, src, ADRc, subgrouping)
+packets_dataset = generatePacketsDataset(difDim, noPackets, minD, maxDimension, dests,
+                                         src, ADRc, subgrouping, prioTrig, breakTrig)
 
 # File name normalization
-filename = str(ID) +"-D" + str(difDim) + "-" + str(minD) + "mx" +\
-           str(maxDim[0]) + "x" + str(maxDim[1]) + "x" + \
-           str(maxDim[2]) + "-n" + str(noPackets) + "-dst" + str(nDestinations) + \
-            "-ADR" + str(ADRc) + "-S" + str(subgrouping)
+filename = str(ID) +"-D" + str(difDim) + "-min" + str(minD) + "-max" +\
+           str(maxDimension)  + "-n" + str(noPackets) + "-dst" + str(nDestinations) + \
+            "-ADR" + str(ADRc) + "-S" + str(subgrouping) + "-P" + str(prioTrig) +\
+           "-B" + str(breakTrig)
 
 with open("./packetsDatasets/" + filename + ".json", "x") as f:
     json.dump(packets_dataset, f, indent=2, ensure_ascii=False)
+
+if ID > 1:
+    data = None
+    with open("./packetsDatasets/description/stats.json", "r+") as f:
+        data = json.load(f)
+    with open("./packetsDatasets/description/stats.json", "w+") as f:
+        data.append(datasetStats(packets_dataset, ID))
+        json.dump(data, f, indent=2, ensure_ascii=False)
+elif ID == 1:
+    data = None
+    with open("./packetsDatasets/description/stats.json", "r+") as f:
+        data = json.load(f)
+    with open("./packetsDatasets/description/stats.json", "w+") as f:
+        stats = [data, datasetStats(packets_dataset, ID)]
+        json.dump(stats, f, indent=2, ensure_ascii=False)
+else:
+    with open("./packetsDatasets/description/stats.json", "r+") as f:
+        json.dump(datasetStats(packets_dataset, ID), f, indent=2, ensure_ascii=False)
+
+
+

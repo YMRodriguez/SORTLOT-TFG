@@ -410,7 +410,7 @@ def generateNewPPs(item, placedItems, truckHeight, truckWidth):
     BLR = getBLR(item) + np.array([0, 0, 0.003])
     # BRR if x>=0.92*truckWidth(20cm) aprox, BRF otherwise
     BRF = getBRF(item) + np.array([0.003, 0, 0])
-    BxF = getBRR(item) + np.array([0, 0, 0.003]) if BRF[0] >= 0.92 * truckWidth else BRF
+    BxF = getBRR(item) + np.array([0, 0, 0.003]) if BRF[0] >= 0.90 * truckWidth else BRF
     TLF = getTLF(item) + np.array([0, 0.003, 0])
     result = np.array([TLF]) if TLF[1] < 0.92 * truckHeight else []
     if not isInFloor(item):
