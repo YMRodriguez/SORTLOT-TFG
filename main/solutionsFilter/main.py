@@ -38,7 +38,6 @@ def getBest(solutions, solutionsStatistics, nSol):
     """
     return {"volume": getBestBy(convertCriteria("volume"), solutions, solutionsStatistics, nSol),
             "weight": getBestBy(convertCriteria("weight"), solutions, solutionsStatistics, nSol),
-            "priority": getBestBy(convertCriteria("priority"), solutions, solutionsStatistics, nSol),
             "taxability": getBestBy(convertCriteria("taxability"), solutions, solutionsStatistics, nSol)}
 
 
@@ -51,8 +50,8 @@ def convertCriteria(criteria):
     :param criteria: Human readable criteria, i.e, taxability.
     :return: string attribute of an object.
     """
-    data = ["used_volume", "used_weight", "p_total_taxability",
-            "p_cumulative_priority"]
+    data = ["used_volume", "used_weight",
+            "p_total_taxability"]
     return list(filter(lambda x: criteria in x, data))[0]
 
 

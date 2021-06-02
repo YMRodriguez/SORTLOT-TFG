@@ -30,8 +30,9 @@ truck_var = json.load(open(os.path.dirname(__file__) + "/packetsDatasets/truckva
 def getDataFromJSONWith(Id):
     """
     This function gets a dataset file by its id.
+
     :param Id: the id of the dataset, not the name.
-    :return: object mapped from json file.
+    :return: object mapped from json file and number of destinations.
     """
     filepath = glob.glob(os.path.dirname(__file__) + "/packetsDatasets/" + str(Id) + "*.json")[0]
     nDst = int(filepath.split("Datasets/")[1].split("-")[5][3])
@@ -57,6 +58,7 @@ def main_scenario(packets, truck, nDst, prime, nIteration, rangeOrientations=Non
     return {"placed": iteration["placed"],
             "discard": iteration["discard"],
             "truck": iteration["truck"],
+            "potentialPoints": iteration["potentialPoints"],
             "sorted": sort_output,
             "rand": rand_output,
             "iteration": nIteration,
@@ -149,19 +151,15 @@ with parallel_backend(backend="loky", n_jobs=1):
     # Make it json serializable
     bestSolsFiltered = {"volume": bestFiltered["volume"][0],
                         "weight": bestFiltered["weight"][0],
-                        "priority": bestFiltered["priority"][0],
                         "taxability": bestFiltered["taxability"][0]}
     bestStatsFiltered = {"volume": bestFiltered["volume"][1],
                          "weight": bestFiltered["weight"][1],
-                         "priority": bestFiltered["priority"][1],
                          "taxability": bestFiltered["taxability"][1]}
     bestSolsUnfiltered = {"volume": bestUnfiltered["volume"][0],
                           "weight": bestUnfiltered["weight"][0],
-                          "priority": bestUnfiltered["priority"][0],
                           "taxability": bestUnfiltered["taxability"][0]}
     bestStatsUnfiltered = {"volume": bestUnfiltered["volume"][1],
                            "weight": bestUnfiltered["weight"][1],
-                           "priority": bestUnfiltered["priority"][1],
                            "taxability": bestUnfiltered["taxability"][1]}
 
     # TODO, determine best by looking at which one is in every characteristic.

@@ -5,6 +5,7 @@ from copy import deepcopy
 import random
 import numpy as np
 import math
+import time
 
 np.set_printoptions(suppress=True)
 
@@ -492,17 +493,22 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
 def main_cp(truck, candidateList, nDst):
     potentialPoints = truck["pp"]
     stage = 1
+    startTime1 = time.time()
     filling = fillList(candidateList, potentialPoints, truck, 0, stage,
                        nDst, getMinDim(candidateList), [])
+    print("Time stage " + str(time.time() - startTime1))
     stage = stage + 1
+    startTime2 = time.time()
     refilling = fillList(filling["discard"],
                          filling["potentialPoints"],
                          filling["truck"], 0, stage, nDst,
                          getMinDim(filling["discard"]), filling["placed"])
+    print("Time stage " + str(time.time() - startTime2))
     stage = stage + 1
-    print(len(refilling["placed"]))
+    startTime3 = time.time()
     rerefilling = fillList(sortingRefillingPhase(refilling["discard"], nDst, stage),
                            refilling["potentialPoints"],
                            refilling["truck"], 0, stage, nDst,
                            getMinDim(refilling["discard"]), refilling["placed"])
+    print("Time stage " + str(time.time() - startTime3))
     return rerefilling
