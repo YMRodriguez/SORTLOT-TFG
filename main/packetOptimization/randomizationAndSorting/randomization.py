@@ -1,5 +1,5 @@
 import random
-from main.packetAdapter.helpers import getAverageTaxability
+from main.packetAdapter.helpers import getAverageTaxability, getMaxPriority
 
 
 # ------------------------- Comparators --------------------------------------
@@ -75,5 +75,4 @@ def swapByTaxability(packets):
 def randomization(packets):
     swapped_v = swapByVolume(packets)
     swapped_w = swapByWeight(swapped_v)
-    swapped_p = swapByPriority(swapped_w)
-    return swapped_p
+    return swapByPriority(swapped_w) if getMaxPriority(packets) else swapped_w

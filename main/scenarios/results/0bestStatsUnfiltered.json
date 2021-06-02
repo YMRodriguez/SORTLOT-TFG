@@ -1,0 +1,94 @@
+{
+  "volume": [
+    {
+      "iteration": 0,
+      "time": "30.80133295059204",
+      "p_mean_weight": 19.85223966942149,
+      "d_mean_weight": 15.452697674418602,
+      "p_total_weight": 2402.121,
+      "d_total_weight": 1993.3979999999997,
+      "p_mean_taxability": 158.95933884297523,
+      "d_mean_taxability": 137.92653488372093,
+      "p_total_taxability": 19234.08,
+      "d_total_taxability": 17792.523,
+      "p_mean_volume": 0.4773553719008265,
+      "d_mean_volume": 0.4141937984496124,
+      "p_total_volume": 57.760000000000005,
+      "d_total_volume": 53.431,
+      "p_cumulative_priority": 0.0,
+      "p_mean_priority": 0.0,
+      "d_max_priority": 0,
+      "used_volume": 0.7075483254526301,
+      "used_weight": 0.10918731818181819
+    }
+  ],
+  "weight": [
+    {
+      "iteration": 0,
+      "time": "30.80133295059204",
+      "p_mean_weight": 19.85223966942149,
+      "d_mean_weight": 15.452697674418602,
+      "p_total_weight": 2402.121,
+      "d_total_weight": 1993.3979999999997,
+      "p_mean_taxability": 158.95933884297523,
+      "d_mean_taxability": 137.92653488372093,
+      "p_total_taxability": 19234.08,
+      "d_total_taxability": 17792.523,
+      "p_mean_volume": 0.4773553719008265,
+      "d_mean_volume": 0.4141937984496124,
+      "p_total_volume": 57.760000000000005,
+      "d_total_volume": 53.431,
+      "p_cumulative_priority": 0.0,
+      "p_mean_priority": 0.0,
+      "d_max_priority": 0,
+      "used_volume": 0.7075483254526301,
+      "used_weight": 0.10918731818181819
+    }
+  ],
+  "priority": [
+    {
+      "iteration": 0,
+      "time": "30.80133295059204",
+      "p_mean_weight": 19.85223966942149,
+      "d_mean_weight": 15.452697674418602,
+      "p_total_weight": 2402.121,
+      "d_total_weight": 1993.3979999999997,
+      "p_mean_taxability": 158.95933884297523,
+      "d_mean_taxability": 137.92653488372093,
+      "p_total_taxability": 19234.08,
+      "d_total_taxability": 17792.523,
+      "p_mean_volume": 0.4773553719008265,
+      "d_mean_volume": 0.4141937984496124,
+      "p_total_volume": 57.760000000000005,
+      "d_total_volume": 53.431,
+      "p_cumulative_priority": 0.0,
+      "p_mean_priority": 0.0,
+      "d_max_priority": 0,
+      "used_volume": 0.7075483254526301,
+      "used_weight": 0.10918731818181819
+    }
+  ],
+  "taxability": [
+    {
+      "iteration": 0,
+      "time": "30.80133295059204",
+      "p_mean_weight": 19.85223966942149,
+      "d_mean_weight": 15.452697674418602,
+      "p_total_weight": 2402.121,
+      "d_total_weight": 1993.3979999999997,
+      "p_mean_taxability": 158.95933884297523,
+      "d_mean_taxability": 137.92653488372093,
+      "p_total_taxability": 19234.08,
+      "d_total_taxability": 17792.523,
+      "p_mean_volume": 0.4773553719008265,
+      "d_mean_volume": 0.4141937984496124,
+      "p_total_volume": 57.760000000000005,
+      "d_total_volume": 53.431,
+      "p_cumulative_priority": 0.0,
+      "p_mean_priority": 0.0,
+      "d_max_priority": 0,
+      "used_volume": 0.7075483254526301,
+      "used_weight": 0.10918731818181819
+    }
+  ]
+}

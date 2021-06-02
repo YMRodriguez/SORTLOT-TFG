@@ -14,12 +14,12 @@ def persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, best
         json.dump(bestStatsFiltered, file, indent=2, ensure_ascii=False)
 
     with open(
-            '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + str(ID) + 'bestUnfilteredSols.json',
+            '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + str(ID) + 'bestSolsUnfiltered.json',
             'w') as file:
         json.dump(bestSolsUnfiltered, file, indent=2, ensure_ascii=False)
 
     with open(
-            '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + str(ID) + 'bestUnfilteredStats.json',
+            '/Users/yamilmateorodriguez/Developtment/TFG/3DBinPacking-VisualizationTool/web-3dbp-visualization/src/' + str(ID) + 'bestStatsUnfiltered.json',
             'w') as file:
         json.dump(bestStatsUnfiltered, file, indent=2, ensure_ascii=False)
     with open(
@@ -33,11 +33,11 @@ def persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, best
         json.dump(bestStatsFiltered, file, indent=2, ensure_ascii=False)
 
     with open(
-            '/Users/yamilmateorodriguez/Developtment/TFG/SORTLOT-TFG/main/scenarios/results/' + str(ID) + 'bestUnfilteredSols.json',
+            '/Users/yamilmateorodriguez/Developtment/TFG/SORTLOT-TFG/main/scenarios/results/' + str(ID) + 'bestSolsUnfiltered.json',
             'w') as file:
         json.dump(bestSolsUnfiltered, file, indent=2, ensure_ascii=False)
 
     with open(
-            '/Users/yamilmateorodriguez/Developtment/TFG/SORTLOT-TFG/main/scenarios/results/' + str(ID) + 'bestUnfilteredStats.json',
+            '/Users/yamilmateorodriguez/Developtment/TFG/SORTLOT-TFG/main/scenarios/results/' + str(ID) + 'bestStatsUnfiltered.json',
             'w') as file:
         json.dump(bestStatsUnfiltered, file, indent=2, ensure_ascii=False)

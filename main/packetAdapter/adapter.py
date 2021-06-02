@@ -42,12 +42,12 @@ def changeOrientationToBest(avgWeight, item, feasibleOrientations):
         itemInOrientations.append(changeItemOrientation(item, [i]))
     itemInOrientations = sorted(itemInOrientations, key=lambda x: getBottomPlaneArea(x))
     pivot = len(itemInOrientations)
-    if 0.9 <= item["weight"]/avgWeight <= 1.1:
+    if 0.8 <= item["weight"]/avgWeight <= 1.2:
         return random.choice([itemInOrientations[int(pivot/2)],
                               itemInOrientations[int(pivot/2)-1]])
-    elif 0.85 <= item["weight"]/avgWeight < 0.9 or 1.1 < item["weight"]/avgWeight <= 1.15:
+    elif 0.65 <= item["weight"]/avgWeight < 0.8 or 1.2 < item["weight"]/avgWeight <= 1.25:
         return random.choice([itemInOrientations[1], itemInOrientations[-2]])
-    elif item["weight"]/avgWeight < 0.85:
+    elif item["weight"]/avgWeight < 0.65:
         return itemInOrientations[0]
     else:
         return itemInOrientations[-1]

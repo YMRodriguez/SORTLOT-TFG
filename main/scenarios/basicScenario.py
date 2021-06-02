@@ -34,7 +34,7 @@ def getDataFromJSONWith(Id):
     :return: object mapped from json file.
     """
     filepath = glob.glob(os.path.dirname(__file__) + "/packetsDatasets/" + str(Id) + "*.json")[0]
-    nDst = int(filepath.split("Datasets/")[1].split("-")[4][3])
+    nDst = int(filepath.split("Datasets/")[1].split("-")[5][3])
     return json.load(open(filepath)), nDst
 
 
@@ -119,14 +119,14 @@ def serializeSolutions(sols):
 
 # ------------------ Solution processing ----------------------------------
 # ------ Common variables ----------
-iterations = 64
+iterations = 1
 
 # ------ Get packets dataset -------
-ID = 1
+ID = 0
 items, ndst = getDataFromJSONWith(ID)
 
 # ------ Iterations ------------
-with parallel_backend(backend="loky", n_jobs=8):
+with parallel_backend(backend="loky", n_jobs=1):
     parallel = Parallel(verbose=100)
     solutions = parallel(
         [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, True, i) for i in range(iterations)])

@@ -1,4 +1,3 @@
-import random
 from main.packetAdapter.helpers import *
 
 
@@ -27,17 +26,17 @@ def mainSortByFitness(items, avgWeight, avgTaxability, avgVolume, avgPriority, n
 
 # This function returns sorted items by a fitness function designed for the main sorting phase
 def mainSortByFitnessPrime(items, maxWeight, maxVol, maxPrio, nDst):
-    return sorted(items, key=lambda x: (((x["volume"] / maxVol) * 0.35 + (x[
-        "weight"] / maxWeight) * 0.35 + (x["priority"] / max(maxPrio, 1)) * 0.3) * (1 - (x["dst_code"] * 0.8 / nDst))), reverse=True)
+    fitweights = [0.35, 0.35, 0.3] if maxPrio else [0.5, 0.5, 0]
+    return sorted(items, key=lambda x: (((x["volume"] / maxVol) * fitweights[0] + (x[
+        "weight"] / maxWeight) * fitweights[1] + (x["priority"] / max(maxPrio, 1)) * fitweights[2]) * (1 - (x["dst_code"] * 0.8 / nDst))), reverse=True)
 
 
 # This function returns sorted items based on a fitness function.
 def refillingSortByFitness(items, maxWeight, maxPrio, maxVol, nDst, stage):
-    weights = [[0.35, 0.25, 0.4], [0.3, 0.3, 0.4], [0.25, 0.25, 0.5]]
-    weightsByStage = weights[1] #TODO
-    return sorted(items, key=lambda x: (((x["volume"] / maxVol) + weightsByStage[0] +
-                                        (x["weight"] / maxWeight) * weightsByStage[1] +
-                                        (x["priority"]/max(maxPrio, 1)) * weightsByStage[2]) * (1 - (x["dst_code"] * 0.8 / nDst))), reverse=True)
+    fitweights = [0.3, 0.3, 0.4] if maxPrio else [0.5, 0.5, 0]
+    return sorted(items, key=lambda x: (((x["volume"] / maxVol) + fitweights[0] +
+                                        (x["weight"] / maxWeight) * fitweights[1] +
+                                        (x["priority"]/max(maxPrio, 1)) * fitweights[2]) * (1 - (x["dst_code"] * 0.8 / nDst))), reverse=True)
 
 
 # ----------- Main functions ----------------------------------
