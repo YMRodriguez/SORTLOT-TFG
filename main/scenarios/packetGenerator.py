@@ -5,12 +5,12 @@ import pandas as pd
 from main.statistics.packets.main import datasetStats
 
 # ----------------------- General variables -----------------------
-ID = 28
-difDim = 80
+ID = 11
+difDim = 25
 noPackets = 400
 maxDimension = 100
 minD = 20
-nDestinations = 4
+nDestinations = 1
 ADRc = 0
 prioTrig = 1
 breakTrig = 1
@@ -130,23 +130,23 @@ filename = str(ID) +"-D" + str(difDim) + "-min" + str(minD) + "-max" +\
 with open("./packetsDatasets/" + filename + ".json", "x") as f:
     json.dump(packets_dataset, f, indent=2, ensure_ascii=False)
 
-if ID > 1:
-    data = None
-    with open("./packetsDatasets/description/stats.json", "r+") as f:
-        data = json.load(f)
-    with open("./packetsDatasets/description/stats.json", "w+") as f:
-        data.append(datasetStats(packets_dataset, ID))
-        json.dump(data, f, indent=2, ensure_ascii=False)
-elif ID == 1:
-    data = None
-    with open("./packetsDatasets/description/stats.json", "r+") as f:
-        data = json.load(f)
-    with open("./packetsDatasets/description/stats.json", "w+") as f:
-        stats = [data, datasetStats(packets_dataset, ID)]
-        json.dump(stats, f, indent=2, ensure_ascii=False)
-else:
-    with open("./packetsDatasets/description/stats.json", "r+") as f:
-        json.dump(datasetStats(packets_dataset, ID), f, indent=2, ensure_ascii=False)
+
+data = None
+with open("./packetsDatasets/description/stats.json", "r+") as f:
+    data = json.load(f)
+with open("./packetsDatasets/description/stats.json", "w+") as f:
+    data.append(datasetStats(packets_dataset, ID))
+    json.dump(data, f, indent=2, ensure_ascii=False)
+# elif ID == 1:
+#     data = None
+#     with open("./packetsDatasets/description/stats.json", "r+") as f:
+#         data = json.load(f)
+#     with open("./packetsDatasets/description/stats.json", "w+") as f:
+#         stats = [data, datasetStats(packets_dataset, ID)]
+#         json.dump(stats, f, indent=2, ensure_ascii=False)
+# else:
+#     with open("./packetsDatasets/description/stats.json", "r+") as f:
+#         json.dump(datasetStats(packets_dataset, ID), f, indent=2, ensure_ascii=False)
 
 
 
