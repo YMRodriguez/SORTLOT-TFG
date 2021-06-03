@@ -128,7 +128,7 @@ def getNearestProjectionPointFor(point, placedItems):
     itemWithNearestProj = sorted(pointIntoPlaneItems, key=lambda x: getTopPlaneHeight(x))
     if len(itemWithNearestProj) != 0:
         # Return the same point but with y-axis value projected.
-        return np.array([point[0], getTopPlaneHeight(itemWithNearestProj[0]) + 0.003, point[2]])
+        return np.array([point[0], getTopPlaneHeight(itemWithNearestProj[0]) + 0.0015, point[2]])
     # Return the projection to the floor.
     return np.array([point[0], 0, point[2]])
 

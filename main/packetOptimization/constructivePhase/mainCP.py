@@ -144,7 +144,7 @@ def isStackable(item, averageWeight, placedItems, stage):
         # TODO, we may want to change this to take into account accumulated weight(i.e 2 packets above another)
         # Reduce the scope of items to those sharing their top y Plane with bottom y Plane of the new item.
         sharePlaneItems = list(
-            filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.0031, placedItems))
+            filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.00151, placedItems))
         # This ndarray will store if the conditions are met for every item the newItem is above.
         stackableForSharePlaneItems = []
         for i in sharePlaneItems:
@@ -188,7 +188,7 @@ def addContactAreaTo(item, placedItems):
             placedItemsSubzone = list(filter(lambda x: i[0] in getItemSubzones(x), placedItems))
             # Reduce the scope of items to those sharing their top y-axis Plane with bottom y-axis Plane of the new item.
             sharePlaneItems = list(
-                filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.0031,
+                filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.00151,
                        placedItemsSubzone))
             # Calculate the area of intersection between the sharedPlaneItems and the new item in a subzone.
             totalContactAreaInSubzone = sum(list(map(lambda x: getIntersectionArea(x, item), sharePlaneItems))) * i[1]
@@ -263,6 +263,8 @@ def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
     :param amountOfNearItems: int with the number of desired neighbours.
     :return: list of N neighbours, with N specified.
     """
+    print("--getSurroundingItems Started--")
+    startTime = time.time()
     if placedItems:
         # Extract the mass center of all placed items.
         itemsMCs = np.array(list(map(lambda x: x["mass_center"], placedItems)))
@@ -273,7 +275,9 @@ def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
         nearestMCs = itemsMCs[ndx[:min(len(placedItems), amountOfNearItems)]]
         nearItems = list(
             filter(lambda x: any((list(map(lambda y: all(y == x["mass_center"]), nearestMCs)))), placedItems))
+        print("--getSurroundingItems Finishing--------"+ str(time.time() - startTime))
         return nearItems
+    print("--getSurroundingItems Finishing--------" + str(time.time() - startTime))
     return []
 
 
@@ -285,14 +289,18 @@ def isNotOverlapping(item, placedItems):
     :param placedItems: list of placed item objects.
     :return: True if the item does not overlap other items around it, False otherwise.
     """
+    print("--isNotOverlapping Started--")
+    startTime = time.time()
     if len(placedItems):
         nearItems = getSurroundingItems(item["mass_center"], placedItems, 9)
         # Generate points for item evaluated.
         p1all = getPlanesFor(item)
         # Validate overlapping conditions item vs. placedItems and vice versa.
         itemToNearItemsOverlapping = all(list(map(lambda x: overlapper(p1all, getPlanesFor(x)), nearItems)))
+        print("--isNotOverlapping Finishing--------"+ str(time.time() - startTime))
         return itemToNearItemsOverlapping
     else:
+        print("--isNotOverlapping Finishing--------"+ str(time.time() - startTime))
         return True
 
 
@@ -418,17 +426,17 @@ def isBetterPP(newPP, currentBest):
 # This function creates a list of potential points generated after inserting an item.
 # Output format: [[TLF],[BLR],[BxF]]
 def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim):
-    # Add margin to the point of the surface.
-    BLR = getBLR(item) + np.array([0, 0, 0.003])
+    # Add margin to z-coordinate.
+    BLR = getBLR(item) + np.array([0, 0, 0.0015])
     # BRR if x>=0.92*truckWidth(20cm) aprox, BRF otherwise
-    BRF = getBRF(item) + np.array([0.003, 0, 0])
-    BxF = getBRR(item) + np.array([0, 0, 0.003]) if BRF[0] >= truckWidth - minDim else BRF
-    TLF = getTLF(item) + np.array([0, 0.003, 0])
+    BRF = getBRF(item) + np.array([0.0015, 0, 0])
+    BxF = getBRR(item) + np.array([0, 0, 0.0015]) if BRF[0] >= truckWidth - minDim else BRF
+    TLF = getTLF(item) + np.array([0, 0.0015, 0])
     result = np.array([TLF]) if TLF[1] < truckHeight - minDim else []
     if not isInFloor(item):
         # Reduce the scope of items to those sharing their top y-axis Plane with bottom y-axis Plane of the new item.
         sharePlaneItems = list(
-            filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.003, placedItems))
+            filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.00151, placedItems))
         # Check which points are not supported.
         isBLRinPlane = any(list(map(lambda x: pointInPlane(BLR, getBLF(x), getBRR(x)), sharePlaneItems)))
         isBxFinPlane = any(list(map(lambda x: pointInPlane(BRF, getBLF(x), getBRR(x)), sharePlaneItems)))
@@ -449,6 +457,8 @@ def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim):
 def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, placedItems):
     discardList = []
     for i in candidateList:
+        print("-----Empieza item en stage " + str(stage) + " ------")
+        startTime = time.time()
         # Update average list excluding those items which have been already placed.
         notPlacedAvgWeight = getAverageWeight(list(filter(lambda x: x not in placedItems, candidateList)))
         notPlacedMaxWeight = getMaxWeight(list(filter(lambda x: x not in placedItems, candidateList)))
@@ -457,6 +467,8 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
             i = reorient(i)
         # Initialization of best point as be the worst, in this context the TRR of the truck. And worse fitness value.
         ppBest = np.array([truck["width"], truck["height"], truck["length"], 0])
+        print("-----Comprueba cada uno de los puntos potenciales------")
+        startTime2 = time.time()
         # Try to get the best PP for an item.
         for pp in potentialPoints:
             # [condition, item]
@@ -467,6 +479,7 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
                 if isBetterPP(ppWithFitness, ppBest):
                     ppBest = ppWithFitness
                     feasibleItem = feasibility[0][1]
+        print("-----Termina puntos potenciales ------" + str(time.time() - startTime2))
         # If the best is different from the worst there is a PP to insert the item.
         if ppBest[3] != 0:
             # Add pp in which the object is inserted.
@@ -485,6 +498,7 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
             truck = addItemWeightToTruckSubzones(feasibleItem["subzones"], truck)
         else:
             discardList.append(i)
+        print("-----Termina item en stage " + str(stage) + " ------" + str(time.time() - startTime))
     return {"placed": placedItems, "discard": discardList,
             "truck": truck, "potentialPoints": potentialPoints}
 
