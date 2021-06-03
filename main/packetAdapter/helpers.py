@@ -87,7 +87,7 @@ def changeItemOrientation(item, validOrientations):
     """
     This function randomly chooses a feasible orientation with equal probability.
     # Orientation equivalences (x, y, z) ---> |o1 -> (w, h, l) |
-                                              |o2 -> (l, h, w) |
+            And taking o1 as reference        |o2 -> (l, h, w) |
                                               |o3 -> (w, l, h) |
                                               |o4 -> (h, l, w) |
                                               |o5 -> (l, w, h) |

@@ -2,7 +2,7 @@ import random
 
 from main.packetAdapter.helpers import changeItemOrientation
 from main.packetOptimization.constructivePhase.geometryHelpers import getBottomPlaneArea
-from main.packetAdapter.helpers import getAverageWeight
+from main.packetAdapter.helpers import getAverageWeight, getWeightStandardDeviation
 
 
 # ------------------ Taxability --------------------------------------------
@@ -42,10 +42,10 @@ def changeOrientationToBest(avgWeight, item, feasibleOrientations):
         itemInOrientations.append(changeItemOrientation(item, [i]))
     itemInOrientations = sorted(itemInOrientations, key=lambda x: getBottomPlaneArea(x))
     pivot = len(itemInOrientations)
-    if 0.8 <= item["weight"]/avgWeight <= 1.2:
+    if 0.85 <= item["weight"]/avgWeight <= 1.15:
         return random.choice([itemInOrientations[int(pivot/2)],
                               itemInOrientations[int(pivot/2)-1]])
-    elif 0.65 <= item["weight"]/avgWeight < 0.8 or 1.2 < item["weight"]/avgWeight <= 1.25:
+    elif 0.65 <= item["weight"]/avgWeight < 0.85 or 1.15 < item["weight"]/avgWeight <= 1.35:
         return random.choice([itemInOrientations[1], itemInOrientations[-2]])
     elif item["weight"]/avgWeight < 0.65:
         return itemInOrientations[0]
@@ -66,6 +66,7 @@ def adaptPackets(items, alpha, feasibleOrientations=None):
     if feasibleOrientations is None:
         feasibleOrientations = [1, 2, 3, 4, 5, 6]
     avgWeight = getAverageWeight(items)
+    # weiStdDev = getWeightStandardDeviation(items)
     items = list(map(lambda x: changeOrientationToBest(avgWeight, x, feasibleOrientations), items))
     if not areTaxed(items):
         return addTaxToDataset(items, alpha)

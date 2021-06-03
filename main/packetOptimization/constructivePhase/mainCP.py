@@ -2,6 +2,7 @@ from main.packetOptimization.constructivePhase.geometryHelpers import *
 from main.packetAdapter.helpers import getAverageWeight, getMinDim, getMaxWeight
 from main.packetOptimization.randomizationAndSorting.sorting import sortingRefillingPhase
 from copy import deepcopy
+from scipy.spatial import distance
 import random
 import numpy as np
 import math
@@ -263,21 +264,16 @@ def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
     :param amountOfNearItems: int with the number of desired neighbours.
     :return: list of N neighbours, with N specified.
     """
-    print("--getSurroundingItems Started--")
-    startTime = time.time()
     if placedItems:
         # Extract the mass center of all placed items.
-        itemsMCs = np.array(list(map(lambda x: x["mass_center"], placedItems)))
+        itemsMCs = np.asarray(list(map(lambda x: x["mass_center"], placedItems)))
         # Compute and sort the distances between the new item mass center and the rest.
-        distances = ((itemsMCs - massCenter) ** 2).sum(axis=1)
-        ndx = distances.argsort()
+        ndxDistances = distance.cdist(massCenter, itemsMCs, 'euclidean').argsort()[0]
         # Get the nearest mass centers and its items.
-        nearestMCs = itemsMCs[ndx[:min(len(placedItems), amountOfNearItems)]]
+        nearestMCs = itemsMCs[ndxDistances[:min(len(placedItems), amountOfNearItems)]]
         nearItems = list(
             filter(lambda x: any((list(map(lambda y: all(y == x["mass_center"]), nearestMCs)))), placedItems))
-        print("--getSurroundingItems Finishing--------"+ str(time.time() - startTime))
         return nearItems
-    print("--getSurroundingItems Finishing--------" + str(time.time() - startTime))
     return []
 
 
@@ -289,18 +285,14 @@ def isNotOverlapping(item, placedItems):
     :param placedItems: list of placed item objects.
     :return: True if the item does not overlap other items around it, False otherwise.
     """
-    print("--isNotOverlapping Started--")
-    startTime = time.time()
     if len(placedItems):
-        nearItems = getSurroundingItems(item["mass_center"], placedItems, 9)
+        nearItems = getSurroundingItems(item["mass_center"].reshape(1, 3), placedItems, 9)
         # Generate points for item evaluated.
         p1all = getPlanesFor(item)
         # Validate overlapping conditions item vs. placedItems and vice versa.
         itemToNearItemsOverlapping = all(list(map(lambda x: overlapper(p1all, getPlanesFor(x)), nearItems)))
-        print("--isNotOverlapping Finishing--------"+ str(time.time() - startTime))
         return itemToNearItemsOverlapping
     else:
-        print("--isNotOverlapping Finishing--------"+ str(time.time() - startTime))
         return True
 
 
@@ -322,7 +314,7 @@ def isFeasible(potentialPoint, placedItems, newItem, candidateListAverageWeight,
         i3WithCondition = isStable(itemWithSubzones, placedItems, stage)
         # Checks if it is stable and stackable.
         if i3WithCondition[0][0] and isStackable(item, candidateListAverageWeight, placedItems, stage):
-            # Way of keeping the modified object and if the condition state. TODO, maybe is not necessary to keep the item.
+            # Way of keeping the modified object and if the condition state.
             i4WithCondition = itemContributionExceedsSubzonesWeightLimit(i3WithCondition[0][1], truckSubzones)
             if i4WithCondition[0][0]:
                 return np.array([[1, i4WithCondition[0][1]]])
@@ -399,13 +391,13 @@ def fitnessFor(PP, item, placedItems, notPlacedAvgWeight, maxHeight, maxLength, 
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
                    areaCondition * stageFW[2] + heightWeightRelation * stageFW[3]
         # Threshold in fitness value.
-        # fitvalue = fitvalue if fitvalue > 0.1 else 0 if stage < 3 else fitvalue
+        #fitvalue = fitvalue if fitvalue > 0.1 else 0 if stage < 3 else fitvalue
         return np.concatenate((PP, np.array([fitvalue])))
     else:
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
                    stageFW[2] + heightWeightRelation * stageFW[3]
         # Threshold in fitness value. TODO, maybe change the threshold depending on the stage.
-        # fitvalue = fitvalue if fitvalue > 0.1 else 0 if stage < 3 else fitvalue
+        #fitvalue = fitvalue if fitvalue > 0.1 else 0 if stage < 3 else fitvalue
         return np.concatenate((PP, np.array([fitvalue])))
 
 
@@ -428,7 +420,7 @@ def isBetterPP(newPP, currentBest):
 def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim):
     # Add margin to z-coordinate.
     BLR = getBLR(item) + np.array([0, 0, 0.0015])
-    # BRR if x>=0.92*truckWidth(20cm) aprox, BRF otherwise
+    # BRR if x >= truckWidth - minDim aprox, BRF otherwise
     BRF = getBRF(item) + np.array([0.0015, 0, 0])
     BxF = getBRR(item) + np.array([0, 0, 0.0015]) if BRF[0] >= truckWidth - minDim else BRF
     TLF = getTLF(item) + np.array([0, 0.0015, 0])
@@ -457,8 +449,6 @@ def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim):
 def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, placedItems):
     discardList = []
     for i in candidateList:
-        print("-----Empieza item en stage " + str(stage) + " ------")
-        startTime = time.time()
         # Update average list excluding those items which have been already placed.
         notPlacedAvgWeight = getAverageWeight(list(filter(lambda x: x not in placedItems, candidateList)))
         notPlacedMaxWeight = getMaxWeight(list(filter(lambda x: x not in placedItems, candidateList)))
@@ -467,8 +457,6 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
             i = reorient(i)
         # Initialization of best point as be the worst, in this context the TRR of the truck. And worse fitness value.
         ppBest = np.array([truck["width"], truck["height"], truck["length"], 0])
-        print("-----Comprueba cada uno de los puntos potenciales------")
-        startTime2 = time.time()
         # Try to get the best PP for an item.
         for pp in potentialPoints:
             # [condition, item]
@@ -479,7 +467,6 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
                 if isBetterPP(ppWithFitness, ppBest):
                     ppBest = ppWithFitness
                     feasibleItem = feasibility[0][1]
-        print("-----Termina puntos potenciales ------" + str(time.time() - startTime2))
         # If the best is different from the worst there is a PP to insert the item.
         if ppBest[3] != 0:
             # Add pp in which the object is inserted.
@@ -498,7 +485,6 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
             truck = addItemWeightToTruckSubzones(feasibleItem["subzones"], truck)
         else:
             discardList.append(i)
-        print("-----Termina item en stage " + str(stage) + " ------" + str(time.time() - startTime))
     return {"placed": placedItems, "discard": discardList,
             "truck": truck, "potentialPoints": potentialPoints}
 
@@ -513,6 +499,7 @@ def main_cp(truck, candidateList, nDst):
     print("Time stage " + str(time.time() - startTime1))
     stage = stage + 1
     startTime2 = time.time()
+    print(len(filling["placed"]))
     refilling = fillList(filling["discard"],
                          filling["potentialPoints"],
                          filling["truck"], 0, stage, nDst,
@@ -520,9 +507,11 @@ def main_cp(truck, candidateList, nDst):
     print("Time stage " + str(time.time() - startTime2))
     stage = stage + 1
     startTime3 = time.time()
+    print(len(refilling["placed"]))
     rerefilling = fillList(sortingRefillingPhase(refilling["discard"], nDst, stage),
                            refilling["potentialPoints"],
                            refilling["truck"], 0, stage, nDst,
                            getMinDim(refilling["discard"]), refilling["placed"])
+    print(len(rerefilling["placed"]))
     print("Time stage " + str(time.time() - startTime3))
     return rerefilling
