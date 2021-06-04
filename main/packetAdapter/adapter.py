@@ -28,7 +28,7 @@ def areTaxed(items):
 
 
 # ------------------- Orientation -------------------------------
-def changeOrientationToBest(avgWeight, item, feasibleOrientations):
+def changeOrientationToBest(avgWeight, item, feasibleOrientations=None):
     """
     This function changes the item orientation to the one which maximizes the
     stackability.
@@ -37,6 +37,8 @@ def changeOrientationToBest(avgWeight, item, feasibleOrientations):
     :param item: item to be evaluated.
     :return: item with the best orientation from the feasible ones.
     """
+    if feasibleOrientations is None:
+        feasibleOrientations = [1, 2, 3, 4, 5, 6]
     itemInOrientations = []
     for i in feasibleOrientations:
         itemInOrientations.append(changeItemOrientation(item, [i]))
@@ -51,6 +53,31 @@ def changeOrientationToBest(avgWeight, item, feasibleOrientations):
         return itemInOrientations[0]
     else:
         return itemInOrientations[-1]
+
+
+def changeOrientationInStage(avgWeight, item, stage, feasibleOrientations=None):
+    """
+    This function changes the item orientation to the one which maximizes the
+    stackability depending on the stage.
+    :param feasibleOrientations: feasible orientations for the item.
+    :param avgWeight: average weight from a set of items.
+    :param item: item to be evaluated.
+    :return: item with the best orientation from the feasible ones.
+    """
+    if feasibleOrientations is None:
+        feasibleOrientations = [1, 2, 3, 4, 5, 6]
+    itemInOrientations = []
+    for i in feasibleOrientations:
+        itemInOrientations.append(changeItemOrientation(item, [i]))
+    itemInOrientations = sorted(itemInOrientations, key=lambda x: getBottomPlaneArea(x))
+    pivot = len(itemInOrientations)
+    if stage == 2:
+        if item["weight"]/avgWeight > 0.80:
+            return random.choice([itemInOrientations[1], itemInOrientations[2], itemInOrientations[int(pivot/2)], itemInOrientations[int(pivot/2)-1]])
+        else:
+            return random.choice([itemInOrientations[-1], itemInOrientations[-2]])
+    else:
+        return changeItemOrientation(item, [random.choice([1, 2, 4, 5, 6])])
 
 
 # -------------------- Adapter ----------------------------------------

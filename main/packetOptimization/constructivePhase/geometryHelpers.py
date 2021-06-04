@@ -5,7 +5,6 @@ from main.packetAdapter.helpers import changeItemOrientation
 # --------------------------------- Item geometric helpers -----------------------------------
 # This function adds the spacial center of mass to a packet solution inserted in a PP
 def setItemMassCenter(item, potentialPoint, truckWidth, minDim):
-    # TODO, limit in which to iterate to determine best solutions.
     if truckWidth - minDim <= potentialPoint[0] <= truckWidth:
         item["mass_center"] = potentialPoint + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
     else:
@@ -139,7 +138,7 @@ def reorient(item):
     :param item: item object.
     :return: reoriented item.
     """
-    return changeItemOrientation(item, list(filter(lambda x: x != item["orientation"], [1, 2, 3, 4])))
+    return changeItemOrientation(item, list(filter(lambda x: x != item["orientation"], [1, 2, 3, 4, 5, 6])))
 
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------
