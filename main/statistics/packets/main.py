@@ -11,7 +11,7 @@ def getDatasetFromJSONWith(ID):
     :param ID: the id of the dataset, not the name.
     :return: list of items from the specified file.
     """
-    filepath = glob.glob(os.path.dirname(__file__) + "/../../scenarios/packetsDatasets/" + str(ID) + "*.json")[0]
+    filepath = glob.glob(os.path.dirname(__file__) + "/../../scenarios/packetsDatasets/" + str(ID) + "-*.json")[0]
     return json.load(open(filepath))
 
 

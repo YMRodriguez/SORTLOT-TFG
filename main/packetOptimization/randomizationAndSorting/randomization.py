@@ -55,7 +55,8 @@ def swapByPriority(packets):
         if bool(random.getrandbits(1)) and (len(same_priority_packets) != 0):
             item_j = random.choice(same_priority_packets)
             j = packets.index(item_j)
-            genericSwapper(packets, i, j)
+            if weightComp(packets[i], packets[j]) and volumeComp(packets[i], packets[j]):
+                genericSwapper(packets, i, j)
     return packets
 
 

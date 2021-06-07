@@ -121,14 +121,14 @@ def serializeSolutions(sols):
 
 # ------------------ Solution processing ----------------------------------
 # ------ Common variables ----------
-iterations = 24
+iterations = 1
 
 # ------ Get packets dataset -------
-ID = 0
+ID = 1
 items, ndst = getDataFromJSONWith(ID)
 
 # ------ Iterations ------------
-with parallel_backend(backend="loky", n_jobs=6):
+with parallel_backend(backend="loky", n_jobs=1):
     parallel = Parallel(verbose=100)
     solutions = parallel(
         [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, True, i) for i in range(iterations)])

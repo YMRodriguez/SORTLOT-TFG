@@ -269,7 +269,7 @@ def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
         # Extract the mass center of all placed items.
         itemsMCs = np.asarray(list(map(lambda x: x["mass_center"], placedItems)))
         # Compute and sort the distances between the new item mass center and the rest.
-        ndxDistances = distance.cdist(massCenter, itemsMCs, 'euclidean').argsort()[0]
+        ndxDistances = distance.cdist(massCenter.reshape((1, 3)), itemsMCs, 'euclidean').argsort()[0]
         # Get the nearest mass centers and its items.
         nearestMCs = itemsMCs[ndxDistances[:min(len(placedItems), amountOfNearItems)]]
         nearItems = list(
@@ -364,7 +364,6 @@ def fitnessFor(PP, item, placedItems, notPlacedAvgWeight, maxHeight, maxLength, 
     # Length condition in the fitness function.
     lengthCondition = 1 - (PP[2] / maxLength)
 
-    surroundingCondition = 0
     if nDst > 1:
         # For the surrounding customer code objects.
         nItems = 5
@@ -380,6 +379,8 @@ def fitnessFor(PP, item, placedItems, notPlacedAvgWeight, maxHeight, maxLength, 
             surroundingCondition = -0.15
         else:
             surroundingCondition = len(nearItemsWithValidDstCode) / max(len(nearItems), 1)
+    else:
+        surroundingCondition = 0
 
     # Height condition in the fitness function.
     heightWeightRelation = (item["mass_center"][1] / maxHeight) * (item["weight"] / notPlacedAvgWeight)
@@ -501,14 +502,14 @@ def main_cp(truck, candidateList, nDst):
     potentialPoints = truck["pp"]
     minDim = getMinDim(candidateList)
     stage = 1
-    #startTime1 = time.time()
+    startTime1 = time.time()
     filling1 = fillList(candidateList, potentialPoints, truck, 0, stage,
                         nDst, minDim, [])
-    #print("Time stage " + str(time.time() - startTime1))
+    print("Time stage " + str(time.time() - startTime1))
 
     stage = stage + 1
-    #startTime2 = time.time()
-    #print(len(filling1["placed"]))
+    startTime2 = time.time()
+    print(len(filling1["placed"]))
     #print(getAverageWeight(filling1["discard"]))
     items = list(map(lambda x: changeOrientationInStage(
         getAverageWeight(filling1["discard"]), x, 2), filling1["discard"]))
@@ -516,10 +517,10 @@ def main_cp(truck, candidateList, nDst):
                         np.unique(filling1["potentialPoints"], axis=0),
                         filling1["truck"], 0, stage, nDst,
                         getMinDim(items), filling1["placed"])
-    #print("Time stage " + str(time.time() - startTime2))
+    print("Time stage " + str(time.time() - startTime2))
     stage = stage + 1
-    #startTime3 = time.time()
-    #print(len(filling2["placed"]))
+    startTime3 = time.time()
+    print(len(filling2["placed"]))
     #print(getAverageWeight(filling2["discard"]))
     items2 = list(map(lambda x: changeOrientationInStage(
         getAverageWeight(filling2["discard"]), x, 3), filling2["discard"]))
@@ -527,14 +528,14 @@ def main_cp(truck, candidateList, nDst):
                         np.unique(filling2["potentialPoints"], axis=0),
                         filling2["truck"], 0, stage, nDst,
                         minDim, filling2["placed"])
-    #print(len(filling3["placed"]))
-    #print("Time stage " + str(time.time() - startTime3))
-    #startTime4 = time.time()
-    # stage = stage + 1
+    print(len(filling3["placed"]))
+    print("Time stage " + str(time.time() - startTime3))
+    startTime4 = time.time()
+    stage = stage + 1
     filling4 = fillList(filling3["discard"],
                         np.unique(filling3["potentialPoints"], axis=0),
                         filling3["truck"], 1, stage, nDst,
                         getMinDim(filling3["discard"]), filling3["placed"])
-    #print(len(filling4["placed"]))
-    #print("Time stage " + str(time.time() - startTime4))
+    print(len(filling4["placed"]))
+    print("Time stage " + str(time.time() - startTime4))
     return filling4

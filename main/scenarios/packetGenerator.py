@@ -2,15 +2,14 @@ import random
 import pymongo
 import json
 import pandas as pd
-from main.statistics.packets.main import datasetStats
 
 # ----------------------- General variables -----------------------
-ID = 11
-difDim = 25
+ID = 18
+difDim = 50
 noPackets = 400
 maxDimension = 100
 minD = 20
-nDestinations = 1
+nDestinations = 4
 ADRc = 0
 prioTrig = 1
 breakTrig = 1
@@ -58,7 +57,7 @@ def randomPacketGenerator(dimensions, destinations, source, ADR, priority, break
     packet["dst_code"] = destinations.index(packet["dst"])
     # We do not care, if it is frozen it will go in a different truck
     packet["frozen"] = random.choices([0, 1], [100, 0])[0]
-    packet["priority"] = random.choices([0, 1], [94, 6])[0] if priority else 0
+    packet["priority"] = random.choices([0, 1], [95, 5])[0] if priority else 0
     packet["breakability"] = random.choices([0, 1], [97, 3])[0] if breakability else 0
     packet["ADR"] = random.choices([0, 1], [95, 5])[0] if ADR else random.choices([0, 1], [100, 0])[0]
     return packet
