@@ -1,6 +1,5 @@
 from main.packetOptimization.constructivePhase.geometryHelpers import *
 from main.packetAdapter.helpers import getAverageWeight, getMinDim, getMaxWeight
-from main.packetAdapter.adapter import changeOrientationInStage
 from main.packetOptimization.randomizationAndSorting.sorting import sortingRefillingPhase
 from copy import deepcopy
 from scipy.spatial import distance
@@ -338,14 +337,14 @@ def areEnoughPlacedItemsOfTheCstCode(dst_code, placedItems, nItems):
     return len(list(filter(lambda x: dst_code == x["dst_code"], placedItems))) >= nItems
 
 
-def fitnessFor(PP, item, placedItems, notPlacedAvgWeight, maxHeight, maxLength, stage, nDst):
+def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, stage, nDst):
     """
     This function computes the fitness value for a potential point.
     :param nDst: number of destinations.
     :param PP: potential point input, it only contains the coordinates in [x, y, z].
     :param item: item object.
     :param placedItems: set of placed items into the container.
-    :param notPlacedAvgWeight: average of not yet placed items.
+    :param notPlacedMaxWeight: maximum weight of not yet placed items.
     :param maxHeight: maximum height of the truck.
     :param maxLength: maximum length of the truck.
     :param stage: stage in the algorithm.
@@ -383,7 +382,7 @@ def fitnessFor(PP, item, placedItems, notPlacedAvgWeight, maxHeight, maxLength, 
         surroundingCondition = 0
 
     # Height condition in the fitness function.
-    heightWeightRelation = (item["mass_center"][1] / maxHeight) * (item["weight"] / notPlacedAvgWeight)
+    heightWeightRelation = (item["mass_center"][1] / maxHeight) * (item["weight"] / notPlacedMaxWeight)
 
     # Item not in floor.
     if PP[1]:
@@ -522,7 +521,7 @@ def main_cp(truck, candidateList, nDst):
     # TODO, maybe I do wanna change the sorting to the second and reorient in this one too.
     filling3 = fillList(sortingRefillingPhase(filling2["discard"], nDst, stage),
                         np.unique(filling2["potentialPoints"], axis=0),
-                        filling2["truck"], 0, stage, nDst,
+                        filling2["truck"], 1, stage, nDst,
                         minDim, filling2["placed"])
     print(len(filling3["placed"]))
     print("Time stage " + str(time.time() - startTime3))

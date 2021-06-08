@@ -34,7 +34,7 @@ def getDataFromJSONWith(Id):
     :param Id: the id of the dataset, not the name.
     :return: object mapped from json file and number of destinations.
     """
-    filepath = glob.glob(os.path.dirname(__file__) + "/packetsDatasets/" + str(Id) + "*.json")[0]
+    filepath = glob.glob(os.path.dirname(__file__) + "/packetsDatasets/" + str(Id) + "-*.json")[0]
     nDst = int(filepath.split("Datasets/")[1].split("-")[5][3])
     return json.load(open(filepath)), nDst
 
@@ -124,7 +124,7 @@ def serializeSolutions(sols):
 iterations = 1
 
 # ------ Get packets dataset -------
-ID = 0
+ID = 1
 items, ndst = getDataFromJSONWith(ID)
 
 # ------ Iterations ------------

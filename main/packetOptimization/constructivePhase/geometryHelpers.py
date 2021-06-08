@@ -135,10 +135,11 @@ def getNearestProjectionPointFor(point, placedItems):
 def reorient(item):
     """
     This function randomly reorients a given item.
+
     :param item: item object.
     :return: reoriented item.
     """
-    return changeItemOrientation(item, item["feasibleOrientations"])
+    return changeItemOrientation(item, item["f_orient"])
 
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------
