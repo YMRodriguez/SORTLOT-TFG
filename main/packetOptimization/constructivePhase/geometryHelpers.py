@@ -138,7 +138,7 @@ def reorient(item):
     :param item: item object.
     :return: reoriented item.
     """
-    return changeItemOrientation(item, list(filter(lambda x: x != item["orientation"], [1, 2, 3, 4, 5, 6])))
+    return changeItemOrientation(item, item["feasibleOrientations"])
 
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------

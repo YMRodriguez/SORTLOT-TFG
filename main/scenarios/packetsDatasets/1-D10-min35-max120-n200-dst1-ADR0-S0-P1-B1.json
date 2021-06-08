@@ -13,7 +13,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 0
+    "id": 0,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -29,7 +37,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 1
+    "id": 1,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.1,
@@ -45,7 +61,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 2
+    "id": 2,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.9,
@@ -61,7 +85,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 3
+    "id": 3,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.39,
@@ -77,7 +107,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 4
+    "id": 4,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.35,
@@ -93,7 +131,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 5
+    "id": 5,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -109,7 +155,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 6
+    "id": 6,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.5,
@@ -125,7 +179,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 7
+    "id": 7,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.79,
@@ -141,7 +203,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 8
+    "id": 8,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.5,
@@ -157,7 +227,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 9
+    "id": 9,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.9,
@@ -173,7 +251,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 10
+    "id": 10,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.79,
@@ -189,7 +275,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 11
+    "id": 11,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -205,7 +299,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 12
+    "id": 12,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.1,
@@ -221,7 +323,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 13
+    "id": 13,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.5,
@@ -237,7 +345,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 14
+    "id": 14,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.35,
@@ -253,7 +369,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 15
+    "id": 15,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -269,7 +393,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 16
+    "id": 16,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.7,
@@ -285,7 +417,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 17
+    "id": 17,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.1,
@@ -301,7 +441,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 18
+    "id": 18,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.38,
@@ -317,7 +463,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 19
+    "id": 19,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.7,
@@ -333,7 +485,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 20
+    "id": 20,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -349,7 +509,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 21
+    "id": 21,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -365,7 +533,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 22
+    "id": 22,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 1.1,
@@ -381,7 +555,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 23
+    "id": 23,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 1.1,
@@ -397,7 +577,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 24
+    "id": 24,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.35,
@@ -413,7 +599,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 25
+    "id": 25,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 1.1,
@@ -429,7 +621,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 26
+    "id": 26,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 1.02,
@@ -445,7 +643,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 27
+    "id": 27,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.39,
@@ -461,7 +667,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 28
+    "id": 28,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.38,
@@ -477,7 +691,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 29
+    "id": 29,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.67,
@@ -493,7 +713,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 30
+    "id": 30,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.5,
@@ -509,7 +737,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 31
+    "id": 31,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.35,
@@ -525,7 +759,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 32
+    "id": 32,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.79,
@@ -541,7 +781,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 33
+    "id": 33,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.67,
@@ -557,7 +803,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 34
+    "id": 34,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -573,7 +827,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 35
+    "id": 35,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.5,
@@ -589,7 +851,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 36
+    "id": 36,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -605,7 +875,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 37
+    "id": 37,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -621,7 +899,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 38
+    "id": 38,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 1.1,
@@ -637,7 +921,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 39
+    "id": 39,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.7,
@@ -653,7 +945,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 40
+    "id": 40,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.5,
@@ -669,7 +967,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 41
+    "id": 41,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.5,
@@ -685,7 +991,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 42
+    "id": 42,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.79,
@@ -701,7 +1013,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 43
+    "id": 43,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.1,
@@ -717,7 +1037,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 44
+    "id": 44,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.79,
@@ -733,7 +1061,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 45
+    "id": 45,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.7,
@@ -749,7 +1083,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 46
+    "id": 46,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.39,
@@ -765,7 +1107,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 47
+    "id": 47,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 1.02,
@@ -781,7 +1129,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 48
+    "id": 48,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.79,
@@ -797,7 +1151,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 49
+    "id": 49,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.9,
@@ -813,7 +1173,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 50
+    "id": 50,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.67,
@@ -829,7 +1195,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 51
+    "id": 51,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.67,
@@ -845,7 +1217,13 @@
     "priority": 0,
     "breakability": 1,
     "ADR": 0,
-    "id": 52
+    "id": 52,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.5,
@@ -861,7 +1239,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 53
+    "id": 53,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.38,
@@ -877,7 +1261,15 @@
     "priority": 1,
     "breakability": 0,
     "ADR": 0,
-    "id": 54
+    "id": 54,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.5,
@@ -893,7 +1285,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 55
+    "id": 55,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -909,7 +1309,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 56
+    "id": 56,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.39,
@@ -925,7 +1333,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 57
+    "id": 57,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.9,
@@ -941,7 +1355,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 58
+    "id": 58,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -957,7 +1377,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 59
+    "id": 59,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 1.1,
@@ -973,7 +1399,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 60
+    "id": 60,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.9,
@@ -989,7 +1421,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 61
+    "id": 61,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.7,
@@ -1005,7 +1443,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 62
+    "id": 62,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.35,
@@ -1021,7 +1465,13 @@
     "priority": 1,
     "breakability": 0,
     "ADR": 0,
-    "id": 63
+    "id": 63,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.67,
@@ -1037,7 +1487,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 64
+    "id": 64,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.5,
@@ -1053,7 +1511,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 65
+    "id": 65,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.35,
@@ -1069,7 +1533,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 66
+    "id": 66,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.79,
@@ -1085,7 +1557,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 67
+    "id": 67,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.79,
@@ -1101,7 +1579,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 68
+    "id": 68,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.39,
@@ -1117,7 +1603,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 69
+    "id": 69,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 1.02,
@@ -1133,7 +1625,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 70
+    "id": 70,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.39,
@@ -1149,7 +1649,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 71
+    "id": 71,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.35,
@@ -1165,7 +1671,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 72
+    "id": 72,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.9,
@@ -1181,7 +1693,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 73
+    "id": 73,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.9,
@@ -1197,7 +1715,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 74
+    "id": 74,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -1213,7 +1737,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 75
+    "id": 75,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.39,
@@ -1229,7 +1759,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 76
+    "id": 76,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.9,
@@ -1245,7 +1783,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 77
+    "id": 77,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -1261,7 +1807,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 78
+    "id": 78,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.67,
@@ -1277,7 +1829,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 79
+    "id": 79,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -1293,7 +1853,15 @@
     "priority": 1,
     "breakability": 0,
     "ADR": 0,
-    "id": 80
+    "id": 80,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.35,
@@ -1309,7 +1877,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 81
+    "id": 81,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.79,
@@ -1325,7 +1901,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 82
+    "id": 82,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.38,
@@ -1341,7 +1925,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 83
+    "id": 83,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -1357,7 +1947,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 84
+    "id": 84,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.67,
@@ -1373,7 +1969,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 85
+    "id": 85,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.35,
@@ -1389,7 +1993,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 86
+    "id": 86,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 1.1,
@@ -1405,7 +2015,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 87
+    "id": 87,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.5,
@@ -1421,7 +2037,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 88
+    "id": 88,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.5,
@@ -1437,7 +2059,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 89
+    "id": 89,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.9,
@@ -1453,7 +2083,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 90
+    "id": 90,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.7,
@@ -1469,7 +2105,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 91
+    "id": 91,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.67,
@@ -1485,7 +2127,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 92
+    "id": 92,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.35,
@@ -1501,7 +2149,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 93
+    "id": 93,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.9,
@@ -1517,7 +2173,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 94
+    "id": 94,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -1533,7 +2195,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 95
+    "id": 95,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.38,
@@ -1549,7 +2219,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 96
+    "id": 96,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 1.02,
@@ -1565,7 +2241,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 97
+    "id": 97,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -1581,7 +2265,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 98
+    "id": 98,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -1597,7 +2289,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 99
+    "id": 99,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.79,
@@ -1613,7 +2313,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 100
+    "id": 100,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.7,
@@ -1629,7 +2335,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 101
+    "id": 101,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.9,
@@ -1645,7 +2357,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 102
+    "id": 102,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.79,
@@ -1661,7 +2379,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 103
+    "id": 103,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.5,
@@ -1677,7 +2401,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 104
+    "id": 104,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.9,
@@ -1693,7 +2423,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 105
+    "id": 105,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.7,
@@ -1709,7 +2447,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 106
+    "id": 106,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -1725,7 +2471,15 @@
     "priority": 1,
     "breakability": 0,
     "ADR": 0,
-    "id": 107
+    "id": 107,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.7,
@@ -1741,7 +2495,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 108
+    "id": 108,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.39,
@@ -1757,7 +2519,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 109
+    "id": 109,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.39,
@@ -1773,7 +2541,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 110
+    "id": 110,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.35,
@@ -1789,7 +2563,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 111
+    "id": 111,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -1805,7 +2587,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 112
+    "id": 112,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.7,
@@ -1821,7 +2609,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 113
+    "id": 113,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.5,
@@ -1837,7 +2631,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 114
+    "id": 114,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.38,
@@ -1853,7 +2653,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 115
+    "id": 115,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.35,
@@ -1869,7 +2677,13 @@
     "priority": 1,
     "breakability": 0,
     "ADR": 0,
-    "id": 116
+    "id": 116,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 1.02,
@@ -1885,7 +2699,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 117
+    "id": 117,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.79,
@@ -1901,7 +2723,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 118
+    "id": 118,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.35,
@@ -1917,7 +2747,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 119
+    "id": 119,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -1933,7 +2771,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 120
+    "id": 120,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -1949,7 +2795,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 121
+    "id": 121,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.1,
@@ -1965,7 +2819,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 122
+    "id": 122,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 1.1,
@@ -1981,7 +2841,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 123
+    "id": 123,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.9,
@@ -1997,7 +2863,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 124
+    "id": 124,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.5,
@@ -2013,7 +2885,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 125
+    "id": 125,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.79,
@@ -2029,7 +2909,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 126
+    "id": 126,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.7,
@@ -2045,7 +2933,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 127
+    "id": 127,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.1,
@@ -2061,7 +2957,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 128
+    "id": 128,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -2077,7 +2979,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 129
+    "id": 129,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.39,
@@ -2093,7 +3001,13 @@
     "priority": 0,
     "breakability": 1,
     "ADR": 0,
-    "id": 130
+    "id": 130,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.39,
@@ -2109,7 +3023,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 131
+    "id": 131,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.7,
@@ -2125,7 +3045,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 132
+    "id": 132,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.79,
@@ -2141,7 +3067,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 133
+    "id": 133,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -2157,7 +3091,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 134
+    "id": 134,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.9,
@@ -2173,7 +3115,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 135
+    "id": 135,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 1.1,
@@ -2189,7 +3137,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 136
+    "id": 136,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.67,
@@ -2205,7 +3159,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 137
+    "id": 137,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.35,
@@ -2221,7 +3183,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 138
+    "id": 138,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.9,
@@ -2237,7 +3207,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 139
+    "id": 139,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.5,
@@ -2253,7 +3231,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 140
+    "id": 140,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.35,
@@ -2269,7 +3255,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 141
+    "id": 141,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.67,
@@ -2285,7 +3277,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 142
+    "id": 142,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.67,
@@ -2301,7 +3299,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 143
+    "id": 143,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.39,
@@ -2317,7 +3323,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 144
+    "id": 144,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.1,
@@ -2333,7 +3347,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 145
+    "id": 145,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 1.02,
@@ -2349,7 +3369,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 146
+    "id": 146,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.38,
@@ -2365,7 +3391,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 147
+    "id": 147,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.1,
@@ -2381,7 +3415,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 148
+    "id": 148,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 1.02,
@@ -2397,7 +3437,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 149
+    "id": 149,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -2413,7 +3459,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 150
+    "id": 150,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.39,
@@ -2429,7 +3481,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 151
+    "id": 151,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.1,
@@ -2445,7 +3505,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 152
+    "id": 152,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.9,
@@ -2461,7 +3527,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 153
+    "id": 153,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.02,
@@ -2477,7 +3551,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 154
+    "id": 154,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.39,
@@ -2493,7 +3573,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 155
+    "id": 155,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 1.02,
@@ -2509,7 +3595,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 156
+    "id": 156,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.7,
@@ -2525,7 +3617,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 157
+    "id": 157,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.38,
@@ -2541,7 +3639,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 158
+    "id": 158,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.67,
@@ -2557,7 +3661,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 159
+    "id": 159,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -2573,7 +3685,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 160
+    "id": 160,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.79,
@@ -2589,7 +3707,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 161
+    "id": 161,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.35,
@@ -2605,7 +3731,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 162
+    "id": 162,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.7,
@@ -2621,7 +3753,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 163
+    "id": 163,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -2637,7 +3777,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 164
+    "id": 164,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.38,
@@ -2653,7 +3801,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 165
+    "id": 165,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.7,
@@ -2669,7 +3825,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 166
+    "id": 166,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.39,
@@ -2685,7 +3849,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 167
+    "id": 167,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.39,
@@ -2701,7 +3871,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 168
+    "id": 168,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.7,
@@ -2717,7 +3895,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 169
+    "id": 169,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   },
   {
     "length": 0.9,
@@ -2733,7 +3917,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 170
+    "id": 170,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.7,
@@ -2749,7 +3939,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 171
+    "id": 171,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.7,
@@ -2765,7 +3963,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 172
+    "id": 172,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.79,
@@ -2781,7 +3985,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 173
+    "id": 173,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.67,
@@ -2797,7 +4009,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 174
+    "id": 174,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.1,
@@ -2813,7 +4033,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 175
+    "id": 175,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.5,
@@ -2829,7 +4055,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 176
+    "id": 176,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.7,
@@ -2845,7 +4077,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 177
+    "id": 177,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.7,
@@ -2861,7 +4099,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 178
+    "id": 178,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.1,
@@ -2877,7 +4123,13 @@
     "priority": 0,
     "breakability": 1,
     "ADR": 0,
-    "id": 179
+    "id": 179,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 1.1,
@@ -2893,7 +4145,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 180
+    "id": 180,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.38,
@@ -2909,7 +4169,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 181
+    "id": 181,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.35,
@@ -2925,7 +4191,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 182
+    "id": 182,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.35,
@@ -2941,7 +4213,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 183
+    "id": 183,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.39,
@@ -2957,7 +4235,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 184
+    "id": 184,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.39,
@@ -2973,7 +4259,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 185
+    "id": 185,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.35,
@@ -2989,7 +4283,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 186
+    "id": 186,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.9,
@@ -3005,7 +4307,15 @@
     "priority": 1,
     "breakability": 0,
     "ADR": 0,
-    "id": 187
+    "id": 187,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 1.1,
@@ -3021,7 +4331,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 188
+    "id": 188,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.9,
@@ -3037,7 +4353,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 189
+    "id": 189,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.35,
@@ -3053,7 +4377,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 190
+    "id": 190,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.38,
@@ -3069,7 +4401,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 191
+    "id": 191,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   {
     "length": 0.67,
@@ -3085,7 +4423,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 192
+    "id": 192,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.79,
@@ -3101,7 +4447,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 193
+    "id": 193,
+    "f_orient": [
+      1,
+      2,
+      6,
+      5
+    ]
   },
   {
     "length": 0.9,
@@ -3117,7 +4469,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 194
+    "id": 194,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.35,
@@ -3133,7 +4491,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 195
+    "id": 195,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.5,
@@ -3149,7 +4515,15 @@
     "priority": 1,
     "breakability": 0,
     "ADR": 0,
-    "id": 196
+    "id": 196,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.38,
@@ -3165,7 +4539,13 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 197
+    "id": 197,
+    "f_orient": [
+      1,
+      2,
+      4,
+      3
+    ]
   },
   {
     "length": 0.79,
@@ -3181,7 +4561,15 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 198
+    "id": 198,
+    "f_orient": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
   },
   {
     "length": 0.38,
@@ -3197,6 +4585,12 @@
     "priority": 0,
     "breakability": 0,
     "ADR": 0,
-    "id": 199
+    "id": 199,
+    "f_orient": [
+      1,
+      2,
+      5,
+      6
+    ]
   }
 ]

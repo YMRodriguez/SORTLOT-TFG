@@ -510,21 +510,17 @@ def main_cp(truck, candidateList, nDst):
     stage = stage + 1
     startTime2 = time.time()
     print(len(filling1["placed"]))
-    #print(getAverageWeight(filling1["discard"]))
-    items = list(map(lambda x: changeOrientationInStage(
-        getAverageWeight(filling1["discard"]), x, 2), filling1["discard"]))
-    filling2 = fillList(items,
+    filling2 = fillList(filling1["discard"],
                         np.unique(filling1["potentialPoints"], axis=0),
                         filling1["truck"], 0, stage, nDst,
-                        getMinDim(items), filling1["placed"])
+                        getMinDim(filling1["discard"]), filling1["placed"])
     print("Time stage " + str(time.time() - startTime2))
     stage = stage + 1
     startTime3 = time.time()
     print(len(filling2["placed"]))
     #print(getAverageWeight(filling2["discard"]))
-    items2 = list(map(lambda x: changeOrientationInStage(
-        getAverageWeight(filling2["discard"]), x, 3), filling2["discard"]))
-    filling3 = fillList(sortingRefillingPhase(items2, nDst, stage),
+    # TODO, maybe I do wanna change the sorting to the second and reorient in this one too.
+    filling3 = fillList(sortingRefillingPhase(filling2["discard"], nDst, stage),
                         np.unique(filling2["potentialPoints"], axis=0),
                         filling2["truck"], 0, stage, nDst,
                         minDim, filling2["placed"])

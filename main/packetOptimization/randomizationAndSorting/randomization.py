@@ -1,5 +1,5 @@
 import random
-from main.packetAdapter.helpers import getAverageTaxability, getMaxPriority
+from main.packetAdapter.helpers import getMaxPriority
 
 
 # ------------------------- Comparators --------------------------------------
@@ -57,17 +57,6 @@ def swapByPriority(packets):
             j = packets.index(item_j)
             if weightComp(packets[i], packets[j]) and volumeComp(packets[i], packets[j]):
                 genericSwapper(packets, i, j)
-    return packets
-
-
-# This function swaps an item with another item in the list with 50% prob if the item has a lower taxability than the
-# average
-def swapByTaxability(packets):
-    for i in range(len(packets)):
-        if packets[i]["taxability"] < getAverageTaxability(packets) and bool(random.getrandbits(1)):
-            item_j = random.choice(packets[i:])
-            j = packets.index(item_j)
-            genericSwapper(packets, i, j)
     return packets
 
 
