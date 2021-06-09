@@ -351,7 +351,7 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
     :return: potential point with fitness, format [x, y, z, fitness].
     """
 
-    fitWeights = [[0.3, 0.4, 0.2, 0.1],
+    fitWeights = [[0.3, 0.4, 0.3, 0.0],
                   [0.2, 0.4, 0.2, 0.2],
                   [0.3, 0.5, 0.1, 0.1],
                   [0.0, 0.8, 0.1, 0.1]] if nDst > 1 else [[0.4, 0.0, 0.3, 0.3],
@@ -394,13 +394,13 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
                    areaCondition * stageFW[2] + heightWeightRelation * stageFW[3]
         # Threshold in fitness value.
-        #fitvalue = fitvalue if fitvalue >= 0 else 0
+        fitvalue = fitvalue if fitvalue >= 0.2 else 0
         return np.concatenate((PP, np.array([fitvalue])))
     else:
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
                    stageFW[2] + heightWeightRelation * stageFW[3]
         # Threshold in fitness value. TODO, maybe change the threshold depending on the stage.
-        #fitvalue = fitvalue if fitvalue >= 0 else 0
+        fitvalue = fitvalue if fitvalue >= 0.2 else 0
         return np.concatenate((PP, np.array([fitvalue])))
 
 
@@ -470,7 +470,7 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
             feasibility = isFeasible(pp, placedItems, i, notPlacedAvgWeight, minDim, truck, stage)
             if feasibility[0][0]:
                 ppWithFitness = fitnessFor(pp, feasibility[0][1], placedItems, notPlacedMaxWeight, truck["height"],
-                                           truck["length"], stage, nDst)
+                                               truck["length"], stage, nDst)
                 if isBetterPP(ppWithFitness, ppBest):
                     ppBest = ppWithFitness
                     feasibleItem = feasibility[0][1]
