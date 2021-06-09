@@ -353,7 +353,7 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
 
     fitWeights = [[0.3, 0.4, 0.2, 0.1],
                   [0.2, 0.4, 0.2, 0.2],
-                  [0.0, 0.8, 0.1, 0.1],
+                  [0.3, 0.5, 0.1, 0.1],
                   [0.0, 0.8, 0.1, 0.1]] if nDst > 1 else [[0.4, 0.0, 0.3, 0.3],
                                                           [0.5, 0.0, 0.3, 0.2],
                                                           [0.5, 0.0, 0.3, 0.2],
@@ -374,7 +374,7 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
             filter(lambda x: x["dst_code"] == item["dst_code"], nearItems))
         if len(nearItemsWithValidDstCode) <= 1 \
                 and len(nearItems) == nItems and areEnoughPlacedItemsOfTheCstCode(item["dst_code"], placedItems,
-                                                                                  nItems):
+                                                                                  nItems) and stage == 4:
             surroundingCondition = -0.15
         else:
             surroundingCondition = len(nearItemsWithValidDstCode) / max(len(nearItems), 1)
@@ -394,13 +394,13 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
                    areaCondition * stageFW[2] + heightWeightRelation * stageFW[3]
         # Threshold in fitness value.
-        # fitvalue = fitvalue if fitvalue > 0.1 else 0 if stage < 3 else fitvalue
+        #fitvalue = fitvalue if fitvalue >= 0 else 0
         return np.concatenate((PP, np.array([fitvalue])))
     else:
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
                    stageFW[2] + heightWeightRelation * stageFW[3]
         # Threshold in fitness value. TODO, maybe change the threshold depending on the stage.
-        # fitvalue = fitvalue if fitvalue > 0.1 else 0 if stage < 3 else fitvalue
+        #fitvalue = fitvalue if fitvalue >= 0 else 0
         return np.concatenate((PP, np.array([fitvalue])))
 
 
