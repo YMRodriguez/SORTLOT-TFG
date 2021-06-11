@@ -142,6 +142,17 @@ def reorient(item):
     return changeItemOrientation(item, item["f_orient"])
 
 
+def generateMaxArea(nItemsDst, nFilteredDSt, truck):
+    """
+    This function calculates the maximum area of the container for each destination.
+
+    :return: ndarray with max area for each destination.
+    """
+    nItemsDst = np.asarray(nItemsDst)
+    nFilteredDSt = np.asarray(nFilteredDSt)
+    return (nItemsDst/np.sum(nItemsDst) + nFilteredDSt/np.sum(nFilteredDSt)) * 0.5 * (truck["length"] * truck["width"])
+
+
 # ------------------------------ Truck Geometric Helpers ----------------------------------------
 # This function returns the spacial Bottom-Left-Front of the item.
 # TODO, if the truck is modified this changes.

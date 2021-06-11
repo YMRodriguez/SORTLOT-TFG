@@ -26,15 +26,15 @@ def mainSortByFitness(items, avgWeight, avgTaxability, avgVolume, avgPriority, n
 
 # This function returns sorted items by a fitness function designed for the main sorting phase
 def mainSortByFitnessPrime(items, maxWeight, maxVol, maxPrio, nDst):
-    fitweights = [0.4, 0.4, 0.2] if maxPrio else [0.5, 0.5, 0]
+    fitweights = [0.35, 0.5, 0.15] if maxPrio else [0.5, 0.5, 0]
     print(nDst)
     return sorted(items, key=lambda x: (((x["volume"] / maxVol) * fitweights[0] + (x[
         "weight"] / maxWeight) * fitweights[1] + (x["priority"] / max(maxPrio, 1)) * fitweights[2]) + (nDst - x["dst_code"])), reverse=True)
 
 
 # This function returns sorted items based on a fitness function.
-def refillingSortByFitness(items, maxWeight, maxPrio, maxVol, nDst, stage):
-    fitweights = [0.25, 0.25, 0.5] if maxPrio else [0.5, 0.5, 0]
+def refillingSortByFitness(items, maxWeight, maxPrio, maxVol, nDst):
+    fitweights = [0.15, 0.15, 0.7] if maxPrio else [0.5, 0.5, 0]
     return sorted(items, key=lambda x: (((x["volume"] / maxVol) + fitweights[0] +
                                         (x["weight"] / maxWeight) * fitweights[1] +
                                         (x["priority"]/max(maxPrio, 1)) * fitweights[2]) * (1 - (x["dst_code"] / (nDst-1)))), reverse=True)
@@ -56,7 +56,7 @@ def sortingPhasePrime(items, nDst):
 
 
 # This function returns sorted by a fitness function in resorting process.
-def sortingRefillingPhase(items, nDst, stage):
+def sortingRefillingPhase(items, nDst):
     return refillingSortByFitness(items, getMaxWeight(items),
                                   getMaxPriority(items),
-                                  getMaxVolume(items), nDst, stage)
+                                  getMaxVolume(items), nDst)
