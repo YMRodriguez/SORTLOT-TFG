@@ -68,6 +68,7 @@ def setItemSubzones(subzones, item):
             break
         # Get if the blf of an item is within the subzone, and include needed extra subzones.
         elif subzones[i]["blf"][2] <= item_blf_z < subzones[i]["brr"][2]:
+            # Percentage of item base out of subzone in which was inserted.
             outSubzone = getPercentageOutSubzone(item_brr_z, subzones[i]["brr"][2], item["length"])
             # Decimal number.
             neededExtraSubzonesForItem = getNeededExtraSubzonesForItem(subzonesLength, item["length"], outSubzone)
@@ -351,8 +352,8 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
     :return: potential point with fitness, format [x, y, z, fitness].
     """
 
-    fitWeights = [[0.3, 0.4, 0.3, 0.0],
-                  [0.2, 0.4, 0.2, 0.2],
+    fitWeights = [[0.4, 0.3, 0.15, 0.15],
+                  [0.3, 0.5, 0.1, 0.1],
                   [0.3, 0.5, 0.1, 0.1],
                   [0.0, 0.8, 0.1, 0.1]] if nDst > 1 else [[0.4, 0.0, 0.3, 0.3],
                                                           [0.5, 0.0, 0.3, 0.2],
@@ -394,13 +395,13 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
                    areaCondition * stageFW[2] + heightWeightRelation * stageFW[3]
         # Threshold in fitness value.
-        fitvalue = fitvalue if fitvalue >= 0.2 else 0
+        fitvalue = fitvalue if fitvalue >= 0 else 0
         return np.concatenate((PP, np.array([fitvalue])))
     else:
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
                    stageFW[2] + heightWeightRelation * stageFW[3]
         # Threshold in fitness value. TODO, maybe change the threshold depending on the stage.
-        fitvalue = fitvalue if fitvalue >= 0.2 else 0
+        fitvalue = fitvalue if fitvalue >= 0 else 0
         return np.concatenate((PP, np.array([fitvalue])))
 
 
@@ -522,7 +523,7 @@ def main_cp(truck, candidateList, nDst):
     filling3 = fillList(sortingRefillingPhase(filling2["discard"], nDst, stage),
                         np.unique(filling2["potentialPoints"], axis=0),
                         filling2["truck"], 1, stage, nDst,
-                        minDim, filling2["placed"])
+                        getMinDim(filling2["discard"]), filling2["placed"])
     print(len(filling3["placed"]))
     print("Time stage " + str(time.time() - startTime3))
     startTime4 = time.time()

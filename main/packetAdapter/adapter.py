@@ -42,12 +42,18 @@ def changeOrientationToBest(avgWeight, weightStdDev, item):
     for i in item["f_orient"]:
         itemInOrientations.append(changeItemOrientation(item, [i]))
     itemInOrientations = sorted(itemInOrientations, key=lambda x: getBottomPlaneArea(x))
-    if avgWeight - weightStdDev <= item["weight"] <= avgWeight + weightStdDev:
-        return random.choice(itemInOrientations[1:-1])
-    elif item["weight"] < avgWeight - weightStdDev:
-        return itemInOrientations[0]
+    if len(itemInOrientations) == 6:
+        if avgWeight - weightStdDev <= item["weight"] <= avgWeight + weightStdDev:
+            return random.choice(itemInOrientations[2:-2])
+        elif item["weight"] < avgWeight - weightStdDev:
+            return random.choice(itemInOrientations[:2])
+        else:
+            return random.choice(itemInOrientations[-2:])
     else:
-        return itemInOrientations[-1]
+        if item["weight"] >= avgWeight:
+            return random.choice(itemInOrientations[-2:])
+        else:
+            return random.choice(itemInOrientations[:2])
 
 
 # -------------------- Adapter ----------------------------------------
