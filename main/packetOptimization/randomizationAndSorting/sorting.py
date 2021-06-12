@@ -19,14 +19,8 @@ def customerSorting(items):
 
 
 # This function returns sorted items by a fitness function designed for the main sorting phase
-def mainSortByFitness(items, avgWeight, avgTaxability, avgVolume, avgPriority, nDst):
-    return sorted(items, key=lambda x: (x["taxability"] / avgTaxability + x["volume"] / avgVolume + x[
-        "weight"] / avgWeight + x["priority"] / avgPriority) * (1 - x["dst_code"] * 0.5 / nDst), reverse=True)
-
-
-# This function returns sorted items by a fitness function designed for the main sorting phase
 def mainSortByFitnessPrime(items, maxWeight, maxVol, maxPrio, nDst):
-    fitweights = [0.35, 0.5, 0.15] if maxPrio else [0.5, 0.5, 0]
+    fitweights = [0.35, 0.4, 0.25] if maxPrio else [0.5, 0.5, 0]
     print(nDst)
     return sorted(items, key=lambda x: (((x["volume"] / maxVol) * fitweights[0] + (x[
         "weight"] / maxWeight) * fitweights[1] + (x["priority"] / max(maxPrio, 1)) * fitweights[2]) + (nDst - x["dst_code"])), reverse=True)
@@ -41,13 +35,6 @@ def refillingSortByFitness(items, maxWeight, maxPrio, maxVol, nDst):
 
 
 # ----------- Main functions ----------------------------------
-# This function is in charge of sorting the packets choosing the sorting method randomly.
-def sortingPhase(items, nDst):
-    return mainSortByFitness(items, getAverageWeight(items),
-                             getAverageTaxability(items), getAverageVolume(items),
-                             getAveragePriority(items), nDst)
-
-
 # This function is in charge of sorting the packets choosing the sorting method randomly.
 def sortingPhasePrime(items, nDst):
     return mainSortByFitnessPrime(items, getMaxWeight(items),

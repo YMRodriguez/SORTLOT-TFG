@@ -144,3 +144,10 @@ def getMinDim(items):
     :return: minimum dimension in metres.
     """
     return np.min(np.array(list(map(lambda x: (x["width"], x["height"], x["length"]), items))))
+
+
+def getVolumeDistributionByDst(items, nDst, containerVol):
+    distribution = []
+    for d in range(nDst):
+        distribution.append((len(list(map(lambda x: x["dst_code"] == d, items)))/len(items)) * containerVol)
+    return distribution

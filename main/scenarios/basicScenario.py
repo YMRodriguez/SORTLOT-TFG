@@ -5,7 +5,7 @@ from copy import deepcopy
 from main.truckAdapter.adapter import adaptTruck
 from main.packetAdapter.adapter import adaptPackets, cleanDestinationAndSource
 from main.packetOptimization.randomizationAndSorting.randomization import randomization
-from main.packetOptimization.randomizationAndSorting.sorting import sortingPhase, sortingPhasePrime
+from main.packetOptimization.randomizationAndSorting.sorting import sortingPhasePrime
 from main.packetOptimization.constructivePhase.mainCP import main_cp
 from main.statistics.main import solutionStatistics, scenarioStatistics
 from main.solutionsFilter.main import filterSolutions, getBest
@@ -40,7 +40,7 @@ def getDataFromJSONWith(Id):
 
 
 # -------------------- Main Processes -----------------------------
-def main_scenario(packets, truck, nDst, prime, nIteration, rangeOrientations=None):
+def main_scenario(packets, truck, nDst, nIteration, rangeOrientations=None):
     if rangeOrientations is None:
         rangeOrientations = [1, 2, 3, 4, 5, 6]
     # ------ Packet adaptation------
@@ -48,7 +48,7 @@ def main_scenario(packets, truck, nDst, prime, nIteration, rangeOrientations=Non
     packets = adaptPackets(cleanDestinationAndSource(packets), 333)
     # ------ Truck adaptation ------
     truck = adaptTruck(truck, 4)
-    sort_output = sortingPhasePrime(packets, nDst) if prime else sortingPhase(packets, nDst)
+    sort_output = sortingPhasePrime(packets, nDst)
     rand_output = randomization(deepcopy(sort_output))
     # ------- Solution builder --------
     startTime = time.time()
@@ -131,7 +131,7 @@ items, ndst = getDataFromJSONWith(ID)
 with parallel_backend(backend="loky", n_jobs=1):
     parallel = Parallel(verbose=100)
     solutions = parallel(
-        [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, True, i) for i in range(iterations)])
+        [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, i) for i in range(iterations)])
     solutionsStats = list(map(lambda x: solutionStatistics(x), solutions))
 
     # ------- Process set of solutions --------
