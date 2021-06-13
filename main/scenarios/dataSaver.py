@@ -1,5 +1,5 @@
 import json
-
+import os
 
 def persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID):
     # Pass the data to visualization. This will be made in a flask api not in local.
@@ -44,6 +44,6 @@ def persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, best
 
 
 def persistStats(stats, ID):
-    with open('/Users/yamilmateorodriguez/Developtment/TFG/SORTLOT-TFG/main/scenarios/results/simulation/' + str(ID) + 'simulationStats.json',
+    with open(os.path.dirname(__file__) + '/results/simulation/' + str(ID) + 'simulationStats.json',
               'w') as file:
         json.dump(stats, file, indent=2, ensure_ascii=False)

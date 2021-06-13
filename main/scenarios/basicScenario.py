@@ -120,15 +120,15 @@ def serializeSolutions(sols):
 
 # ------------------ Solution processing ----------------------------------
 # ------ Common variables ----------
-iterations = 480
+iterations = 56
 
-for i in range(30):
+for i in range(1):
     # ------ Get packets dataset -------
     ID = i
     items, ndst = getDataFromJSONWith(ID)
 
     # ------ Iterations ------------
-    with parallel_backend(backend="loky", n_jobs=6):
+    with parallel_backend(backend="loky", n_jobs=28):
         parallel = Parallel(verbose=100)
         solutions = parallel(
             [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, i) for i in range(iterations)])
@@ -164,4 +164,4 @@ for i in range(30):
                                "taxability": bestUnfiltered["taxability"][1]}
 
         # TODO, determine best by looking at which one is in every characteristic.
-        persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)
+        # persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)

@@ -27,7 +27,7 @@ def mainSortByFitnessPrime(items, maxWeight, maxVol, maxPrio, nDst):
 
 # This function returns sorted items based on a fitness function.
 def refillingSortByFitness(items, maxWeight, maxPrio, maxVol, nDst):
-    fitweights = [0.3, 0.35, 0.35] if maxPrio else [0.5, 0.5, 0]
+    fitweights = [0.25, 0.35, 0.4] if maxPrio else [0.5, 0.5, 0]
     return sorted(items, key=lambda x: (((x["volume"] / maxVol) + fitweights[0] +
                                         (x["weight"] / maxWeight) * fitweights[1] +
                                         (x["priority"]/max(maxPrio, 1)) * fitweights[2]) + (nDst - x["dst_code"])), reverse=True)
