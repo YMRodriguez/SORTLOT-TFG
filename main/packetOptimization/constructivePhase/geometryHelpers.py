@@ -116,7 +116,7 @@ def getPlanesFor(item):
 # This function returns True if the point is inside the Plane for the same y-axis value.
 # PlaneLF/RR could be both the bottom and top Plane of an item.
 def pointInPlane(point, planeLF, planeRR):
-    return planeRR[0] >= point[0] >= planeLF[0] and planeRR[2] >= point[2] >= planeLF[2]
+    return planeRR[0]+0.001 >= point[0] >= planeLF[0] - 0.001 and planeRR[2] + 0.001 >= point[2] >= planeLF[2] - 0.001
 
 
 # This function returns the projection in y-axis over the nearest item top plane for a point.

@@ -8,8 +8,8 @@ from main.packetOptimization.randomizationAndSorting.randomization import random
 from main.packetOptimization.randomizationAndSorting.sorting import sortingPhasePrime
 from main.packetOptimization.constructivePhase.mainCP import main_cp
 from main.statistics.main import solutionStatistics, scenarioStatistics
-from main.solutionsFilter.main import filterSolutions, getBest
-from main.scenarios.dataSaver import persistInLocal
+from main.solutionsFilter.main import filterSolutions, getBest, filterSolutionsWithoutExcluding
+from main.scenarios.dataSaver import persistInLocal, persistStats
 import glob
 import os
 
@@ -102,7 +102,6 @@ def serializeTruck(truck):
         s['blf'] = s['blf'].tolist()
         s['brr'] = s['brr'].tolist()
     truck['pp'] = truck['pp'].tolist()
-    #truck['_id'] = str(truck['_id'])
     return truck
 
 
@@ -121,46 +120,48 @@ def serializeSolutions(sols):
 
 # ------------------ Solution processing ----------------------------------
 # ------ Common variables ----------
-iterations = 1
+iterations = 2
 
-# ------ Get packets dataset -------
-ID = 2
-items, ndst = getDataFromJSONWith(ID)
+for i in range(2):
+    # ------ Get packets dataset -------
+    ID = i
+    items, ndst = getDataFromJSONWith(ID)
 
-# ------ Iterations ------------
-with parallel_backend(backend="loky", n_jobs=1):
-    parallel = Parallel(verbose=100)
-    solutions = parallel(
-        [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, i) for i in range(iterations)])
-    solutionsStats = list(map(lambda x: solutionStatistics(x), solutions))
+    # ------ Iterations ------------
+    with parallel_backend(backend="loky", n_jobs=1):
+        parallel = Parallel(verbose=100)
+        solutions = parallel(
+            [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, i) for i in range(iterations)])
+        solutionsStats = list(map(lambda x: solutionStatistics(x), solutions))
 
-    # ------- Process set of solutions --------
-    # Clean solutions
-    solutionsCleaned = list(map(lambda x: {"placed": x["placed"],
-                                           "discard": x["discard"],
-                                           "truck": x["truck"],
-                                           "iteration": x["iteration"],
-                                           "time": x["time"]}, solutions))
+        # ------- Process set of solutions --------
+        # Clean solutions
+        solutionsCleaned = list(map(lambda x: {"placed": x["placed"],
+                                               "discard": x["discard"],
+                                               "truck": x["truck"],
+                                               "iteration": x["iteration"],
+                                               "time": x["time"]}, solutions))
+        updatedStats = filterSolutionsWithoutExcluding(solutionsCleaned, solutionsStats)
+        persistStats(updatedStats, ID)
+        # Get best filtered and unfiltered.
+        serializedSolutions = serializeSolutions(solutionsCleaned)
+        filteredSolutions, filteredStats = filterSolutions(serializedSolutions, solutionsStats)
+        bestFiltered = getBest(filteredSolutions, filteredStats, 5)
+        bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 5)
 
-    # Get best filtered and unfiltered.
-    serializedSolutions = serializeSolutions(solutionsCleaned)
-    filteredSolutions, filteredStats = filterSolutions(serializedSolutions, solutionsStats)
-    bestFiltered = getBest(filteredSolutions, filteredStats, 5)
-    bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 5)
+        # Make it json serializable
+        bestSolsFiltered = {"volume": bestFiltered["volume"][0],
+                            "weight": bestFiltered["weight"][0],
+                            "taxability": bestFiltered["taxability"][0]}
+        bestStatsFiltered = {"volume": bestFiltered["volume"][1],
+                             "weight": bestFiltered["weight"][1],
+                             "taxability": bestFiltered["taxability"][1]}
+        bestSolsUnfiltered = {"volume": bestUnfiltered["volume"][0],
+                              "weight": bestUnfiltered["weight"][0],
+                              "taxability": bestUnfiltered["taxability"][0]}
+        bestStatsUnfiltered = {"volume": bestUnfiltered["volume"][1],
+                               "weight": bestUnfiltered["weight"][1],
+                               "taxability": bestUnfiltered["taxability"][1]}
 
-    # Make it json serializable
-    bestSolsFiltered = {"volume": bestFiltered["volume"][0],
-                        "weight": bestFiltered["weight"][0],
-                        "taxability": bestFiltered["taxability"][0]}
-    bestStatsFiltered = {"volume": bestFiltered["volume"][1],
-                         "weight": bestFiltered["weight"][1],
-                         "taxability": bestFiltered["taxability"][1]}
-    bestSolsUnfiltered = {"volume": bestUnfiltered["volume"][0],
-                          "weight": bestUnfiltered["weight"][0],
-                          "taxability": bestUnfiltered["taxability"][0]}
-    bestStatsUnfiltered = {"volume": bestUnfiltered["volume"][1],
-                           "weight": bestUnfiltered["weight"][1],
-                           "taxability": bestUnfiltered["taxability"][1]}
-
-    # TODO, determine best by looking at which one is in every characteristic.
-    persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)
+        # TODO, determine best by looking at which one is in every characteristic.
+        persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)

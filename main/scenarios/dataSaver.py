@@ -41,3 +41,9 @@ def persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, best
             '/Users/yamilmateorodriguez/Developtment/TFG/SORTLOT-TFG/main/scenarios/results/' + str(ID) + 'bestStatsUnfiltered.json',
             'w') as file:
         json.dump(bestStatsUnfiltered, file, indent=2, ensure_ascii=False)
+
+
+def persistStats(stats, ID):
+    with open('/Users/yamilmateorodriguez/Developtment/TFG/SORTLOT-TFG/main/scenarios/results/simulation/' + str(ID) + 'simulationStats.json',
+              'w') as file:
+        json.dump(stats, file, indent=2, ensure_ascii=False)

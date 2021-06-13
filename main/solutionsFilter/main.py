@@ -12,7 +12,7 @@ def filterSolutions(solutions, solutionsStatistics):
     
     :param solutions: set of solutions in this format [{"solution":'', "iteration":'', "time":''}, ...]
     :param solutionsStatistics: set of statistics.
-    :return: two set of filtered conditions.
+    :return: one set of filtered solutions and another set with its stats.
     """
     # Keep those that satisfies horizontal stability.
     solutions = list(filter(lambda x: isHorizontallyStable(x["placed"], x["truck"]["width"]), solutions))
@@ -25,6 +25,29 @@ def filterSolutions(solutions, solutionsStatistics):
     iterWithPrio = list(map(lambda x: x["iteration"], solStatsWithPrio))
     sols = list(filter(lambda x: x["iteration"] in iterWithPrio, solutions))
     return sols, solStatsWithPrio
+
+
+def filterSolutionsWithoutExcluding(solutions, solutionsStatistics):
+    """
+    This function determines if a set of solutions and its statistics satisfy by this constrains:
+    - Not horizontal stability in the truck.
+    - Left priority items unloaded.
+
+    :param solutions: set of solutions in this format [{"solution":'', "iteration":'', "time":''}, ...]
+    :param solutionsStatistics: set of statistics.
+    :return: one set of solutions and another set with its stats including if satisfies the filter.
+    """
+    # Keep those that satisfies horizontal stability.
+    stats = list(map(lambda x: updateStatsWithConditions(x, solutionsStatistics[x["iteration"]]), solutions))
+    return stats
+
+
+def updateStatsWithConditions(solution, stats):
+    stats["hs_cond"] = int(isHorizontallyStable(solution["placed"], solution["truck"]["width"]))
+    maxPriority = max(solution["placed"] + solution["discard"],
+                      key=lambda x: x["priority"])["priority"]
+    stats["p_cond"] = int(stats["d_max_priority"] != maxPriority)
+    return stats
 
 
 def getBest(solutions, solutionsStatistics, nSol):
