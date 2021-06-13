@@ -673,32 +673,32 @@ def main_cp(truck, candidateList, nDst):
     stage = 0
     startTime0 = time.time()
     filling0 = fillListStage0(candidateList, potentialPoints, truck, nDst, minDim, [])
-    print("Time stage " + str(time.time() - startTime0))
-    print(len(filling0["placed"]))
+    #print("Time stage " + str(time.time() - startTime0))
+    #print(len(filling0["placed"]))
 
     stage = stage + 1
     startTime1 = time.time()
     filling1 = fillList(sortingRefillingPhase(filling0["discard"], nDst),
                         np.unique(filling0["potentialPoints"], axis=0), truck, 0, stage,
                         nDst, getMinDim(filling0["discard"]), filling0["placed"])
-    print("Time stage " + str(time.time() - startTime1))
+    #print("Time stage " + str(time.time() - startTime1))
     newPPs = createNewPPsFromPlacedItems(filling1["placed"], filling1["potentialPoints"])
     stage = stage + 1
     startTime2 = time.time()
-    print(len(filling1["placed"]))
+    #print(len(filling1["placed"]))
     filling2 = fillList(filling1["discard"],
                         np.unique(newPPs, axis=0),
                         filling1["truck"], 1, stage, nDst,
                         getMinDim(filling1["discard"]), filling1["placed"])
-    print("Time stage " + str(time.time() - startTime2))
+    #print("Time stage " + str(time.time() - startTime2))
     stage = stage + 1
     startTime3 = time.time()
-    print(len(filling2["placed"]))
+    #print(len(filling2["placed"]))
 
     filling3 = fillList(filling2["discard"],
                         np.unique(filling2["potentialPoints"], axis=0),
                         filling2["truck"], 1, stage, nDst,
                         getMinDim(filling2["discard"]), filling2["placed"])
-    print(len(filling3["placed"]))
-    print("Time stage " + str(time.time() - startTime3))
+    #print(len(filling3["placed"]))
+    #print("Time stage " + str(time.time() - startTime3))
     return filling3
