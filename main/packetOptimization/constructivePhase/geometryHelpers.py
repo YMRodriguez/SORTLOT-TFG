@@ -61,12 +61,12 @@ def getTLR(item):
 
 # This function returns the height of the bottom Plane of an item.
 def getBottomPlaneHeight(item):
-    return item["mass_center"][1] - np.array([item["height"] / 2])[0]
+    return (item["mass_center"][1] - np.array([item["height"] / 2]))[0]
 
 
 # This function returns the height(y-axis) of the top Plane of an item.
 def getTopPlaneHeight(item):
-    return item["mass_center"][1] + np.array([item["height"] / 2])[0]
+    return (item["mass_center"][1] + np.array([item["height"] / 2]))[0]
 
 
 # This function returns the area(m2) of the base face of an item.
@@ -142,7 +142,7 @@ def reorient(item):
     return changeItemOrientation(item, item["f_orient"])
 
 
-def generateMaxArea(nItemsDst, nFilteredDSt, truck):
+def generateMaxArea(nItemsDst, nFilteredDSt, truck, nDst):
     """
     This function calculates the maximum area of the container for each destination.
 
@@ -150,7 +150,14 @@ def generateMaxArea(nItemsDst, nFilteredDSt, truck):
     """
     nItemsDst = np.asarray(nItemsDst)
     nFilteredDSt = np.asarray(nFilteredDSt)
-    return (nItemsDst/np.sum(nItemsDst) + nFilteredDSt/np.sum(nFilteredDSt)) * 0.5 * (truck["length"] * truck["width"])
+    if nDst > 3:
+        factor = []
+        for i in range(nDst):
+            factor.append(1 - min((nDst-1-i)/100, 0.05))
+        factor = np.asarray(factor)
+    else:
+        factor = np.ones((1, nDst))
+    return (nItemsDst/np.sum(nItemsDst) + nFilteredDSt/np.sum(nFilteredDSt)) * factor * 0.5 * (truck["length"] * truck["width"])
 
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------
