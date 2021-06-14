@@ -2,6 +2,8 @@
 This module is in charge of processing the array of solutions reducing it to the best.
 """
 import numpy as np
+from scipy.spatial import distance
+from main.packetOptimization.constructivePhase.mainCP import getSurroundingItems
 
 
 def filterSolutions(solutions, solutionsStatistics):
@@ -24,7 +26,23 @@ def filterSolutions(solutions, solutionsStatistics):
     solStatsWithPrio = list(filter(lambda x: x["d_max_priority"] != maxPriority, solutionsStatistics))
     iterWithPrio = list(map(lambda x: x["iteration"], solStatsWithPrio))
     sols = list(filter(lambda x: x["iteration"] in iterWithPrio, solutions))
+    sols = addUnloadingOrderTo(sols)
     return sols, solStatsWithPrio
+
+
+def addUnloadingOrderTo(sols):
+    for sol in sols:
+        # Extract the mass center of all placed items.
+        itemsIDs = np.asarray(list(map(lambda x: x["in_id"], sol["placed"])))
+        itemsMCs = np.asarray(list(map(lambda x: x["mass_center"], sol["placed"])))
+        # Compute and sort the distances between the new item mass center and the rest.
+        ndxDistances = distance.cdist(np.array([[0, 0, 0]]), itemsMCs, 'euclidean').argsort()[0]
+        # Get the nearest mass centers and its items.
+        nearestIds = itemsIDs[ndxDistances].tolist()
+        for i in nearestIds:
+            item = list(filter(lambda x: x["in_id"] == i, sol["placed"]))[0]
+            item["id_or"] = nearestIds.index(i)
+    return sols
 
 
 def filterSolutionsWithoutExcluding(solutions, solutionsStatistics):
@@ -43,11 +61,23 @@ def filterSolutionsWithoutExcluding(solutions, solutionsStatistics):
 
 
 def updateStatsWithConditions(solution, stats):
+    stats["unload_obs"] = determineUnloadingObstacles(solution)
     stats["hs_cond"] = int(isHorizontallyStable(solution["placed"], solution["truck"]["width"]))
     maxPriority = max(solution["placed"] + solution["discard"],
                       key=lambda x: x["priority"])["priority"]
     stats["p_cond"] = int(stats["d_max_priority"] != maxPriority)
     return stats
+
+
+def determineUnloadingObstacles(solution):
+    obstacles = 0
+    for i in solution["placed"]:
+        nearItems = getSurroundingItems(np.array(i["mass_center"]), [e for e in solution["placed"] if e["id"] != i["id"]], 5)
+        if i["dst_code"] > 1:
+            condition = list(filter(lambda x: (i["dst_code"] - x["dst_code"]) > 1, nearItems))
+            condition = 1 if len(condition) > 4 else 0
+            obstacles = obstacles + condition
+    return obstacles
 
 
 def getBest(solutions, solutionsStatistics, nSol):

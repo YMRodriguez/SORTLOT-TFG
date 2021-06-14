@@ -536,7 +536,6 @@ def fillListStage0(candidateList, potentialPoints, truck, nDst, minDim, placedIt
     candidateList = filteredCandidates
     # Create max area items of a destination can occupy within the container.
     maxAreas = generateMaxArea(nItemDst, nFilteredDst, truck, nDst)
-    print(maxAreas)
     # Initialize current areas.
     currentAreas = np.zeros((1, nDst))
     # Obtain the maximum weight of the candidatelist.

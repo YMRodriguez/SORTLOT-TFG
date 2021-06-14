@@ -11,6 +11,7 @@ def solutionStatistics(solution):
     placed = pd.DataFrame(solution["placed"])
     discard = pd.DataFrame(solution["discard"]) if len(solution["discard"]) else placed.iloc[0:1].apply(lambda x: 0, axis=0)
     return {"iteration": solution["iteration"], "time": solution["time"],
+            "n_placed": len(solution["placed"]), "n_discard": len(solution["discard"]),
             "p_mean_weight": float(placed.weight.mean()), "d_mean_weight": float(discard.weight.mean()),
             "p_median_weight": float(placed.weight.median()), "d_median_weight": float(discard.weight.median()),
             "p_std_weight": float(placed.weight.std()), "d_std_weight": float(discard.weight.std()),

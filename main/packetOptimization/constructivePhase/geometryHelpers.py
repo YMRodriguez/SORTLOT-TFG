@@ -153,7 +153,10 @@ def generateMaxArea(nItemsDst, nFilteredDSt, truck, nDst):
     if nDst > 3:
         factor = []
         for i in range(nDst):
-            factor.append(1 - min((nDst-1-i)/100, 0.05))
+            if i != nDst-1:
+                factor.append(1 - (nDst-i+2)/100)
+            else:
+                factor.append(1)
         factor = np.asarray(factor)
     else:
         factor = np.ones((1, nDst))
