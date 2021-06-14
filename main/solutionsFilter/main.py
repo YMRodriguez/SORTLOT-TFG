@@ -23,7 +23,10 @@ def filterSolutions(solutions, solutionsStatistics):
     # Filter those which has not been able to place all priority items.
     maxPriority = max(solutions[0]["placed"] + solutions[0]["discard"],
                       key=lambda x: x["priority"])["priority"]
-    solStatsWithPrio = list(filter(lambda x: x["d_max_priority"] != maxPriority, solutionsStatistics))
+    if maxPriority!=0:
+        solStatsWithPrio = list(filter(lambda x: x["d_max_priority"] != maxPriority, solutionsStatistics))
+    else:
+        solStatsWithPrio = solutionsStatistics
     iterWithPrio = list(map(lambda x: x["iteration"], solStatsWithPrio))
     sols = list(filter(lambda x: x["iteration"] in iterWithPrio, solutions))
     sols = addUnloadingOrderTo(sols)
@@ -65,7 +68,7 @@ def updateStatsWithConditions(solution, stats):
     stats["hs_cond"] = int(isHorizontallyStable(solution["placed"], solution["truck"]["width"]))
     maxPriority = max(solution["placed"] + solution["discard"],
                       key=lambda x: x["priority"])["priority"]
-    stats["p_cond"] = int(stats["d_max_priority"] != maxPriority)
+    stats["p_cond"] = int(stats["d_max_priority"] != maxPriority if maxPriority != 0 else 1)
     return stats
 
 

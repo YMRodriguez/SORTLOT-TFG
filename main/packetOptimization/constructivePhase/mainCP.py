@@ -576,8 +576,8 @@ def fillListStage0(candidateList, potentialPoints, truck, nDst, minDim, placedIt
                                 ppBest = ppWithFitness
                                 feasibleItem = feasibility[0][1]
                         # This condition is only important for the first two items.
-                        if ppBest[3] == 1:
-                            break
+                    if ppBest[3] == 1:
+                        break
                 # If the best is different from the worst there is a PP to insert the item.
                 if ppBest[3] != 0:
                     currentAreas[0][feasibleItem["dst_code"]] = currentAreas[0][
@@ -592,7 +592,10 @@ def fillListStage0(candidateList, potentialPoints, truck, nDst, minDim, placedIt
                     # Generate new PPs to add to item and potentialPoints.
                     newPPs = generateNewPPs(feasibleItem, placedItems, truck["height"], truck["width"], minDim, 0)
                     feasibleItem["pp_out"] = newPPs
-                    potentialPoints = np.vstack((potentialPoints, newPPs)) if len(newPPs) else potentialPoints
+                    if potentialPoints.shape[0]:
+                        potentialPoints = np.vstack((potentialPoints, newPPs)) if len(newPPs) else potentialPoints
+                    else:
+                        potentialPoints = newPPs
                     # Add insertion order to item.
                     feasibleItem["in_id"] = len(placedItems)
                     # Add item to placedItems.
