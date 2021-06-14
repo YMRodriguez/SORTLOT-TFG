@@ -612,7 +612,6 @@ def fillListStage0(candidateList, potentialPoints, truck, nDst, minDim, placedIt
     discardList = discardList + candidateList
     # Keep the potential points that are not in the floor(which should be full).
     potentialPoints = np.asarray(notInFloorPP)
-    print(currentAreas)
     return {"placed": placedItems, "discard": discardList,
             "truck": truck, "potentialPoints": potentialPoints}
 
