@@ -2,6 +2,8 @@
 This module is in charge of processing the array of solutions reducing it to the best.
 """
 import numpy as np
+from scipy.spatial import distance
+from main.packetOptimization.constructivePhase.mainCP import getSurroundingItems
 
 
 def filterSolutions(solutions, solutionsStatistics):
@@ -12,7 +14,7 @@ def filterSolutions(solutions, solutionsStatistics):
     
     :param solutions: set of solutions in this format [{"solution":'', "iteration":'', "time":''}, ...]
     :param solutionsStatistics: set of statistics.
-    :return: two set of filtered conditions.
+    :return: one set of filtered solutions and another set with its stats.
     """
     # Keep those that satisfies horizontal stability.
     solutions = list(filter(lambda x: isHorizontallyStable(x["placed"], x["truck"]["width"]), solutions))
@@ -21,10 +23,64 @@ def filterSolutions(solutions, solutionsStatistics):
     # Filter those which has not been able to place all priority items.
     maxPriority = max(solutions[0]["placed"] + solutions[0]["discard"],
                       key=lambda x: x["priority"])["priority"]
-    solStatsWithPrio = list(filter(lambda x: x["d_max_priority"] != maxPriority, solutionsStatistics))
+    if maxPriority!=0:
+        solStatsWithPrio = list(filter(lambda x: x["d_max_priority"] != maxPriority, solutionsStatistics))
+    else:
+        solStatsWithPrio = solutionsStatistics
     iterWithPrio = list(map(lambda x: x["iteration"], solStatsWithPrio))
     sols = list(filter(lambda x: x["iteration"] in iterWithPrio, solutions))
+    sols = addUnloadingOrderTo(sols)
     return sols, solStatsWithPrio
+
+
+def addUnloadingOrderTo(sols):
+    for sol in sols:
+        # Extract the mass center of all placed items.
+        itemsIDs = np.asarray(list(map(lambda x: x["in_id"], sol["placed"])))
+        itemsMCs = np.asarray(list(map(lambda x: x["mass_center"], sol["placed"])))
+        # Compute and sort the distances between the new item mass center and the rest.
+        ndxDistances = distance.cdist(np.array([[0, 0, 0]]), itemsMCs, 'euclidean').argsort()[0]
+        # Get the nearest mass centers and its items.
+        nearestIds = itemsIDs[ndxDistances].tolist()
+        for i in nearestIds:
+            item = list(filter(lambda x: x["in_id"] == i, sol["placed"]))[0]
+            item["id_or"] = nearestIds.index(i)
+    return sols
+
+
+def filterSolutionsWithoutExcluding(solutions, solutionsStatistics):
+    """
+    This function determines if a set of solutions and its statistics satisfy by this constrains:
+    - Not horizontal stability in the truck.
+    - Left priority items unloaded.
+
+    :param solutions: set of solutions in this format [{"solution":'', "iteration":'', "time":''}, ...]
+    :param solutionsStatistics: set of statistics.
+    :return: one set of solutions and another set with its stats including if satisfies the filter.
+    """
+    # Keep those that satisfies horizontal stability.
+    stats = list(map(lambda x: updateStatsWithConditions(x, solutionsStatistics[x["iteration"]]), solutions))
+    return stats
+
+
+def updateStatsWithConditions(solution, stats):
+    stats["unload_obs"] = determineUnloadingObstacles(solution)
+    stats["hs_cond"] = int(isHorizontallyStable(solution["placed"], solution["truck"]["width"]))
+    maxPriority = max(solution["placed"] + solution["discard"],
+                      key=lambda x: x["priority"])["priority"]
+    stats["p_cond"] = int(stats["d_max_priority"] != maxPriority if maxPriority != 0 else 1)
+    return stats
+
+
+def determineUnloadingObstacles(solution):
+    obstacles = 0
+    for i in solution["placed"]:
+        nearItems = getSurroundingItems(np.array(i["mass_center"]), [e for e in solution["placed"] if e["id"] != i["id"]], 5)
+        if i["dst_code"] > 1:
+            condition = list(filter(lambda x: (i["dst_code"] - x["dst_code"]) > 1, nearItems))
+            condition = 1 if len(condition) > 4 else 0
+            obstacles = obstacles + condition
+    return obstacles
 
 
 def getBest(solutions, solutionsStatistics, nSol):
@@ -38,7 +94,6 @@ def getBest(solutions, solutionsStatistics, nSol):
     """
     return {"volume": getBestBy(convertCriteria("volume"), solutions, solutionsStatistics, nSol),
             "weight": getBestBy(convertCriteria("weight"), solutions, solutionsStatistics, nSol),
-            "priority": getBestBy(convertCriteria("priority"), solutions, solutionsStatistics, nSol),
             "taxability": getBestBy(convertCriteria("taxability"), solutions, solutionsStatistics, nSol)}
 
 
@@ -51,8 +106,8 @@ def convertCriteria(criteria):
     :param criteria: Human readable criteria, i.e, taxability.
     :return: string attribute of an object.
     """
-    data = ["used_volume", "used_weight", "p_total_taxability",
-            "p_cumulative_priority"]
+    data = ["used_volume", "used_weight",
+            "p_total_taxability"]
     return list(filter(lambda x: criteria in x, data))[0]
 
 

@@ -1,12 +1,11 @@
 import numpy as np
-from main.packetOptimization.randomizationAndSorting.randomization import changeItemOrientation
+from main.packetAdapter.helpers import changeItemOrientation
 
 
 # --------------------------------- Item geometric helpers -----------------------------------
 # This function adds the spacial center of mass to a packet solution inserted in a PP
-def setItemMassCenter(item, potentialPoint, truckWidth):
-    # TODO, limit in which to iterate to determine best solutions.
-    if truckWidth * 0.85 <= potentialPoint[0] <= truckWidth:
+def setItemMassCenter(item, potentialPoint, truckWidth, minDim):
+    if truckWidth - minDim <= potentialPoint[0] <= truckWidth:
         item["mass_center"] = potentialPoint + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
     else:
         item["mass_center"] = potentialPoint + np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
@@ -62,12 +61,12 @@ def getTLR(item):
 
 # This function returns the height of the bottom Plane of an item.
 def getBottomPlaneHeight(item):
-    return item["mass_center"][1] - np.array([item["height"] / 2])[0]
+    return (item["mass_center"][1] - np.array([item["height"] / 2]))[0]
 
 
 # This function returns the height(y-axis) of the top Plane of an item.
 def getTopPlaneHeight(item):
-    return item["mass_center"][1] + np.array([item["height"] / 2])[0]
+    return (item["mass_center"][1] + np.array([item["height"] / 2]))[0]
 
 
 # This function returns the area(m2) of the base face of an item.
@@ -117,7 +116,7 @@ def getPlanesFor(item):
 # This function returns True if the point is inside the Plane for the same y-axis value.
 # PlaneLF/RR could be both the bottom and top Plane of an item.
 def pointInPlane(point, planeLF, planeRR):
-    return planeRR[0] >= point[0] >= planeLF[0] and planeRR[2] >= point[2] >= planeLF[2]
+    return planeRR[0]+0.001 >= point[0] >= planeLF[0] - 0.001 and planeRR[2] + 0.001 >= point[2] >= planeLF[2] - 0.001
 
 
 # This function returns the projection in y-axis over the nearest item top plane for a point.
@@ -128,14 +127,40 @@ def getNearestProjectionPointFor(point, placedItems):
     itemWithNearestProj = sorted(pointIntoPlaneItems, key=lambda x: getTopPlaneHeight(x))
     if len(itemWithNearestProj) != 0:
         # Return the same point but with y-axis value projected.
-        return np.array([point[0], getTopPlaneHeight(itemWithNearestProj[0]), point[2]])
+        return np.array([point[0], getTopPlaneHeight(itemWithNearestProj[0]) + 0.0015, point[2]])
     # Return the projection to the floor.
     return np.array([point[0], 0, point[2]])
 
 
-# This function randomly reorients a given item.
 def reorient(item):
-    return changeItemOrientation(item, list(filter(lambda x: x != item["orientation"], list(range(1, 7)))))
+    """
+    This function randomly reorients a given item.
+
+    :param item: item object.
+    :return: reoriented item.
+    """
+    return changeItemOrientation(item, item["f_orient"])
+
+
+def generateMaxArea(nItemsDst, nFilteredDSt, truck, nDst):
+    """
+    This function calculates the maximum area of the container for each destination.
+
+    :return: ndarray with max area for each destination.
+    """
+    nItemsDst = np.asarray(nItemsDst)
+    nFilteredDSt = np.asarray(nFilteredDSt)
+    if nDst > 3:
+        factor = []
+        for i in range(nDst):
+            if i != nDst-1:
+                factor.append(1 - (nDst-i+2)/100)
+            else:
+                factor.append(1)
+        factor = np.asarray(factor)
+    else:
+        factor = np.ones((1, nDst))[0]
+    return (nItemsDst/np.sum(nItemsDst) + nFilteredDSt/np.sum(nFilteredDSt)) * factor * 0.5 * (truck["length"] * truck["width"])
 
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------
