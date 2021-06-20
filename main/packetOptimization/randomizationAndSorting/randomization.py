@@ -3,24 +3,48 @@ from main.packetAdapter.helpers import getMaxPriority
 
 
 # ------------------------- Comparators --------------------------------------
-# This function compares the volume of two give items, returns true if is in range false otherwise
 def volumeComp(i0, i1):
+    """
+    This function compares the volume of two give items.
+
+    :param i0: item object 1.
+    :param i1: item object 2.
+    :return: True if within bounds of similarity, false otherwise.
+    """
     return 0.85 < (i0["volume"] / i1["volume"]) < 1.15
 
 
-# This function compares the weight of two give items, returns true if is in range false otherwise
 def weightComp(i0, i1):
+    """
+    This function compares the weight of two give items.
+
+    :param i0: item object 1.
+    :param i1: item object 2.
+    :return: True if within bounds of similarity, false otherwise.
+    """
     return 0.85 < (i0["weight"] / i1["weight"]) < 1.15
 
 
 # ------------------------------ Swappers --------------------------------------
-# This function swaps the values of the given indexes in the list
 def genericSwapper(lst, i, j):
+    """
+    This is a generic swapper function which given a list changes two items by their indexes.
+
+    :param lst: list object.
+    :param i: index.
+    :param j: index.
+    """
     lst[i], lst[j] = lst[j], lst[i]
 
 
-# This function swaps an item with its consecutive with 50% prob in case vi/vi+1 in [0.85, 1.15]
 def swapByVolume(packets):
+    """
+    This function swaps an item with its consecutive in the list with 50% prob if they have the
+    a degree of volume similarity [0.85, 1.15] and destination code.
+
+    :param packets: list of packets.
+    :return: modified list of packets.
+    """
     for i in range(len(packets) - 1):
         if volumeComp(packets[i], packets[i + 1]) \
                 and packets[i]["dst_code"] == packets[i+1]["dst_code"]\
@@ -29,8 +53,14 @@ def swapByVolume(packets):
     return packets
 
 
-# This function swaps an item with its consecutive with 50% prob in case wi/wi+1 in [0.85, 1.15]
 def swapByWeight(packets):
+    """
+    This function swaps an item with its consecutive in the list with 50% prob if they have the
+    a degree of weight similarity [0.85, 1.15] and destination code.
+
+    :param packets: list of packets.
+    :return: modified list of packets.
+    """
     for i in range(len(packets) - 1):
         if weightComp(packets[i], packets[i + 1]) \
                 and packets[i]["dst_code"] == packets[i+1]["dst_code"]\
@@ -42,7 +72,7 @@ def swapByWeight(packets):
 def swapByPriority(packets):
     """
     This function swaps an item with another in the list with 50% prob if they have the
-    same priority an destination code.
+    same priority and destination code.
 
     :param packets: list of packets.
     :return: modified list of packets.
@@ -61,8 +91,13 @@ def swapByPriority(packets):
 
 
 # ------------------- Main Function ---------------------------------------------------------------------
-# This function is in charge of the randomization of a list of packets
 def randomization(packets):
+    """
+    This function randomizes packets based on weight, volume and priority criteria.
+
+    :param packets: list of packets.
+    :return: randomized list.
+    """
     swapped_v = swapByVolume(packets)
     swapped_w = swapByWeight(swapped_v)
     return swapByPriority(swapped_w) if getMaxPriority(packets) else swapped_w

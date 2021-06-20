@@ -7,7 +7,7 @@ from main.packetAdapter.adapter import adaptPackets, cleanDestinationAndSource
 from main.packetOptimization.randomizationAndSorting.randomization import randomization
 from main.packetOptimization.randomizationAndSorting.sorting import sortingPhasePrime
 from main.packetOptimization.constructivePhase.mainCP import main_cp
-from main.statistics.main import solutionStatistics, scenarioStatistics
+from main.statistics.main import solutionStatistics
 from main.solutionsFilter.main import filterSolutions, getBest, filterSolutionsWithoutExcluding
 from main.scenarios.dataSaver import persistInLocal, persistStats
 import glob
@@ -122,7 +122,7 @@ def serializeSolutions(sols):
 # ------ Common variables ----------
 iterations = 360
 
-for i in range(13,30):
+for i in range(1):
     # ------ Get packets dataset -------
     ID = i
     items, ndst = getDataFromJSONWith(ID)

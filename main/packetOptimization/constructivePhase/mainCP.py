@@ -17,18 +17,11 @@ def isWeightExceeded(placedItems, newItem, truck):
     return sum(list(map(lambda x: x["weight"], placedItems))) + newItem["weight"] > truck["tonnage"]
 
 
-# This function gives the amount of weight exceeded
-def amountWeightExceeded(placedItems, newItem, truck):
-    return sum(list(map(lambda x: x["weight"], placedItems))) + newItem["weight"] - truck["tonnage"]
-
-
 # ----------------- Weight Distribution and load balancing - C2 --------------------------------------
 # This function gets subzone length.
 def getSubzoneLength(subzones):
     return subzones[0]["brr"][2]
 
-
-# TODO, we may want to modify the subzones to reduce the difficulty of the constrain and get better solutions. Maybe balance differently.
 
 # This function returns the subzones of a truck.
 def getContainerSubzones(truck):
@@ -131,9 +124,15 @@ def itemContributionExceedsSubzonesWeightLimit(item, truckSubzones):
 
 
 # ------------------ Stackability - C5 ---------------------------------------------
-# This function returns true if a item is stackable, false otherwise.
-# An item is stackable if the contributions of weight for every object underneath does not exceed certain conditions.
 def isStackable(item, placedItems):
+    """
+    This function checks whether the stackability constraint is satisfied so the contributions
+    of weight for every object underneath does not exceed certain conditions.
+
+    :param item: item object.
+    :param placedItems: list of placed items.
+    :return: True is stackable, false otherwise.
+    """
     # Reduce the scope of items to those sharing their top y Plane with bottom y Plane of the new item.
     sharePlaneItems = list(
         filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.00151, placedItems))
@@ -165,10 +164,14 @@ def isADRSuitable(item, truckBRR_z):
 
 
 # ------------------ Stability - C7 ------------------------------------------------
-# This function returns the item modified including the contact area in each subzone for it.
-# Input Item Subzone Format: [[id_subzone, percentageIn],...]
-# Output Item Subzone Format: [[id_subzone, percentageIn, contactAreaIn],...]
 def addContactAreaTo(item, placedItems):
+    """
+    This function returns the item modified including the contact area in each subzone for it.
+
+    :param item: item object with subzone format [[id_subzone, percentageIn],...].
+    :param placedItems: list of placed items.
+    :return: item object with subzone format [[id_subzone, percentageIn, contactAreaIn],...].
+    """
     newItem = deepcopy(item)
     itemSubzones = deepcopy(item["subzones"].tolist())
     # Go over the subzones the item is in.
@@ -190,8 +193,15 @@ def addContactAreaTo(item, placedItems):
     return newItem
 
 
-# This function returns a ndarray with the item and True if the item has at least 80% of supported area, False otherwise.
 def isStable(item, placedItems, stage):
+    """
+    This function checks whether the stability constraint is satisfied.
+
+    :param item: item object.
+    :param placedItems: list of items.
+    :param stage: the stage of the algorithm.
+    :return: True if feasible, false otherwise.
+    """
     threshold = 0.8 if stage == 1 else 0.75
     itemWithContactArea = addContactAreaTo(item, placedItems)
     totalItemContactArea = sum(list(map(lambda x: x[2], itemWithContactArea["subzones"])))
@@ -222,8 +232,14 @@ def isWithinTruckHeight(item, truckHeight):
     return getTopPlaneHeight(item) <= truckHeight
 
 
-# This function returns True if dimension constrains are met, False otherwise.
 def isWithinTruckDimensionsConstrains(item, truckDimensions):
+    """
+    This function checks whether the item satisfies container dimension requirements.
+
+    :param item: the item object.
+    :param truckDimensions: dimensions of the container.
+    :return: True if within bounds, false otherwise.
+    """
     return isWithinTruckLength(item, truckDimensions["length"]) \
            and isWithinTruckWidth(item, truckDimensions["width"]) \
            and isWithinTruckHeight(item, truckDimensions["height"])
@@ -351,6 +367,7 @@ def feasibleInStage0(potentialPoint, placedItems, newItem, currentAreas, maxArea
 def areEnoughPlacedItemsOfTheCstCode(dst_code, placedItems, nItems):
     """
     This function checks whether there are enough items with a customer code.
+
     :param dst_code: The customer code to be checked.
     :param placedItems: Set of items already placed in the container.
     :param nItems: Threshold of items.
@@ -362,6 +379,7 @@ def areEnoughPlacedItemsOfTheCstCode(dst_code, placedItems, nItems):
 def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, stage, nDst):
     """
     This function computes the fitness value for a potential point.
+
     :param nDst: number of destinations.
     :param PP: potential point input, it only contains the coordinates in [x, y, z].
     :param item: item object.
@@ -433,6 +451,18 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
 
 
 def fitnessForStage0(PP, item, truck, nDst, placedItems, maxWeight):
+    """
+    This function computes the fitness value for a potential point.
+
+    :param truck: truck object.
+    :param maxWeight: maximum weight of the candidate list.
+    :param nDst: number of destinations.
+    :param PP: potential point input, it only contains the coordinates in [x, y, z].
+    :param item: item object.
+    :param placedItems: set of placed items into the container.
+    :return: potential point with fitness, format [x, y, z, fitness].
+    :return:
+    """
     fitWeights = [0.3, 0.3, 0.4] if nDst > 1 else [0.5, 0.5, 0]
     if nDst > 1:
         # For the surrounding customer code objects.
@@ -459,8 +489,9 @@ def fitnessForStage0(PP, item, truck, nDst, placedItems, maxWeight):
 def isBetterPP(newPP, currentBest):
     """
     This function decide which potential point is better. Criteria is:
-    - Give same fitness, randomly choose one.
+    - Given same fitness, randomly choose one.
     - Choose the one with the best fitness value.
+
     :param newPP: potential point being evaluated.
     :param currentBest: current potential point for an item.
     :return: True if the newPP is better than the current best, False otherwise.
@@ -471,6 +502,14 @@ def isBetterPP(newPP, currentBest):
 
 
 def projectPPOverlapped(item, potentialPoints, placedItems):
+    """
+    This function projects potential point to the closest free surface above them.
+
+    :param item: item object.
+    :param potentialPoints: list of spatial coordinates.
+    :param placedItems: list of placed items.
+    :return: list of potential points projected.
+    """
     potentialPointsOverlapped = list(filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints.tolist()))
     newPotentialPoints = list(filter(lambda x: x not in potentialPointsOverlapped, deepcopy(potentialPoints.tolist())))
     for p in potentialPointsOverlapped:

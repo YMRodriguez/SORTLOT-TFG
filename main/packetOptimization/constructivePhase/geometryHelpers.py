@@ -92,8 +92,8 @@ def generalIntersectionArea(p1, p2):
     :param p2: plane with format [cord1, cord2, difAxis1, difAxis2]
     :return: intersection area in m2.
     """
-    d1 = min(p1[0]+p1[2], p2[0]+p2[2]) - max(p1[0], p2[0])
-    d2 = min(p1[1]+p1[3], p2[1]+p2[3]) - max(p1[1], p2[1])
+    d1 = min(p1[0] + p1[2], p2[0] + p2[2]) - max(p1[0], p2[0])
+    d2 = min(p1[1] + p1[3], p2[1] + p2[3]) - max(p1[1], p2[1])
     if (d1 >= 0) and (d2 >= 0):
         return d1 * d2
     else:
@@ -116,7 +116,7 @@ def getPlanesFor(item):
 # This function returns True if the point is inside the Plane for the same y-axis value.
 # PlaneLF/RR could be both the bottom and top Plane of an item.
 def pointInPlane(point, planeLF, planeRR):
-    return planeRR[0]+0.001 >= point[0] >= planeLF[0] - 0.001 and planeRR[2] + 0.001 >= point[2] >= planeLF[2] - 0.001
+    return planeRR[0] + 0.001 >= point[0] >= planeLF[0] - 0.001 and planeRR[2] + 0.001 >= point[2] >= planeLF[2] - 0.001
 
 
 # This function returns the projection in y-axis over the nearest item top plane for a point.
@@ -153,14 +153,16 @@ def generateMaxArea(nItemsDst, nFilteredDSt, truck, nDst):
     if nDst > 3:
         factor = []
         for i in range(nDst):
-            if i != nDst-1:
-                factor.append(1 - (nDst-i+2)/100)
+            if i != nDst - 1:
+                # Just cut percentage of the destinations previous to the first out.
+                factor.append(1 - (nDst - i + 2) / 100)
             else:
                 factor.append(1)
         factor = np.asarray(factor)
     else:
         factor = np.ones((1, nDst))[0]
-    return (nItemsDst/np.sum(nItemsDst) + nFilteredDSt/np.sum(nFilteredDSt)) * factor * 0.5 * (truck["length"] * truck["width"])
+    return (nItemsDst / np.sum(nItemsDst) + nFilteredDSt / np.sum(nFilteredDSt)) * factor * 0.5 * (
+                truck["length"] * truck["width"])
 
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------
@@ -172,14 +174,32 @@ def getTruckBLF(truck):
 
 # This function returns the spacial Bottom-Right-Front of the item.
 def getTruckBRF(truck):
+    """
+    This function gets the spatial coordinates of the Bottom Right Front of a truck.
+
+    :param truck: truck object.
+    :return: ndarray representing the spatial coordinates of truck's BRF.
+    """
     return np.array([truck["width"], 0, 0])
 
 
 # This function returns the spacial Bottom-Right-Rear of the item.
 def getTruckBRR(truck):
+    """
+    This function gets the spatial coordinates of the Bottom Right Rear of a truck.
+
+    :param truck: truck object.
+    :return: ndarray representing the spatial coordinates of truck's BRR.
+    """
     return np.array([truck["width"], 0, truck["length"]])
 
 
 # This function returns the spacial Bottom-Left-Rear of the item.
 def getTruckBLR(truck):
+    """
+    This function gets the spatial coordinates of the Bottom Left Rear of a truck.
+
+    :param truck: truck object.
+    :return: ndarray representing the spatial coordinates of truck's BLR.
+    """
     return np.array([0, 0, truck["length"]])

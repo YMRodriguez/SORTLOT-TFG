@@ -1,10 +1,10 @@
 import pandas as pd
 
 
-# TODO, may want to include priority by customer.
 def solutionStatistics(solution):
     """
     This function returns main statistics for a solution.
+
     :param solution: solution object.
     :return: Object of stats.
     """
@@ -26,13 +26,3 @@ def solutionStatistics(solution):
             "used_volume": float(placed.volume.sum() / solution["truck"]["volume"]),
             "used_weight": float(placed.weight.sum() / solution["truck"]["tonnage"])
             }
-
-
-def scenarioStatistics(solutionsStatistics):
-    """
-    This function computes a set of unfiltered solutions statistics and return some
-    insights on them.
-    :param solutionsStatistics:
-    :return: Object with statistics.
-    """
-    return
