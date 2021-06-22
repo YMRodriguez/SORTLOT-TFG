@@ -122,7 +122,7 @@ def serializeSolutions(sols):
 # ------ Common variables ----------
 iterations = 360
 
-for i in range(1):
+for i in range(5,6):
     # ------ Get packets dataset -------
     ID = i
     items, ndst = getDataFromJSONWith(ID)
