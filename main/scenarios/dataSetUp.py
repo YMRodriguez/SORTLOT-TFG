@@ -2,14 +2,15 @@ import gmaps
 import googlemaps
 import pandas as pd
 import pymongo
+from main.scenarios.config import *
 
 # ----------------------- GCloud configuration ----------------------
-API_KEY = "AIzaSyCnCXg1vN3cOhY2cGPtC-tCkwbrrjUu6-Y"
+API_KEY = GC_APIKEY
 gmaps.configure(api_key=API_KEY)
 gmaps_services = googlemaps.Client(key=API_KEY)
 
 
-# ---------------------- WhareHouses Configuration -----------------
+# ---------------------- WareHouses Configuration -----------------
 # Auxiliar function
 def getFirstIfExists(response):
     if response:
@@ -18,7 +19,7 @@ def getFirstIfExists(response):
         return ""
 
 
-wharehouses_titles = """Polígono Industrial de la Pedrosa
+warehouses_titles = """Polígono Industrial de la Pedrosa
 Polígono Industrial Táctica
 Polígono Industrial Camposol
 Poligono Industrial La Negrilla
@@ -36,27 +37,27 @@ Baleària Palma
 Baleària Ceuta
 Baleària Melilla""".split("\n")
 
-wharehouses = []
-for i in wharehouses_titles:
-    wharehouse_geolocation = gmaps_services.geocode(i + ", España")
+warehouses = []
+for i in warehouses_titles:
+    warehouse_geolocation = gmaps_services.geocode(i + ", España")
     failed_to_geolocate = []
-    if len(wharehouse_geolocation) > 0:
-        wharehouse_geolocation = wharehouse_geolocation[0]
-        wharehouse = {"name": i}
+    if len(warehouse_geolocation) > 0:
+        warehouse_geolocation = warehouse_geolocation[0]
+        warehouse = {"name": i}
         try:
-            wharehouse["location"] = (wharehouse_geolocation["geometry"]["location"]["lat"],
-                                      wharehouse_geolocation["geometry"]["location"]["lng"])
-            wharehouse["postal_code"] = getFirstIfExists(
-                [x["long_name"] for x in wharehouse_geolocation["address_components"] if "postal_code" in x["types"]])
-            wharehouse["city"] = getFirstIfExists(
-                [x["long_name"] for x in wharehouse_geolocation["address_components"] if "locality" in x["types"]])
-            wharehouse["province"] = getFirstIfExists(
-                [x["long_name"] for x in wharehouse_geolocation["address_components"] if
+            warehouse["location"] = (warehouse_geolocation["geometry"]["location"]["lat"],
+                                      warehouse_geolocation["geometry"]["location"]["lng"])
+            warehouse["postal_code"] = getFirstIfExists(
+                [x["long_name"] for x in warehouse_geolocation["address_components"] if "postal_code" in x["types"]])
+            warehouse["city"] = getFirstIfExists(
+                [x["long_name"] for x in warehouse_geolocation["address_components"] if "locality" in x["types"]])
+            warehouse["province"] = getFirstIfExists(
+                [x["long_name"] for x in warehouse_geolocation["address_components"] if
                  "administrative_area_level_2" in x["types"]])
-            wharehouse["community"] = getFirstIfExists(
-                [x["long_name"] for x in wharehouse_geolocation["address_components"] if
+            warehouse["community"] = getFirstIfExists(
+                [x["long_name"] for x in warehouse_geolocation["address_components"] if
                  "administrative_area_level_1" in x["types"]])
-            wharehouses.append(wharehouse)
+            warehouses.append(warehouse)
         except:
             print("Fail in " + i)
     else:
@@ -86,17 +87,18 @@ trucks_to_db = trucks_dataset.to_dict(orient='records')
 
 # -------- Store common data in mongoDB ------------------------------
 
-myclient = pymongo.MongoClient("mongodb://localhost:27017/",
-                               username="mongoadmin",
-                               password="admin")
+# Connect to database - Just important for the author
+myclient = pymongo.MongoClient(mongoData["path"],
+                               mongoData["username"],
+                               mongoData["password"])
 
 # Creamos la base de datos
 db = myclient['SpainVRP']
 
 # Creamos las colecciones dentro de la base de datos
-wharehouses_col = db['wharehouses']
+warehouses_col = db['warehouses']
 trucks_col = db['trucks']
 packets_col = db['packets']
 
-wharehouses_col.insert_many(wharehouses)
+warehouses_col.insert_many(warehouses)
 trucks_col.insert_many(trucks_to_db)

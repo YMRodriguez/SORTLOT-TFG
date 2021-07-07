@@ -2,6 +2,7 @@ import random
 import pymongo
 import json
 import pandas as pd
+from main.scenarios.config import *
 
 # ----------------------- General variables -----------------------
 ID = 18
@@ -16,10 +17,10 @@ breakTrig = 1
 subgrouping = 0
 
 # ----------------------- MongoDB extraction ----------------------
-# Connect to database
-myclient = pymongo.MongoClient("mongodb://localhost:27017/",
-                               username="mongoadmin",
-                               password="admin")
+# Connect to database - Just important for the author
+myclient = pymongo.MongoClient(mongoData["path"],
+                               mongoData["username"],
+                               mongoData["password"])
 db = myclient['SpainVRP']
 warehouses_col = db['wharehouses']
 trucks_col = db['trucks']
@@ -92,7 +93,7 @@ def generatePacketsDataset(difDimensions, nPackets, minDim, maxDim, destinations
     :param difDimensions: distinct dimensions.
     :param nPackets: number of packets to be generated.
     :param minDim: minimum W/H/L value in centimetres.
-    :param maxDimensions: maximum [W, H, L] in centimetres.
+    :param maxDim: maximum [W, H, L] in centimetres.
     :param destinations: list of destinations names.
     :param source: name of the source
     :param ADR: True if dangerous in set, False otherwise.

@@ -6,49 +6,88 @@ from scipy.spatial import distance
 import random
 import numpy as np
 import math
-import time
 
 np.set_printoptions(suppress=True)
 
 
 # --------------------- Weight Limit - C1 -------------------------------------------------------------
-# This function returns if adding an item does not satisfy weight limit
 def isWeightExceeded(placedItems, newItem, truck):
+    """
+    This function checks is the weight allowed by the container has been exceeded.
+
+    :param placedItems: set of items already placed in the truck.
+    :param newItem: new item to be placed.
+    :param truck: truck or container with weight limit.
+    :return: True is the weight has been exceeded, False otherwise.
+    """
     return sum(list(map(lambda x: x["weight"], placedItems))) + newItem["weight"] > truck["tonnage"]
 
 
 # ----------------- Weight Distribution and load balancing - C2 --------------------------------------
-# This function gets subzone length.
 def getSubzoneLength(subzones):
+    """
+    Get subzone length supposing they are all equal.
+
+    """
     return subzones[0]["brr"][2]
 
 
-# This function returns the subzones of a truck.
 def getContainerSubzones(truck):
+    """
+    Getter for the truck subzones.
+
+    :param truck: truck or container which has subzones.
+    :return: subzones object.
+    """
     return truck["subzones"]
 
 
-# This function returns a list with the subzones the item is in.
 def getItemSubzones(item):
+    """
+    Getter for the subzones an item is in.
+
+    :param item: item object.
+    :return: subzones object.
+    """
     return list(map(lambda x: x[0], item["subzones"]))
 
 
-# This function returns the percentage of the item for a specified subzone.
 def getPercentageOutSubzone(itemBRRz, subzoneBRRz, itemLength):
+    """
+    Gets the percentage of the base area of the item that is out of the subzone in which it was inserted.
+
+    :param itemBRRz: z-coordinate of the item BRR corner.
+    :param subzoneBRRz: z-coordinate of the subzone BRR corner.
+    :param itemLength: item length.
+    :return: percentage of the area out of the subzone.
+    """
     return (itemBRRz - subzoneBRRz) / itemLength
 
 
-# This function returns the amount of subzones needed to fit the part of the item out of its initial zone.
 def getNeededExtraSubzonesForItem(subzonesLength, itemLength, outSubzone):
+    """
+    Gets the number of subzones needed to fit the part of the item out of its BLF insertion subzone.
+
+    :param subzonesLength: length of the subzones of the truck.
+    :param itemLength: length of the item.
+    :param outSubzone: percentage of the base area of the item that is out of the subzone in which it was inserted.
+    :return: number of needed extra subzones.
+    """
     # Percentage * length(m)
     outzoneItemLength = outSubzone * itemLength
     return outzoneItemLength / subzonesLength
 
 
-# This function sets in which zones is the item, for those, it returns an array with the id and the percentage of the base in.
-# Example 1: item in one zone then [id_zone, percentageIn(1)]
-# Example 2: item in two zones then [[id_zone1, p], [id_zone2, (1-p)] ]
 def setItemSubzones(subzones, item):
+    """
+    This function sets in which zones is the item, for those, it returns an array with the id and the percentage of the base in.
+    - Example 1: item in one zone then [id_zone, percentageIn(1)]
+    - Example 2: item in two zones then [[id_zone1, p], [id_zone2, (1-p)] ]
+
+    :param subzones: the subzones of the truck.
+    :param item: item object.
+    :return: item object with subzones added.
+    """
     item_blf_z = getBLF(item)[2]
     item_brr_z = getBRR(item)[2]
     # TODO, this may go inside the for block if the length of the subzones is not equal.
@@ -63,7 +102,7 @@ def setItemSubzones(subzones, item):
         elif subzones[i]["blf"][2] <= item_blf_z < subzones[i]["brr"][2]:
             # Percentage of item base out of subzone in which was inserted.
             outSubzone = getPercentageOutSubzone(item_brr_z, subzones[i]["brr"][2], item["length"])
-            # Decimal number.
+            # Decimal number with the needed extra subzones.
             neededExtraSubzonesForItem = getNeededExtraSubzonesForItem(subzonesLength, item["length"], outSubzone)
             # First subzone the item is in.
             itemSubzones = [[subzones[i]["id"], 1 - outSubzone]]
@@ -83,22 +122,32 @@ def setItemSubzones(subzones, item):
     return item
 
 
-# This function calculates the weight contribution of an object which has the contactArea for each subzone.
-# Input Item Subzone Format: item["subzones"]=[[id_subzone, percentageIn, contactAreaIn],...]
-# Output Item Subzone Format: item["subzones"]=[[id_subzone, percentageIn, contactAreaIn, weightIn],...]
 def addWeightContributionTo(item):
+    """
+    This function adds the weight contribution of an item for each of the subzones the item is at.
+    - Input Item Subzone Format: item["subzones"]=[[id_subzone, percentageIn, contactAreaIn],...]
+
+    :param item: item object.
+    :return: Output Item Subzone Format: item["subzones"]=[[id_subzone, percentageIn, contactAreaIn, weightIn],...]
+
+    """
     itemSubzones = item["subzones"].tolist()
     bottomPlaneArea = getBottomPlaneArea(item)
     for i in itemSubzones:
-        # WeightContributionInSubzone = (contactAreaIn/totalArea) * weight
         # Is not the same the contactAreaIn than the percentage because not all the percentage may be supported nor in contact.
         i.append((i[2] / bottomPlaneArea) * item["weight"])
     item["subzones"] = np.asarray(itemSubzones)
     return item
 
 
-# This function adds the item weight to the global truck weight and to each subzone.
 def addItemWeightToTruckSubzones(itemSubzones, truck):
+    """
+    This function adds the item weight to the global truck weight and its respective subzones.
+
+    :param itemSubzones: inserted item subzones object.
+    :param truck: truck object.
+    :return: modified truck.
+    """
     for j in truck["subzones"]:
         for i in itemSubzones:
             if i[0] == j["id"]:
@@ -106,11 +155,16 @@ def addItemWeightToTruckSubzones(itemSubzones, truck):
     return truck
 
 
-# This function returns a ndarray with the modified item and true if not any weight limit of a subzone is exceeded, false otherwise.
-# If the item is in the floor the weight contribution is direct to a subzone.
-# If the item is on top of others the weight contribution to a subzone is proportional to the bottom Plane in contact of the item.
-# Output Format: [condition, item]
-def itemContributionExceedsSubzonesWeightLimit(item, truckSubzones):
+def itemContributionNotExceedingSubzonesWeightLimit(item, truckSubzones):
+    """
+    Checks if the weight contribution of a item in the subzones is on, exceeds their weight limits.
+
+    :param item: item object.
+    :param truckSubzones: truck subzones object.
+    :return: ndarray with format [condition, item], where the condition is True if the contribution
+    does not exceed the weight limits and False otherwise. The item is returned because it is modified
+    with its contribution of weight broken down for each subzone.
+    """
     # This list stores the state of the condition for each subzone.
     weightNotExceeded = []
     # Once known the contribution area(contactAreaIn), supposing an homogeneous density, calculate the weight contribution.
@@ -304,6 +358,14 @@ def isNotOverlapping(item, placedItems):
 
 
 def physicalConstrains(placedItems, item, truck):
+    """
+    Checks whether the physical constraints are satisfied.
+
+    :param placedItems: list of already packed items.
+    :param item: item object.
+    :param truck: truck object.
+    :return: True if they are all satisfied, false otherwise.
+    """
     return not isWeightExceeded(placedItems, item, truck) \
            and isWithinTruckDimensionsConstrains(item, {"width": truck["width"], "height": truck["height"],
                                                         "length": truck["length"]}) \
@@ -326,7 +388,7 @@ def isFeasible(potentialPoint, placedItems, newItem, minDim, truck, stage):
         # Checks if it is stable and stackable.
         if i3WithCondition[0][0] and isStackable(item, placedItems):
             # Way of keeping the modified object and if the condition state.
-            i4WithCondition = itemContributionExceedsSubzonesWeightLimit(i3WithCondition[0][1], truckSubzones)
+            i4WithCondition = itemContributionNotExceedingSubzonesWeightLimit(i3WithCondition[0][1], truckSubzones)
             if i4WithCondition[0][0]:
                 return np.array([[1, i4WithCondition[0][1]]])
             else:
@@ -353,7 +415,7 @@ def feasibleInStage0(potentialPoint, placedItems, newItem, currentAreas, maxArea
             # Checks if it is stable and stackable.
             if i3WithCondition[0][0]:
                 # Way of keeping the modified object and if the condition state.
-                i4WithCondition = itemContributionExceedsSubzonesWeightLimit(i3WithCondition[0][1], truckSubzones)
+                i4WithCondition = itemContributionNotExceedingSubzonesWeightLimit(i3WithCondition[0][1], truckSubzones)
                 if i4WithCondition[0][0]:
                     return np.array([[1, i4WithCondition[0][1]]])
                 else:
@@ -394,8 +456,8 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
     fitWeights = [[0.45, 0.45, 0.05, 0.05],
                   [0.3, 0.5, 0.1, 0.1],
                   [0.15, 0.6, 0.15, 0.1]] if nDst > 1 else [[0.4, 0.0, 0.3, 0.3],
-                                                          [0.5, 0.0, 0.3, 0.2],
-                                                          [0.5, 0.0, 0.3, 0.2]]
+                                                            [0.5, 0.0, 0.3, 0.2],
+                                                            [0.5, 0.0, 0.3, 0.2]]
     # Take the weights of the stage.
     stageFW = fitWeights[stage - 1]
     # Length condition in the fitness function.
@@ -510,7 +572,8 @@ def projectPPOverlapped(item, potentialPoints, placedItems):
     :param placedItems: list of placed items.
     :return: list of potential points projected.
     """
-    potentialPointsOverlapped = list(filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints.tolist()))
+    potentialPointsOverlapped = list(
+        filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints.tolist()))
     newPotentialPoints = list(filter(lambda x: x not in potentialPointsOverlapped, deepcopy(potentialPoints.tolist())))
     for p in potentialPointsOverlapped:
         ppOut = list(map(lambda x: list(filter(lambda y: all(y == p), x["pp_out"])), placedItems))
@@ -565,7 +628,7 @@ def fillListStage0(candidateList, potentialPoints, truck, nDst, minDim, placedIt
     filteredCandidates = []
     for d in list(range(nDst)):
         filteredCandidates = filteredCandidates + list(
-            filter(lambda x: x["dst_code"] == d and x["weight"] >= avgGeneral*0.5, candidateList))
+            filter(lambda x: x["dst_code"] == d and x["weight"] >= avgGeneral * 0.5, candidateList))
     # Count amount of filtered for each destination.
     nFilteredDst = list(
         map(lambda x: len(list(filter(lambda y: y["dst_code"] == x, filteredCandidates))), list(range(nDst))))
@@ -602,7 +665,8 @@ def fillListStage0(candidateList, potentialPoints, truck, nDst, minDim, placedIt
             if not pp[1]:
                 for i in candidateList:
                     # Pick one random orientation apart from the current.
-                    orientations = [i["orientation"], random.choice([o for o in i["f_orient"] if o != i["orientation"]])]
+                    orientations = [i["orientation"],
+                                    random.choice([o for o in i["f_orient"] if o != i["orientation"]])]
                     for o in orientations:
                         if o != i["orientation"]:
                             i = changeItemOrientation(i, [o])
@@ -703,6 +767,13 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
 
 
 def createAndProjectNewPPs(placedItems, potentialPoints):
+    """
+    This function creates new potential points and projects the overlapped ones.
+
+    :param placedItems: set of placed items that 
+    :param potentialPoints:
+    :return:
+    """
     potentialPoints = potentialPoints.tolist()
     for p in potentialPoints:
         if not p[1]:
@@ -730,39 +801,38 @@ def createAndProjectNewPPs(placedItems, potentialPoints):
     return np.asarray(potentialPoints)
 
 
-# This function is the main function of the module M2_2
 def main_cp(truck, candidateList, nDst):
     potentialPoints = truck["pp"]
     minDim = getMinDim(candidateList)
     stage = 0
-#    startTime0 = time.time()
+    #    startTime0 = time.time()
     filling0 = fillListStage0(candidateList, potentialPoints, truck, nDst, minDim, [])
-#    print("Time stage " + str(time.time() - startTime0))
-#    print(len(filling0["placed"]))
+    #    print("Time stage " + str(time.time() - startTime0))
+    #    print(len(filling0["placed"]))
 
     stage = stage + 1
-#    startTime1 = time.time()
+    #    startTime1 = time.time()
     filling1 = fillList(sortingRefillingPhase(filling0["discard"], nDst),
                         np.unique(filling0["potentialPoints"], axis=0), truck, 0, stage,
                         nDst, getMinDim(filling0["discard"]), filling0["placed"])
-#    print("Time stage " + str(time.time() - startTime1))
+    #    print("Time stage " + str(time.time() - startTime1))
     newPPs = createAndProjectNewPPs(filling1["placed"], filling1["potentialPoints"])
     stage = stage + 1
-#    startTime2 = time.time()
-#    print(len(filling1["placed"]))
+    #    startTime2 = time.time()
+    #    print(len(filling1["placed"]))
     filling = fillList(filling1["discard"],
-                        np.unique(newPPs, axis=0),
-                        filling1["truck"], 1, stage, nDst,
-                        getMinDim(filling1["discard"]), filling1["placed"])
-#    print("Time stage " + str(time.time() - startTime2))
+                       np.unique(newPPs, axis=0),
+                       filling1["truck"], 1, stage, nDst,
+                       getMinDim(filling1["discard"]), filling1["placed"])
+    #    print("Time stage " + str(time.time() - startTime2))
     stage = stage + 1
-#    startTime3 = time.time()
-#    print(len(filling["placed"]))
+    #    startTime3 = time.time()
+    #    print(len(filling["placed"]))
     if len(candidateList) < 300:
         filling = fillList(filling["discard"],
-                            np.unique(filling["potentialPoints"], axis=0),
-                            filling["truck"], 1, stage, nDst,
-                            getMinDim(filling["discard"]), filling["placed"])
-#    print(len(filling["placed"]))
-#    print("Time stage " + str(time.time() - startTime3))
+                           np.unique(filling["potentialPoints"], axis=0),
+                           filling["truck"], 1, stage, nDst,
+                           getMinDim(filling["discard"]), filling["placed"])
+    #    print(len(filling["placed"]))
+    #    print("Time stage " + str(time.time() - startTime3))
     return filling
