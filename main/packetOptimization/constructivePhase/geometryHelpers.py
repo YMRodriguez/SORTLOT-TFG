@@ -1,10 +1,23 @@
+"""
+author: Yamil Mateo Rodríguez
+university: Universidad Politécnica de Madrid
+"""
+
 import numpy as np
 from main.packetAdapter.helpers import changeItemOrientation
 
 
 # --------------------------------- Item geometric helpers -----------------------------------
-# This function adds the spacial center of mass to a packet solution inserted in a PP
 def setItemMassCenter(item, potentialPoint, truckWidth, minDim):
+    """
+    This function adds the spatial center of mass to a packet solution inserted in a PP.
+
+    :param item: object representing a packet.
+    :param potentialPoint: point in cartesian coordinates in which is inserted the packet.
+    :param truckWidth: the width of the truck.
+    :param minDim: minimum dimension that there is in the rest of the packets 
+    :return:
+    """
     if truckWidth - minDim <= potentialPoint[0] <= truckWidth:
         item["mass_center"] = potentialPoint + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
     else:
@@ -12,70 +25,136 @@ def setItemMassCenter(item, potentialPoint, truckWidth, minDim):
     return item
 
 
-# This function returns if an item is in the floor.
 def isInFloor(item):
+    """
+    This function checks if an item is in the floor.
+
+    :param item: object representing the item.
+    :return: True if the item is in the floor, False otherwise.
+    """
     if item["mass_center"][1] - item["height"] / 2 == 0:
         return True
     return False
 
 
-# This function returns the spacial Bottom-Left-Front of the item.
 def getBLF(item):
+    """
+    This function gets the spatial Bottom-Left-Front corner of the item.
+
+    :param item: object representing the item.
+    :return: The cartesian coordinates of the corner.
+    """
     return item["mass_center"] - np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
 
 
-# This function returns the spacial Bottom-Right-Front of the item.
 def getBRF(item):
+    """
+    This function gets the spatial Bottom-Right-Front corner of the item.
+
+    :param item: object representing the item.
+    :return: The cartesian coordinates of the corner.
+    """
     return item["mass_center"] - np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
 
 
-# This function returns the spacial Bottom-Right-Rear of the item.
 def getBRR(item):
+    """
+    This function gets the spatial Bottom-Right-Rear corner of the item.
+
+    :param item: object representing the item.
+    :return: The cartesian coordinates of the corner.
+    """
     return item["mass_center"] + np.array([item["width"] / 2, -item["height"] / 2, item["length"] / 2])
 
 
-# This function returns the spacial Bottom-Left-Rear of the item.
 def getBLR(item):
+    """
+    This function gets the spatial Bottom-Left-Rear corner of the item.
+
+    :param item: object representing the item.
+    :return: The cartesian coordinates of the corner.
+    """
     return item["mass_center"] + np.array([-item["width"] / 2, -item["height"] / 2, item["length"] / 2])
 
 
-# This function return the spacial Top-Left-Front of the item.
 def getTLF(item):
+    """
+    This function gets the spatial Top-Left-Front corner of the item.
+
+    :param item: object representing the item.
+    :return: The cartesian coordinates of the corner.
+    """
     return item["mass_center"] - np.array([item["width"] / 2, -item["height"] / 2, item["length"] / 2])
 
 
-# This function returns the spacial Top-Right-Front of the item.
 def getTRF(item):
+    """
+    This function gets the spatial Top-Right-Front corner of the item.
+
+    :param item: object representing the item.
+    :return: The cartesian coordinates of the corner.
+    """
     return item["mass_center"] + np.array([item["width"] / 2, item["height"] / 2, -item["length"] / 2])
 
 
-# This function return the spacial Top-Right-Rear of the item.
 def getTRR(item):
+    """
+    This function gets the spatial Top-Right-Rear corner of the item.
+
+    :param item: object representing the item.
+    :return: The cartesian coordinates of the corner.
+    """
     return item["mass_center"] + np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
 
 
-# This function returns the spacial Top-Left-Rear of the item.
 def getTLR(item):
+    """
+    This function gets the spatial Top-Left-Rear corner of the item.
+
+    :param item: object representing the item.
+    :return: The cartesian coordinates of the corner.
+    """
     return item["mass_center"] + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
 
 
-# This function returns the height of the bottom Plane of an item.
 def getBottomPlaneHeight(item):
+    """
+    This function gets the height of the bottom plane of an item.
+
+    :param item: object representing the item.
+    :return: Height in metres.
+    """
     return (item["mass_center"][1] - np.array([item["height"] / 2]))[0]
 
 
-# This function returns the height(y-axis) of the top Plane of an item.
 def getTopPlaneHeight(item):
+    """
+    This function gets the height of the top planes of an item.
+
+    :param item: object representing the item.
+    :return: Height in metres.
+    """
     return (item["mass_center"][1] + np.array([item["height"] / 2]))[0]
 
 
-# This function returns the area(m2) of the base face of an item.
 def getBottomPlaneArea(item):
+    """
+    This function gets the bottom plane's item area.
+
+    :param item: object representing the item.
+    :return: area in square metres.
+    """
     return item["length"] * item["width"]
 
 
-# This function returns the intersection area(m2) between two items in Plane x(width), z(length).
 def getIntersectionArea(i1, i2):
+    """
+    This function returns the intersection between two items in planes X(width) and Z(length).
+
+    :param i1: object representing the first item.
+    :param i2: object representing the second item.
+    :return: intersection area in square metres.
+    """
     dx = min(getBRR(i1)[0], getBRR(i2)[0]) - max(getBLF(i1)[0], getBLF(i2)[0])
     dz = min(getBRR(i1)[2], getBRR(i2)[2]) - max(getBLF(i1)[2], getBLF(i2)[2])
     if (dx >= 0) and (dz >= 0):
@@ -113,14 +192,26 @@ def getPlanesFor(item):
            np.array([blf[2], blf[0], item["length"], item["width"]])
 
 
-# This function returns True if the point is inside the Plane for the same y-axis value.
-# PlaneLF/RR could be both the bottom and top Plane of an item.
 def pointInPlane(point, planeLF, planeRR):
+    """
+    This function checks if a point is inside a plane.
+
+    :param point: cartesian point to be checked.
+    :param planeLF: cartesian left front point of the plane.
+    :param planeRR: cartesian right rear point of the plane.
+    :return: True if the point is into plane, False otherwise.
+    """
     return planeRR[0] + 0.001 >= point[0] >= planeLF[0] - 0.001 and planeRR[2] + 0.001 >= point[2] >= planeLF[2] - 0.001
 
 
-# This function returns the projection in y-axis over the nearest item top plane for a point.
 def getNearestProjectionPointFor(point, placedItems):
+    """
+    This function projects a potential point onto the nearest item top plane along the y-axis.
+
+    :param point: the cartesian point to be projected.
+    :param placedItems: dictionary of placed packets.
+    :return: cartesian coordinates of the projected points.
+    """
     # Reduce the scope to those items whose top or bottom plane contains the point in (x,z)-axis.
     pointIntoPlaneItems = list(filter(lambda x: pointInPlane(point, getBLF(x), getBRR(x)), placedItems))
     # Sort and get the item with the nearest y-axis value.
@@ -146,6 +237,10 @@ def generateMaxArea(nItemsDst, nFilteredDSt, truck, nDst):
     """
     This function calculates the maximum area of the container for each destination.
 
+    :param nDst:
+    :param truck:
+    :param nFilteredDSt:
+    :param nItemsDst:
     :return: ndarray with max area for each destination.
     """
     nItemsDst = np.asarray(nItemsDst)
@@ -172,7 +267,6 @@ def getTruckBLF(truck):
     return np.array([0, 0, 0])
 
 
-# This function returns the spacial Bottom-Right-Front of the item.
 def getTruckBRF(truck):
     """
     This function gets the spatial coordinates of the Bottom Right Front of a truck.
@@ -183,7 +277,6 @@ def getTruckBRF(truck):
     return np.array([truck["width"], 0, 0])
 
 
-# This function returns the spacial Bottom-Right-Rear of the item.
 def getTruckBRR(truck):
     """
     This function gets the spatial coordinates of the Bottom Right Rear of a truck.
@@ -194,7 +287,6 @@ def getTruckBRR(truck):
     return np.array([truck["width"], 0, truck["length"]])
 
 
-# This function returns the spacial Bottom-Left-Rear of the item.
 def getTruckBLR(truck):
     """
     This function gets the spatial coordinates of the Bottom Left Rear of a truck.

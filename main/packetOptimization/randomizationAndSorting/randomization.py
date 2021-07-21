@@ -1,3 +1,8 @@
+"""
+author: Yamil Mateo Rodríguez
+university: Universidad Politécnica de Madrid
+"""
+
 import random
 from main.packetAdapter.helpers import getMaxPriority
 

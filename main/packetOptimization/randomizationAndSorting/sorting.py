@@ -1,48 +1,72 @@
+"""
+author: Yamil Mateo Rodríguez
+university: Universidad Politécnica de Madrid
+"""
+
 from main.packetAdapter.helpers import *
 
 
 # -------------- Types -----------------------------------------
-# This function will sort by decreasing taxability
-def taxSorting(items):
-    return {"sort_type": "tax", "solution": sorted(items, key=lambda x: x["taxability"], reverse=True)}
 
+def mainSortByFitness(items, maxWeight, maxVol, maxPrio, nDst):
+    """
+    This function sorts items according to a fitness function.
 
-# This function will sort by decreasing priority level
-def prioritySorting(items):
-    return {"sort_type": "prior", "solution": sorted(items, key=lambda x: x["priority"], reverse=True)}
-
-
-# This function will sort by decreasing customer code
-# TODO, no confundir dst_code con el costumer_code para una ruta dada
-def customerSorting(items):
-    return {"sort_type": "cust", "solution": sorted(items, key=lambda x: x["dst_code"])}
-
-
-# This function returns sorted items by a fitness function designed for the main sorting phase
-def mainSortByFitnessPrime(items, maxWeight, maxVol, maxPrio, nDst):
+    :param items: dictionary of objects representing the packets.
+    :param maxWeight: maximum weight of the cargo.
+    :param maxVol: maximum volume of the cargo.
+    :param maxPrio: maximum priority of the cargo.
+    :param nDst: number of destinations of the cargo.
+    :return: sorted set of packets.
+    """
     fitweights = [0.35, 0.4, 0.25] if maxPrio else [0.5, 0.5, 0]
     return sorted(items, key=lambda x: (((x["volume"] / maxVol) * fitweights[0] + (x[
-        "weight"] / maxWeight) * fitweights[1] + (x["priority"] / max(maxPrio, 1)) * fitweights[2]) + (nDst - x["dst_code"])), reverse=True)
+                                                                                       "weight"] / maxWeight) *
+                                         fitweights[1] + (x["priority"] / max(maxPrio, 1)) * fitweights[2]) + (
+                                                    nDst - x["dst_code"])), reverse=True)
 
 
 # This function returns sorted items based on a fitness function.
 def refillingSortByFitness(items, maxWeight, maxPrio, maxVol, nDst):
+    """
+    This function sorts in the refilling phase according to a fitness function.
+
+    :param items: dictionary of objects representing the packets.
+    :param maxWeight: maximum weight of the cargo.
+    :param maxVol: maximum volume of the cargo.
+    :param maxPrio: maximum priority of the cargo.
+    :param nDst: number of destinations of the cargo.
+    :return: sorted set of packets.
+    """
     fitweights = [0.25, 0.35, 0.4] if maxPrio else [0.5, 0.5, 0]
     return sorted(items, key=lambda x: (((x["volume"] / maxVol) + fitweights[0] +
-                                        (x["weight"] / maxWeight) * fitweights[1] +
-                                        (x["priority"]/max(maxPrio, 1)) * fitweights[2]) + (nDst - x["dst_code"])), reverse=True)
+                                         (x["weight"] / maxWeight) * fitweights[1] +
+                                         (x["priority"] / max(maxPrio, 1)) * fitweights[2]) + (nDst - x["dst_code"])),
+                  reverse=True)
 
 
 # ----------- Main functions ----------------------------------
-# This function is in charge of sorting the packets choosing the sorting method randomly.
-def sortingPhasePrime(items, nDst):
-    return mainSortByFitnessPrime(items, getMaxWeight(items),
-                                  getMaxVolume(items),
-                                  getMaxPriority(items), nDst)
+def sortingPhase(items, nDst):
+    """
+    This function handles the sorting phase.
+
+    :param items: dictionary of objects representing the packets.
+    :param nDst: number of destinations of the cargo.
+    :return: sorted set of packets.
+    """
+    return mainSortByFitness(items, getMaxWeight(items),
+                             getMaxVolume(items),
+                             getMaxPriority(items), nDst)
 
 
-# This function returns sorted by a fitness function in resorting process.
 def sortingRefillingPhase(items, nDst):
+    """
+    This function handles the second sorting phase.
+
+    :param items: dictionary of objects representing the packets.
+    :param nDst: number of destinations of the cargo.
+    :return: sorted set of packets.
+    """
     return refillingSortByFitness(items, getMaxWeight(items),
                                   getMaxPriority(items),
                                   getMaxVolume(items), nDst)

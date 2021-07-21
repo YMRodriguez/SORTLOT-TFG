@@ -266,23 +266,36 @@ def isStable(item, placedItems, stage):
 
 
 # ------------------ Physical constrains - Truck-related ----------------------------------------
-# This function returns True if the packet inserted in a potentialPoint does not exceed the length of the truck, False otherwise.
-def isWithinTruckLengthAux(item):
-    return item["lengthFitting"]
-
-
-# This function returns True if the packet inserted in a potentialPoint does not exceed the length of the truck, False otherwise.
 def isWithinTruckLength(item, truckLength):
+    """
+    This function checks whether an item is within truck's length in an insertion.
+
+    :param item: item object.
+    :param truckLength: truck/container length.
+    :return: True if within length, False otherwise.
+    """
     return getBRR(item)[2] <= truckLength
 
 
-# This function returns True if the packet inserted in a potentialPoint does not exceed the width of the truck, False otherwise.
 def isWithinTruckWidth(item, truckWidth):
+    """
+    This function checks whether an item is withing truck's width in an insertion.
+
+    :param item: item object.
+    :param truckWidth: truck/container width.
+    :return: True if within width, False otherwise.
+    """
     return getBRR(item)[0] <= truckWidth
 
 
-# This function returns True if the packet inserted in a potentialPoint does not exceed the height of the truck, False otherwise.
 def isWithinTruckHeight(item, truckHeight):
+    """
+    This function checks whether an item is withing truck's height in an insertion.
+
+    :param item: item object.
+    :param truckHeight: truck/container height.
+    :return: True if within height, False otherwise.
+    """
     return getTopPlaneHeight(item) <= truckHeight
 
 
@@ -304,8 +317,8 @@ def overlapper(p1all, p2all):
     """
     This function checks whether an item overlaps other or not.
 
-    :param p1all: tuple of 3 planes,
-    :param p2all:
+    :param p1all: triplet of 3 planes.
+    :param p2all: triplet of 3 planes.
     :return: True if the item overlaps the polyItem, False otherwise.
     """
     for i, j in zip(p1all, p2all):
@@ -374,9 +387,18 @@ def physicalConstrains(placedItems, item, truck):
 
 
 # --------------------- Helpers to the main module function -----------------------------------
-# This function checks if a potential point is feasible for placing the item, meaning it satisfies all the conditions.
-# Returns the state of feasibility condition and the item after processing it for all the constrains.
 def isFeasible(potentialPoint, placedItems, newItem, minDim, truck, stage):
+    """
+    This function checks if a potential point is feasible for the insertion of an item, meaning it satisfies all the conditions.
+
+    :param potentialPoint: list of cartesian points.
+    :param newItem: item object representing the packet to be inserted.
+    :param minDim: minimum size in any dimension (width, height, length) of any item of the cargo.
+    :param placedItems: list of items that have been already placed inside the container.
+    :param truck: truck object.
+    :param stage: packing stage of the algorithm.
+    :return: True if the item can be inserted in the potential point, False otherwise.
+    """
     item = setItemMassCenter(newItem, potentialPoint, truck["width"], minDim)
 
     # Conditions to be checked sequentially to improve performance.
@@ -400,10 +422,31 @@ def isFeasible(potentialPoint, placedItems, newItem, minDim, truck, stage):
 
 
 def areaConstraint(currentAreas, maxAreas, item):
+    """
+    This function checks if the assigned area of a destination is exceeded after an insertion of a new packet.
+
+    :param currentAreas: current area occupied for each destination.
+    :param maxAreas: maximum area allowed to a certain destination.
+    :param item: item object.
+    :return: True if current area after insertion does not exceed the maximum allowed.
+    """
     return currentAreas[0][item["dst_code"]] + getBottomPlaneArea(item) <= maxAreas[item["dst_code"]]
 
 
-def feasibleInStage0(potentialPoint, placedItems, newItem, currentAreas, maxAreas, minDim, truck):
+def feasibleInFillingBase(potentialPoint, placedItems, newItem, currentAreas, maxAreas, minDim, truck):
+    """
+    This function checks if a potential point is feasible for the insertion of an item, meaning it satisfies all the conditions.
+    During the base filling stage.
+
+    :param potentialPoint: list of cartesian points.
+    :param newItem: item object representing the packet to be inserted.
+    :param minDim: minimum size in any dimension (width, height, length) of any item of the cargo.
+    :param placedItems: list of items that have been already placed inside the container.
+    :param truck: truck object.
+    :param currentAreas: current area occupied for each destination.
+    :param maxAreas: maximum area allowed to a certain destination.
+    :return: True if feasible for insertion, False otherwise.
+    """
     item = setItemMassCenter(newItem, potentialPoint, truck["width"], minDim)
 
     if areaConstraint(currentAreas, maxAreas, item):
@@ -583,12 +626,22 @@ def projectPPOverlapped(item, potentialPoints, placedItems):
     return newPotentialPoints
 
 
-# This function creates a list of potential points generated after inserting an item.
-# Output format: [[TLF],[BLR],[BxF]]
 def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim, stage):
+    """
+    This function creates a list of potential points from an packet after its insertion. Depending on the
+    situation and the packet location it will generate the points including different corners.
+
+    :param item: item object.
+    :param truckHeight: truck/container height.
+    :param truckWidth: truck/container width.
+    :param minDim: minimum size in any dimension (width, height, length) of any item of the cargo.
+    :param placedItems: list of items that have been already placed inside the container.
+    :param stage: stage the packing is at.
+    :return: array of new potential points.
+    """
     # Add margin to z-coordinate.
     BLR = getBLR(item) + np.array([0, 0, 0.0015])
-    # BRR if x >= truckWidth - minDim aprox, BRF otherwise
+    # Logic: BRR if x >= truckWidth - minDim aprox, BRF otherwise
     BRF = getBRF(item) + np.array([0.0015, 0, 0])
     BRx = getBRR(item) + np.array([0, 0, 0.0015]) if BRF[0] >= truckWidth - minDim else BRF
     TLF = getTLF(item) + np.array([0, 0.0015, 0])
@@ -617,7 +670,18 @@ def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim, stage):
     return result
 
 
-def fillListStage0(candidateList, potentialPoints, truck, nDst, minDim, placedItems):
+def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems):
+    """
+    This function creates a solution from a list of packets and a given potential points in the base of the truck.
+
+    :param candidateList: list of items to be packed.
+    :param potentialPoints: list of cartesian points representing potential points.
+    :param truck: truck object.
+    :param nDst: number of destinations of the cargo.
+    :param minDim: minimum size in any dimension (width, height, length) of any item of the cargo.
+    :param placedItems: list of items that have been already placed inside the container.
+    :return: dictionary with the packed items, non-packed items, current state of the truck and not used potential points.
+    """
     # Fill number of items per destination.
     nItemDst = []
     for n in range(nDst):
@@ -672,7 +736,7 @@ def fillListStage0(candidateList, potentialPoints, truck, nDst, minDim, placedIt
                             i = changeItemOrientation(i, [o])
                         # Try to get the best PP for an item.
                         # [condition, item]
-                        feasibility = feasibleInStage0(pp, placedItems, i, currentAreas, maxAreas, minDim, truck)
+                        feasibility = feasibleInFillingBase(pp, placedItems, i, currentAreas, maxAreas, minDim, truck)
                         if feasibility[0][0]:
                             ppWithFitness = fitnessForStage0(pp, feasibility[0][1], truck, nDst, placedItems, maxWeight)
                             if isBetterPP(ppWithFitness, ppBest):
@@ -722,8 +786,21 @@ def fillListStage0(candidateList, potentialPoints, truck, nDst, minDim, placedIt
             "truck": truck, "potentialPoints": potentialPoints}
 
 
-# This function creates a solution from a list of packets and a given potential points
 def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, placedItems):
+    """
+    This function creates a solution from a list of packets and a given potential points above the first layer
+    base of items of the truck.
+
+    :param candidateList:
+    :param potentialPoints:
+    :param truck: truck object.
+    :param retry: binary condition to reorient each item in their insertion evaluation.
+    :param stage: number indicating the packing stage, options: [1, 2, 3]
+    :param nDst: number of destinations of the cargo.
+    :param minDim: minimum size in any dimension (width, height, length) of any item of the cargo.
+    :param placedItems: list of items that have been already placed inside the container.
+    :return: dictionary with the packed items, non-packed items, current state of the truck and not used potential points.
+    """
     discardList = []
     for i in candidateList:
         # Update average list excluding those items which have been already placed.
@@ -771,8 +848,8 @@ def createAndProjectNewPPs(placedItems, potentialPoints):
     This function creates new potential points and projects the overlapped ones.
 
     :param placedItems: set of placed items that 
-    :param potentialPoints:
-    :return:
+    :param potentialPoints: set of potential points from later phases.
+    :return: set of potential points with a projection in those that were overlapped.
     """
     potentialPoints = potentialPoints.tolist()
     for p in potentialPoints:
@@ -802,37 +879,59 @@ def createAndProjectNewPPs(placedItems, potentialPoints):
 
 
 def main_cp(truck, candidateList, nDst):
+    """
+    This function is the main part of the core of the solution builder.
+
+    :param truck: truck object.
+    :param candidateList: list of objects representing the cargo.
+    :param nDst: number of destinations in the cargo.
+    :return: dictionary with the packed items, non-packed items, current state of the truck and not used potential points.
+    """
+
     potentialPoints = truck["pp"]
     minDim = getMinDim(candidateList)
     stage = 0
     #    startTime0 = time.time()
-    filling0 = fillListStage0(candidateList, potentialPoints, truck, nDst, minDim, [])
+    fillingBase = fillListBase(candidateList, potentialPoints, truck, nDst, minDim, [])
+    # ----- DEBUG-INFO ------
     #    print("Time stage " + str(time.time() - startTime0))
-    #    print(len(filling0["placed"]))
+    #    print("Number of items packed after stage" + len(filling0["placed"]))
+    #    startTime1 = time.time()
+    # ----- DEBUG-INFO ------
 
     stage = stage + 1
-    #    startTime1 = time.time()
-    filling1 = fillList(sortingRefillingPhase(filling0["discard"], nDst),
-                        np.unique(filling0["potentialPoints"], axis=0), truck, 0, stage,
-                        nDst, getMinDim(filling0["discard"]), filling0["placed"])
+    fillingS1 = fillList(sortingRefillingPhase(fillingBase["discard"], nDst),
+                         np.unique(fillingBase["potentialPoints"], axis=0), truck, 0, stage,
+                         nDst, getMinDim(fillingBase["discard"]), fillingBase["placed"])
+    newPPs = createAndProjectNewPPs(fillingS1["placed"], fillingS1["potentialPoints"])
+    stage = stage + 1
+
+    # ----- DEBUG-INFO ------
     #    print("Time stage " + str(time.time() - startTime1))
-    newPPs = createAndProjectNewPPs(filling1["placed"], filling1["potentialPoints"])
-    stage = stage + 1
     #    startTime2 = time.time()
-    #    print(len(filling1["placed"]))
-    filling = fillList(filling1["discard"],
+    #    print("Number of items packed after stage" + len(filling1["placed"]))
+    # ----- DEBUG-INFO ------
+
+    filling = fillList(fillingS1["discard"],
                        np.unique(newPPs, axis=0),
-                       filling1["truck"], 1, stage, nDst,
-                       getMinDim(filling1["discard"]), filling1["placed"])
+                       fillingS1["truck"], 1, stage, nDst,
+                       getMinDim(fillingS1["discard"]), fillingS1["placed"])
+    # ----- DEBUG-INFO ------
     #    print("Time stage " + str(time.time() - startTime2))
-    stage = stage + 1
     #    startTime3 = time.time()
-    #    print(len(filling["placed"]))
+    #    print("Number of items packed after stage" + len(filling["placed"]))
+    # ----- DEBUG-INFO ------
+
+    stage = stage + 1
+
+    # Got to do a few more tests to check if this additional phase is really relevant.
     if len(candidateList) < 300:
         filling = fillList(filling["discard"],
                            np.unique(filling["potentialPoints"], axis=0),
                            filling["truck"], 1, stage, nDst,
                            getMinDim(filling["discard"]), filling["placed"])
-    #    print(len(filling["placed"]))
-    #    print("Time stage " + str(time.time() - startTime3))
+    # ----- DEBUG-INFO ------
+    #    print("Number of items packed after stage" + len(fillingSA["placed"]))
+    #    print("Stage time: " + str(time.time() - startTime3))
+    # ----- DEBUG-INFO ------
     return filling

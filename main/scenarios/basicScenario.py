@@ -1,11 +1,17 @@
+"""
+author: Yamil Mateo Rodríguez
+university: Universidad Politécnica de Madrid
+"""
+
 from joblib import Parallel, delayed, parallel_backend
 import json
 import time
+import sys
 from copy import deepcopy
 from main.truckAdapter.adapter import adaptTruck
 from main.packetAdapter.adapter import adaptPackets, cleanDestinationAndSource
 from main.packetOptimization.randomizationAndSorting.randomization import randomization
-from main.packetOptimization.randomizationAndSorting.sorting import sortingPhasePrime
+from main.packetOptimization.randomizationAndSorting.sorting import sortingPhase
 from main.packetOptimization.constructivePhase.mainCP import main_cp
 from main.statistics.main import solutionStatistics
 from main.solutionsFilter.main import filterSolutions, getBest, filterSolutionsWithoutExcluding
@@ -14,15 +20,6 @@ import glob
 import os
 
 # ----------------------- MongoDB extraction ----------------------
-# # Connect to database
-# myclient = pymongo.MongoClient("mongodb://localhost:27017/",
-#                                username="mongoadmin",
-#                                password="admin")
-# db = myclient['SpainVRP']
-# trucks_col = db['trucks']
-#
-# # Extract relevant data
-# truck_var = trucks_col.find_one()
 truck_var = json.load(open(os.path.dirname(__file__) + "/packetsDatasets/truckvar.json"))
 
 
@@ -48,7 +45,7 @@ def main_scenario(packets, truck, nDst, nIteration, rangeOrientations=None):
     packets = adaptPackets(cleanDestinationAndSource(packets), 333)
     # ------ Truck adaptation ------
     truck = adaptTruck(truck, 4)
-    sort_output = sortingPhasePrime(packets, nDst)
+    sort_output = sortingPhase(packets, nDst)
     rand_output = randomization(deepcopy(sort_output))
     # ------- Solution builder --------
     startTime = time.time()
@@ -66,10 +63,10 @@ def main_scenario(packets, truck, nDst, nIteration, rangeOrientations=None):
 
 
 # ------------------ Translation of nested ndarrays -------------------
-# TODO, this may go into a process data module which will be needed when implementing flask.
 def serializePlacedItem(item):
     """
     This function adapts nested ndarrays in a object.
+
     :param item: item object.
     :return: item object with nested numpy arrays jsonified.
     """
@@ -83,6 +80,7 @@ def serializePlacedItem(item):
 def serializeDiscardItem(item):
     """
     This function adapts nested ndarrays in a object.
+
     :param item: item object.
     :return: item object with nested numpy arrays jsonified.
     """
@@ -94,7 +92,8 @@ def serializeDiscardItem(item):
 
 def serializeTruck(truck):
     """
-    This function serializes ndarrays in object
+    This function serializes ndarrays in object.
+
     :param truck: truck object.
     :return: serialized object.
     """
@@ -108,6 +107,7 @@ def serializeTruck(truck):
 def serializeSolutions(sols):
     """
     This function serializes solution.
+
     :param: sols: list of solutions to be serialized.
     :return: serialized solution.
     """
@@ -120,15 +120,32 @@ def serializeSolutions(sols):
 
 # ------------------ Solution processing ----------------------------------
 # ------ Common variables ----------
-iterations = 360
+if len(sys.argv) > 1:
+    try:
+        iterations = int(sys.argv[2])
+    except ValueError:
+        iterations = 1
 
-for i in range(3,4):
+    try:
+        expP1 = int(sys.argv[1])
+    except ValueError:
+        expP1 = 1
+    expP2 = expP1 + 1
+
+    try:
+        cores = int(sys.argv[3])
+    except ValueError:
+        cores = 1
+else:
+    iterations, expP1, expP2, cores = 1, 1, 2, 1
+
+for i in range(expP1, expP2):
     # ------ Get packets dataset -------
     ID = i
     items, ndst = getDataFromJSONWith(ID)
 
     # ------ Iterations ------------
-    with parallel_backend(backend="loky", n_jobs=120):
+    with parallel_backend(backend="loky", n_jobs=cores):
         parallel = Parallel(verbose=100)
         solutions = parallel(
             [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, i) for i in range(iterations)])
@@ -163,5 +180,4 @@ for i in range(3,4):
                                "weight": bestUnfiltered["weight"][1],
                                "taxability": bestUnfiltered["taxability"][1]}
 
-        # TODO, determine best by looking at which one is in every characteristic.
         persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)
