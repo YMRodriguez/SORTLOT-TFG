@@ -233,19 +233,20 @@ def reorient(item):
     return changeItemOrientation(item, item["f_orient"])
 
 
-def generateMaxArea(nItemsDst, nFilteredDSt, truck, nDst):
+def generateMaxAreas(nItemsDst, nFilteredDst, truck, nDst):
     """
     This function calculates the maximum area of the container for each destination.
 
-    :param nDst:
-    :param truck:
-    :param nFilteredDSt:
-    :param nItemsDst:
+    :param nDst: number of destinations in the cargo.
+    :param truck: data object of the container/truck.
+    :param nFilteredDst: number of items filtered (by weight) for each destination.
+    :param nItemsDst: number of items for each destination.
     :return: ndarray with max area for each destination.
     """
     nItemsDst = np.asarray(nItemsDst)
-    nFilteredDSt = np.asarray(nFilteredDSt)
+    nFilteredDSt = np.asarray(nFilteredDst)
     if nDst > 3:
+        # List of factors related to each destination, decimal values in [0, 1].
         factor = []
         for i in range(nDst):
             if i != nDst - 1:

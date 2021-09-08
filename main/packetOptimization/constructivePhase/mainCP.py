@@ -445,7 +445,7 @@ def feasibleInFillingBase(potentialPoint, placedItems, newItem, currentAreas, ma
     :param truck: truck object.
     :param currentAreas: current area occupied for each destination.
     :param maxAreas: maximum area allowed to a certain destination.
-    :return: True if feasible for insertion, False otherwise.
+    :return: True if feasible for insertion, False otherwise. Plus the item adapted.
     """
     item = setItemMassCenter(newItem, potentialPoint, truck["width"], minDim)
 
@@ -566,7 +566,6 @@ def fitnessForStage0(PP, item, truck, nDst, placedItems, maxWeight):
     :param item: item object.
     :param placedItems: set of placed items into the container.
     :return: potential point with fitness, format [x, y, z, fitness].
-    :return:
     """
     fitWeights = [0.3, 0.3, 0.4] if nDst > 1 else [0.5, 0.5, 0]
     if nDst > 1:
@@ -701,7 +700,7 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
     # Update list with the items that passed the filter.
     candidateList = filteredCandidates
     # Create max area items of a destination can occupy within the container.
-    maxAreas = generateMaxArea(nItemDst, nFilteredDst, truck, nDst)
+    maxAreas = generateMaxAreas(nItemDst, nFilteredDst, truck, nDst)
     # Initialize current areas.
     currentAreas = np.zeros((1, nDst))
     # Obtain the maximum weight of the candidatelist.
@@ -739,10 +738,12 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
                         feasibility = feasibleInFillingBase(pp, placedItems, i, currentAreas, maxAreas, minDim, truck)
                         if feasibility[0][0]:
                             ppWithFitness = fitnessForStage0(pp, feasibility[0][1], truck, nDst, placedItems, maxWeight)
+                            # Can use the same even thought the concept is different, in all cases the pp is going to be
+                            # the same but with diff fitness functions so the highest will save the item.
                             if isBetterPP(ppWithFitness, ppBest):
                                 ppBest = ppWithFitness
                                 feasibleItem = feasibility[0][1]
-                        # This condition is only important for the first two items.
+                    # This condition is only important for the first two items.
                     if ppBest[3] == 1:
                         break
                 # If the best is different from the worst there is a PP to insert the item.
