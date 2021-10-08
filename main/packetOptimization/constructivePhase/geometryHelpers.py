@@ -19,9 +19,9 @@ def setItemMassCenter(item, potentialPoint, truckWidth, minDim):
     :return:
     """
     if truckWidth - minDim <= potentialPoint[0] <= truckWidth:
-        item["mass_center"] = potentialPoint + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
+        item["mass_center"] = potentialPoint + np.array([-item["width"], item["height"], item["length"]])/2
     else:
-        item["mass_center"] = potentialPoint + np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
+        item["mass_center"] = potentialPoint + np.array([item["width"], item["height"], item["length"]])/2
     return item
 
 
@@ -44,7 +44,7 @@ def getBLF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] - np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
+    return item["mass_center"] - np.array([item["width"], item["height"], item["length"]])/2
 
 
 def getBRF(item):
@@ -54,7 +54,7 @@ def getBRF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] - np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
+    return item["mass_center"] - np.array([-item["width"], item["height"], item["length"]])/2
 
 
 def getBRR(item):
@@ -64,7 +64,7 @@ def getBRR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([item["width"] / 2, -item["height"] / 2, item["length"] / 2])
+    return item["mass_center"] + np.array([item["width"], -item["height"], item["length"]])/2
 
 
 def getBLR(item):
@@ -74,7 +74,7 @@ def getBLR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([-item["width"] / 2, -item["height"] / 2, item["length"] / 2])
+    return item["mass_center"] + np.array([-item["width"], -item["height"], item["length"]])/2
 
 
 def getTLF(item):
@@ -84,7 +84,7 @@ def getTLF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] - np.array([item["width"] / 2, -item["height"] / 2, item["length"] / 2])
+    return item["mass_center"] - np.array([item["width"], -item["height"], item["length"]])/2
 
 
 def getTRF(item):
@@ -94,7 +94,7 @@ def getTRF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([item["width"] / 2, item["height"] / 2, -item["length"] / 2])
+    return item["mass_center"] + np.array([item["width"], item["height"], -item["length"]])/2
 
 
 def getTRR(item):
@@ -104,7 +104,7 @@ def getTRR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([item["width"] / 2, item["height"] / 2, item["length"] / 2])
+    return item["mass_center"] + np.array([item["width"], item["height"], item["length"]])/2
 
 
 def getTLR(item):
@@ -114,7 +114,7 @@ def getTLR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([-item["width"] / 2, item["height"] / 2, item["length"] / 2])
+    return item["mass_center"] + np.array([-item["width"], item["height"], item["length"]])/2
 
 
 def getBottomPlaneHeight(item):
@@ -124,7 +124,7 @@ def getBottomPlaneHeight(item):
     :param item: object representing the item.
     :return: Height in metres.
     """
-    return (item["mass_center"][1] - np.array([item["height"] / 2]))[0]
+    return (item["mass_center"][1] - np.array([item["height"]])/2)[0]
 
 
 def getTopPlaneHeight(item):
@@ -134,7 +134,7 @@ def getTopPlaneHeight(item):
     :param item: object representing the item.
     :return: Height in metres.
     """
-    return (item["mass_center"][1] + np.array([item["height"] / 2]))[0]
+    return (item["mass_center"][1] + np.array([item["height"]])/2)[0]
 
 
 def getBottomPlaneArea(item):
@@ -145,22 +145,6 @@ def getBottomPlaneArea(item):
     :return: area in square metres.
     """
     return item["length"] * item["width"]
-
-
-def getIntersectionArea(i1, i2):
-    """
-    This function returns the intersection between two items in planes X(width) and Z(length).
-
-    :param i1: object representing the first item.
-    :param i2: object representing the second item.
-    :return: intersection area in square metres.
-    """
-    dx = min(getBRR(i1)[0], getBRR(i2)[0]) - max(getBLF(i1)[0], getBLF(i2)[0])
-    dz = min(getBRR(i1)[2], getBRR(i2)[2]) - max(getBLF(i1)[2], getBLF(i2)[2])
-    if (dx >= 0) and (dz >= 0):
-        return dx * dz
-    else:
-        return 0
 
 
 def generalIntersectionArea(p1, p2):
@@ -192,6 +176,18 @@ def getPlanesFor(item):
            np.array([blf[2], blf[0], item["length"], item["width"]])
 
 
+def getZXPlaneFor(item):
+    """
+    This function generates the ZX plane.
+
+    :param item: item object.
+    :return: ndarray representing [z,x,dZ,dX]
+    """
+    blf = getBLF(item)
+    return np.array([blf[2], blf[0], item["length"], item["width"]])
+
+
+# TODO, change these margins.
 def pointInPlane(point, planeLF, planeRR):
     """
     This function checks if a point is inside a plane.
@@ -258,7 +254,7 @@ def generateMaxAreas(nItemsDst, nFilteredDst, truck, nDst):
     else:
         factor = np.ones((1, nDst))[0]
     return (nItemsDst / np.sum(nItemsDst) + nFilteredDSt / np.sum(nFilteredDSt)) * factor * 0.5 * (
-                truck["length"] * truck["width"])
+            truck["length"] * truck["width"])
 
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------
