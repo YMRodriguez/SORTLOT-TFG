@@ -2,10 +2,10 @@ from main.packetOptimization.constructivePhase.geometryHelpers import *
 from main.packetAdapter.helpers import getAverageWeight, getMinDim, getMaxWeight
 from main.packetOptimization.randomizationAndSorting.sorting import sortingRefillingPhase
 from copy import deepcopy
-from scipy.spatial import distance
 import random
 import numpy as np
 import math
+from numba import njit
 
 np.set_printoptions(suppress=True)
 
@@ -73,11 +73,11 @@ def getNeededExtraSubzonesForItem(subzonesLength, itemLength, outSubzone):
     :param outSubzone: percentage of the base area of the item that is out of the subzone in which it was inserted.
     :return: number of needed extra subzones.
     """
-    # Percentage * length(m)
-    outzoneItemLength = outSubzone * itemLength
-    return outzoneItemLength / subzonesLength
+    # Percentage * length(m) / subzoneLength(m)
+    return (outSubzone * itemLength) / subzonesLength
 
 
+# TODO, change the subzones system to make it just numeric.
 def setItemSubzones(subzones, item):
     """
     This function sets in which zones is the item, for those, it returns an array with the id and the percentage of the base in.
@@ -194,7 +194,7 @@ def isStackable(item, placedItems):
     stackableForSharePlaneItems = []
     for i in sharePlaneItems:
         # % of area between the newItem and the placed items underneath * newItem["weight"]
-        itemWeightContribution = (getIntersectionArea(i, item) / getBottomPlaneArea(item)) * item["weight"]
+        itemWeightContribution = (generalIntersectionArea(getZXPlaneFor(i), getZXPlaneFor(item)) / getBottomPlaneArea(item)) * item["weight"]
         # Portion of weight above fragile item cannot be more than 50% of the weight of the fragile item.
         if i["breakability"] and itemWeightContribution <= 0.5 * i["weight"]:
             stackableForSharePlaneItems.append(True)
@@ -240,7 +240,8 @@ def addContactAreaTo(item, placedItems):
                 filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.02151,
                        placedItemsSubzone))
             # Calculate the area of intersection between the sharedPlaneItems and the new item in a subzone.
-            totalContactAreaInSubzone = sum(list(map(lambda x: getIntersectionArea(x, item), sharePlaneItems))) * i[1]
+            itemZXPlane = getZXPlaneFor(item)
+            totalContactAreaInSubzone = sum(list(map(lambda x: generalIntersectionArea(getZXPlaneFor(x), itemZXPlane), sharePlaneItems))) * i[1]
         # For each subzone the item is in we also have the contact area which is not the same as the percentage within the subzone.
         i.append(totalContactAreaInSubzone)
     newItem["subzones"] = np.asarray(itemSubzones)
@@ -319,11 +320,12 @@ def overlapper(p1all, p2all):
 
     :param p1all: triplet of 3 planes.
     :param p2all: triplet of 3 planes.
-    :return: True if the item overlaps the polyItem, False otherwise.
+    :return: True if the item does not overlap, False otherwise.
     """
     for i, j in zip(p1all, p2all):
         if generalIntersectionArea(i, j):
             continue
+        # If there is a plane that does not overlap then we conclude there is not overlapping (hyperplane separation theorem)
         else:
             return True
     return False
@@ -342,13 +344,15 @@ def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
         # Extract the mass center of all placed items.
         itemsMCs = np.asarray(list(map(lambda x: x["mass_center"], placedItems)))
         # Compute and sort the distances between the new item mass center and the rest.
-        ndxDistances = distance.cdist(massCenter.reshape((1, 3)), itemsMCs, 'euclidean').argsort()[0]
+        ndxDistances = getComputedDistIndexes(massCenter, itemsMCs)
         # Get the nearest mass centers and its items.
-        nearestMCs = itemsMCs[ndxDistances[:min(len(placedItems), amountOfNearItems)]]
-        nearItems = list(
-            filter(lambda x: any((list(map(lambda y: all(y == x["mass_center"]), nearestMCs)))), placedItems))
-        return nearItems
+        return (np.asarray(placedItems)[ndxDistances[:min(len(placedItems), amountOfNearItems)]]).tolist()
     return []
+
+
+@njit()
+def getComputedDistIndexes(massCenter, massCenters):
+    return np.sqrt(np.sum(np.sqrt(np.square(massCenter - massCenters)), axis=1)).argsort()
 
 
 def isNotOverlapping(item, placedItems):
