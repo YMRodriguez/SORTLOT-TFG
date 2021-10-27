@@ -20,7 +20,7 @@ import glob
 import os
 
 # ----------------------- MongoDB extraction ----------------------
-truck_var = json.load(open(os.path.dirname(__file__) + "/packetsDatasets/truckvar.json"))
+truck_var = json.load(open(os.path.dirname(__file__) + os.path.sep + "packetsDatasets" + os.path.sep + "truckvar.json"))
 
 
 # --------------- Packet Generator ------------------------------------------
@@ -31,8 +31,8 @@ def getDataFromJSONWith(Id):
     :param Id: the id of the dataset, not the name.
     :return: object mapped from json file and number of destinations.
     """
-    filepath = glob.glob(os.path.dirname(__file__) + "/packetsDatasets/" + str(Id) + "-*.json")[0]
-    nDst = int(filepath.split("Datasets/")[1].split("-")[5][3])
+    filepath = glob.glob(os.path.dirname(__file__) + os.path.sep + "packetsDatasets" + os.path.sep + str(Id) + "-*.json")[0]
+    nDst = int(filepath.split("packetsDatasets" + os.path.sep)[1].split("-")[5][3])
     return json.load(open(filepath)), nDst
 
 

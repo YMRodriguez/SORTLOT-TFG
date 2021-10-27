@@ -23,27 +23,27 @@ def persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, best
     #         'w') as file:
     #     json.dump(bestStatsUnfiltered, file, indent=2, ensure_ascii=False)
     with open(
-            os.path.dirname(__file__) +'/results/' + str(ID) + 'bestSolsFiltered.json',
+            os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + str(ID) + 'bestSolsFiltered.json',
             'w') as file:
         json.dump(bestSolsFiltered, file, indent=2, ensure_ascii=False)
 
     with open(
-            os.path.dirname(__file__) +'/results/' + str(ID) + 'bestStatsFiltered.json',
+            os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + str(ID) + 'bestStatsFiltered.json',
             'w') as file:
         json.dump(bestStatsFiltered, file, indent=2, ensure_ascii=False)
 
     with open(
-            os.path.dirname(__file__) +'/results/' + str(ID) + 'bestSolsUnfiltered.json',
+            os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + str(ID) + 'bestSolsUnfiltered.json',
             'w') as file:
         json.dump(bestSolsUnfiltered, file, indent=2, ensure_ascii=False)
 
     with open(
-            os.path.dirname(__file__) +'/results/' + str(ID) + 'bestStatsUnfiltered.json',
+            os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + str(ID) + 'bestStatsUnfiltered.json',
             'w') as file:
         json.dump(bestStatsUnfiltered, file, indent=2, ensure_ascii=False)
 
 
 def persistStats(stats, ID):
-    with open(os.path.dirname(__file__) + '/results/simulation/' + str(ID) + 'simulationStats.json',
+    with open(os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'simulation' + os.path.sep + str(ID) + 'simulationStats.json',
               'w') as file:
         json.dump(stats, file, indent=2, ensure_ascii=False)
