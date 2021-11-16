@@ -5,7 +5,6 @@ from copy import deepcopy
 import random
 import numpy as np
 import math
-from numba import njit
 
 np.set_printoptions(suppress=True)
 
@@ -350,9 +349,8 @@ def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
     return []
 
 
-@njit()
 def getComputedDistIndexes(massCenter, massCenters):
-    return np.sqrt(np.sum(np.sqrt(np.square(massCenter - massCenters)), axis=1)).argsort()
+    return np.sqrt(np.sum(np.square(massCenter - massCenters), axis=1)).argsort()
 
 
 def isNotOverlapping(item, placedItems):
