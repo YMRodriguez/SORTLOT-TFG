@@ -100,7 +100,7 @@ def changeItemOrientation(item, validOrientations):
     orientation = random.choice(validOrientations)
     i = deepcopy(item)
     i2 = deepcopy(item)
-    i2["orientation"] = orientation
+    i2["or"] = orientation
     if orientation == 2:
         i2["width"] = i["length"]
         i2["height"] = i["height"]
@@ -149,5 +149,5 @@ def getMinDim(items):
 def getVolumeDistributionByDst(items, nDst, containerVol):
     distribution = []
     for d in range(nDst):
-        distribution.append((len(list(map(lambda x: x["dst_code"] == d, items)))/len(items)) * containerVol)
+        distribution.append((len(list(map(lambda x: x["dstCode"] == d, items)))/len(items)) * containerVol)
     return distribution

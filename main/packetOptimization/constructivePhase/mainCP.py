@@ -195,9 +195,9 @@ def isStackable(item, placedItems):
         # % of area between the newItem and the placed items underneath * newItem["weight"]
         itemWeightContribution = (generalIntersectionArea(getZXPlaneFor(i), getZXPlaneFor(item)) / getBottomPlaneArea(item)) * item["weight"]
         # Portion of weight above fragile item cannot be more than 50% of the weight of the fragile item.
-        if i["breakability"] and itemWeightContribution <= 0.5 * i["weight"]:
+        if i["fragility"] and itemWeightContribution <= 0.5 * i["weight"]:
             stackableForSharePlaneItems.append(True)
-        elif not i["breakability"] and itemWeightContribution <= i["weight"]:
+        elif not i["fragility"] and itemWeightContribution <= i["weight"]:
             stackableForSharePlaneItems.append(True)
         else:
             stackableForSharePlaneItems.append(False)
@@ -432,7 +432,7 @@ def areaConstraint(currentAreas, maxAreas, item):
     :param item: item object.
     :return: True if current area after insertion does not exceed the maximum allowed.
     """
-    return currentAreas[0][item["dst_code"]] + getBottomPlaneArea(item) <= maxAreas[item["dst_code"]]
+    return currentAreas[0][item["dstCode"]] + getBottomPlaneArea(item) <= maxAreas[item["dstCode"]]
 
 
 def feasibleInFillingBase(potentialPoint, placedItems, newItem, currentAreas, maxAreas, minDim, truck):
@@ -471,16 +471,16 @@ def feasibleInFillingBase(potentialPoint, placedItems, newItem, currentAreas, ma
     return np.array([[0, newItem]])
 
 
-def areEnoughPlacedItemsOfTheCstCode(dst_code, placedItems, nItems):
+def areEnoughPlacedItemsOfTheCstCode(dstCode, placedItems, nItems):
     """
     This function checks whether there are enough items with a customer code.
 
-    :param dst_code: The customer code to be checked.
+    :param dstCode: The customer code to be checked.
     :param placedItems: Set of items already placed in the container.
     :param nItems: Threshold of items.
     :return: True if there are more items placed than the threshold for the same customer.
     """
-    return len(list(filter(lambda x: dst_code == x["dst_code"], placedItems))) >= nItems
+    return len(list(filter(lambda x: dstCode == x["dstCode"], placedItems))) >= nItems
 
 
 def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, stage, nDst):
@@ -514,9 +514,9 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
         nearItems = getSurroundingItems(item["mass_center"], placedItems, nItems)
         # Consider valid dst code the same or the previous.
         nearItemsWithValidDstCode = list(
-            filter(lambda x: x["dst_code"] == item["dst_code"], nearItems))
-        if not areEnoughPlacedItemsOfTheCstCode(item["dst_code"], placedItems, nItems):
-            surroundingCondition = 1 - item["dst_code"] / (nDst - 1)
+            filter(lambda x: x["dstCode"] == item["dstCode"], nearItems))
+        if not areEnoughPlacedItemsOfTheCstCode(item["dstCode"], placedItems, nItems):
+            surroundingCondition = 1 - item["dstCode"] / (nDst - 1)
         elif len(nearItemsWithValidDstCode) <= 1:
             surroundingCondition = -0.30
         else:
@@ -534,10 +534,10 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
             filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.00151,
                    placedItems))
         itemBehind = getSurroundingItems(PP, sharePlaneItems, 1)[0]
-        itemBehindCondition = int(itemBehind["dst_code"] == item["dst_code"])
+        itemBehindCondition = int(itemBehind["dstCode"] == item["dstCode"])
 
         if stage == 3:
-            surroundingCondition = -stageFW[3] if item["dst_code"] < itemBehind["dst_code"] else surroundingCondition
+            surroundingCondition = -stageFW[3] if item["dstCode"] < itemBehind["dstCode"] else surroundingCondition
         # Check how similar are the areas between the item being inserted and the item behind.
         areaCondition = 1 - abs((getBottomPlaneArea(item) / getBottomPlaneArea(itemBehind)) - 1)
         areaCondition = areaCondition if (1 >= areaCondition >= 0) else 0
@@ -576,11 +576,11 @@ def fitnessForStage0(PP, item, truck, nDst, placedItems, maxWeight):
         nearItems = getSurroundingItems(item["mass_center"], placedItems, nItems)
         # Consider valid dst code the same or the previous.
         nearItemsWithValidDstCode = list(
-            filter(lambda x: x["dst_code"] == item["dst_code"] or x["dst_code"] == item["dst_code"] + 1,
+            filter(lambda x: x["dstCode"] == item["dstCode"] or x["dstCode"] == item["dstCode"] + 1,
                    nearItems)) if nDst > 2 else list(
-            filter(lambda x: x["dst_code"] == item["dst_code"], nearItems))
-        if not areEnoughPlacedItemsOfTheCstCode(item["dst_code"], placedItems, nItems):
-            surroundingCondition = 1 - item["dst_code"] / (nDst - 1)
+            filter(lambda x: x["dstCode"] == item["dstCode"], nearItems))
+        if not areEnoughPlacedItemsOfTheCstCode(item["dstCode"], placedItems, nItems):
+            surroundingCondition = 1 - item["dstCode"] / (nDst - 1)
         elif len(nearItemsWithValidDstCode) <= 1:
             surroundingCondition = -0.30
         else:
@@ -686,17 +686,17 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
     # Fill number of items per destination.
     nItemDst = []
     for n in range(nDst):
-        nItemDst.append(len(list(filter(lambda x: x["dst_code"] == n, candidateList))))
+        nItemDst.append(len(list(filter(lambda x: x["dstCode"] == n, candidateList))))
     # Average weight of candidateList.
     avgGeneral = getAverageWeight(candidateList)
     # Filter the candidates for each destination that satisfy a condition.
     filteredCandidates = []
     for d in list(range(nDst)):
         filteredCandidates = filteredCandidates + list(
-            filter(lambda x: x["dst_code"] == d and x["weight"] >= avgGeneral * 0.5, candidateList))
+            filter(lambda x: x["dstCode"] == d and x["weight"] >= avgGeneral * 0.5, candidateList))
     # Count amount of filtered for each destination.
     nFilteredDst = list(
-        map(lambda x: len(list(filter(lambda y: y["dst_code"] == x, filteredCandidates))), list(range(nDst))))
+        map(lambda x: len(list(filter(lambda y: y["dstCode"] == x, filteredCandidates))), list(range(nDst))))
     # Group items that did not pass the filter.
     discardList = list(filter(lambda x: x not in filteredCandidates, candidateList))
     # Update list with the items that passed the filter.
@@ -730,10 +730,10 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
             if not pp[1]:
                 for i in candidateList:
                     # Pick one random orientation apart from the current.
-                    orientations = [i["orientation"],
-                                    random.choice([o for o in i["f_orient"] if o != i["orientation"]])]
+                    orientations = [i["or"],
+                                    random.choice([o for o in i["feasibleOr"] if o != i["or"]])]
                     for o in orientations:
-                        if o != i["orientation"]:
+                        if o != i["or"]:
                             i = changeItemOrientation(i, [o])
                         # Try to get the best PP for an item.
                         # [condition, item]
@@ -750,8 +750,8 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
                         break
                 # If the best is different from the worst there is a PP to insert the item.
                 if ppBest[3] != 0:
-                    currentAreas[0][feasibleItem["dst_code"]] = currentAreas[0][
-                                                                    feasibleItem["dst_code"]] + getBottomPlaneArea(
+                    currentAreas[0][feasibleItem["dstCode"]] = currentAreas[0][
+                                                                    feasibleItem["dstCode"]] + getBottomPlaneArea(
                         feasibleItem)
                     # Add pp in which the object is inserted.
                     feasibleItem["pp_in"] = ppBest[0:3]

@@ -52,7 +52,7 @@ def swapByVolume(packets):
     """
     for i in range(len(packets) - 1):
         if volumeComp(packets[i], packets[i + 1]) \
-                and packets[i]["dst_code"] == packets[i+1]["dst_code"]\
+                and packets[i]["dstCode"] == packets[i+1]["dstCode"]\
                 and bool(random.getrandbits(1)):
             genericSwapper(packets, i, i + 1)
     return packets
@@ -68,7 +68,7 @@ def swapByWeight(packets):
     """
     for i in range(len(packets) - 1):
         if weightComp(packets[i], packets[i + 1]) \
-                and packets[i]["dst_code"] == packets[i+1]["dst_code"]\
+                and packets[i]["dstCode"] == packets[i+1]["dstCode"]\
                 and bool(random.getrandbits(1)):
             genericSwapper(packets, i, i + 1)
     return packets
@@ -86,7 +86,7 @@ def swapByPriority(packets):
         same_priority_packets = list(
             filter(lambda x: (x["priority"] == packets[i]["priority"]
                               and x["id"] != packets[i]["id"]
-                              and x["dst_code"] == packets[i]["dst_code"]), packets))
+                              and x["dstCode"] == packets[i]["dstCode"]), packets))
         if bool(random.getrandbits(1)) and (len(same_priority_packets) != 0):
             item_j = random.choice(same_priority_packets)
             j = packets.index(item_j)

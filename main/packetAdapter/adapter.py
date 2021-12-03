@@ -1,5 +1,7 @@
 import random
 
+import pandas as pd
+
 from main.packetAdapter.helpers import changeItemOrientation
 from main.packetOptimization.constructivePhase.geometryHelpers import getBottomPlaneArea
 from main.packetAdapter.helpers import getAverageWeight, getWeightStandardDeviation
@@ -39,7 +41,7 @@ def changeOrientationToBest(avgWeight, weightStdDev, item):
     :return: item with the best orientation from the feasible ones.
     """
     itemInOrientations = []
-    for i in item["f_orient"]:
+    for i in item["feasibleOr"]:
         itemInOrientations.append(changeItemOrientation(item, [i]))
     itemInOrientations = sorted(itemInOrientations, key=lambda x: getBottomPlaneArea(x))
     if len(itemInOrientations) == 6:
@@ -65,9 +67,11 @@ def adaptPackets(items, alpha):
     :param alpha: parameter dependant of the type of transport.
     :return: list of adapted items.
     """
-    avgWeight = getAverageWeight(items)
-    weiStdDev = getWeightStandardDeviation(items)
-    items = list(map(lambda x: changeOrientationToBest(avgWeight, weiStdDev, x), items))
+    itemsDf = pd.DataFrame(items)
+    avgWeight = itemsDf["weight"].mean()
+    weiStdDev = itemsDf["weight"].std(ddof=0)
+    itemsDf[["width", "height", "length"]] = itemsDf[["width", "height", "length"]]/100
+    items = list(map(lambda x: changeOrientationToBest(avgWeight, weiStdDev, x), itemsDf.to_dict(orient="records")))
     if not areTaxed(items):
         return addTaxToDataset(items, alpha)
     else:

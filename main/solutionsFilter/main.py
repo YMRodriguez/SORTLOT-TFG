@@ -76,8 +76,8 @@ def determineUnloadingObstacles(solution):
     obstacles = 0
     for i in solution["placed"]:
         nearItems = getSurroundingItems(np.array(i["mass_center"]), [e for e in solution["placed"] if e["id"] != i["id"]], 5)
-        if i["dst_code"] > 1:
-            condition = list(filter(lambda x: (i["dst_code"] - x["dst_code"]) > 1, nearItems))
+        if i["dstCode"] > 1:
+            condition = list(filter(lambda x: (i["dstCode"] - x["dstCode"]) > 1, nearItems))
             condition = 1 if len(condition) > 4 else 0
             obstacles = obstacles + condition
     return obstacles

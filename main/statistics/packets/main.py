@@ -36,7 +36,7 @@ def datasetStats(items, ID):
             "max_v": items.volume.max(), "min_v": items.volume.min(),
             "v_mean": round(items.volume.mean(), 2), "v_median": round(items.volume.median(), 2),
             "v_std": round(items.volume.std(), 2), "t_vol": round(items.volume.sum(), 2),
-            "n_dst": items.dst_code.unique().shape[0],
+            "n_dst": items.dstCode.unique().shape[0],
             "n_prio": 0 if n_prio[0] == len(items) else n_prio[1],
             "n_br": 0 if n_break[0] == len(items) else n_break[1],
             }

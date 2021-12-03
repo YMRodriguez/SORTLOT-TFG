@@ -226,7 +226,7 @@ def reorient(item):
     :param item: item object.
     :return: reoriented item.
     """
-    return changeItemOrientation(item, item["f_orient"])
+    return changeItemOrientation(item, item["feasibleOr"])
 
 
 def generateMaxAreas(nItemsDst, nFilteredDst, truck, nDst):
