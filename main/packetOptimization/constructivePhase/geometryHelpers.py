@@ -44,7 +44,7 @@ def getBLF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] - np.array([item["width"], item["height"], item["length"]])/2
+    return item["mass_center"] - [item["width"]/2, item["height"]/2, item["length"]/2]
 
 
 def getBRF(item):
@@ -124,7 +124,7 @@ def getBottomPlaneHeight(item):
     :param item: object representing the item.
     :return: Height in metres.
     """
-    return (item["mass_center"][1] - np.array([item["height"]])/2)[0]
+    return item["mass_center"][1] - item["height"]/2
 
 
 def getTopPlaneHeight(item):
@@ -134,7 +134,7 @@ def getTopPlaneHeight(item):
     :param item: object representing the item.
     :return: Height in metres.
     """
-    return (item["mass_center"][1] + np.array([item["height"]])/2)[0]
+    return item["mass_center"][1] + item["height"]/2
 
 
 def getBottomPlaneArea(item):

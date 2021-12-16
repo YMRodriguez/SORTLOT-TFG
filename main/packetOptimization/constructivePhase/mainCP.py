@@ -557,7 +557,7 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
         return np.concatenate((PP, np.array([fitvalue])))
 
 
-def fitnessForStage0(PP, item, truck, nDst, placedItems, maxWeight):
+def fitnessForStage0(PP, item, nDst, placedItems, maxWeight):
     """
     This function computes the fitness value for a potential point.
 
@@ -569,7 +569,7 @@ def fitnessForStage0(PP, item, truck, nDst, placedItems, maxWeight):
     :param placedItems: set of placed items into the container.
     :return: potential point with fitness, format [x, y, z, fitness].
     """
-    fitWeights = [0.3, 0.3, 0.4] if nDst > 1 else [0.5, 0.5, 0]
+    fitWeights = [0.45, 0.55] if nDst > 1 else [1, 0]
     if nDst > 1:
         # For the surrounding customer code objects.
         nItems = 5
@@ -587,8 +587,7 @@ def fitnessForStage0(PP, item, truck, nDst, placedItems, maxWeight):
             surroundingCondition = len(nearItemsWithValidDstCode) / max(len(nearItems), 1)
     else:
         surroundingCondition = 0
-    fitnessValue = (1 - PP[2] / truck["length"]) * fitWeights[0] \
-                   + (item["weight"] / maxWeight) * fitWeights[1] + surroundingCondition * fitWeights[2]
+    fitnessValue = (item["weight"] / maxWeight) * fitWeights[0] + surroundingCondition * fitWeights[1]
     return np.concatenate((PP, np.array([fitnessValue])))
 
 
@@ -719,7 +718,7 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
         # The intention is to fill the max area of the container assigned to a destination,
         # so it checks this condition for each potential point, each item and each item orientation.
         while (currentArea <= maxArea) and len(potentialPoints):
-            # Check if there is no item that satisfies full filling without exceeding max allowed area.
+            # Check if there is no item that satisfies fulfilling without exceeding max allowed area.
             if not any(list(map(lambda x: getBottomPlaneArea(x) + currentArea <= maxArea, candidateList))):
                 break
             # Initialization of best point as the worst, in this context the TRR of the truck. And worse fitness value.
