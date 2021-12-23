@@ -197,7 +197,7 @@ def pointInPlane(point, planeLF, planeRR):
     :param planeRR: cartesian right rear point of the plane.
     :return: True if the point is into plane, False otherwise.
     """
-    return planeRR[0] + 0.001 >= point[0] >= planeLF[0] - 0.001 and planeRR[2] + 0.001 >= point[2] >= planeLF[2] - 0.001
+    return planeRR[0] + 0.0001 >= point[0] >= planeLF[0] - 0.0001 and planeRR[2] + 0.0001 >= point[2] >= planeLF[2] - 0.0001
 
 
 def getNearestProjectionPointFor(point, placedItems):

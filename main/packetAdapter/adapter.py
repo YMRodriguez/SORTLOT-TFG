@@ -4,7 +4,6 @@ import pandas as pd
 
 from main.packetAdapter.helpers import changeItemOrientation
 from main.packetOptimization.constructivePhase.geometryHelpers import getBottomPlaneArea
-from main.packetAdapter.helpers import getAverageWeight, getWeightStandardDeviation
 
 
 # ------------------ Taxability --------------------------------------------
