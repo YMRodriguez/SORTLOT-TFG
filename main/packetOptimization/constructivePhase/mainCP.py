@@ -513,12 +513,7 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
         # Consider valid dst code the same or the previous.
         nearItemsWithValidDstCode = list(
             filter(lambda x: x["dstCode"] == item["dstCode"], nearItems))
-        if not areEnoughPlacedItemsOfTheCstCode(item["dstCode"], placedItems, nItems):
-            surroundingCondition = 1 - item["dstCode"] / (nDst - 1)
-        elif len(nearItemsWithValidDstCode) <= 1:
-            surroundingCondition = -0.30
-        else:
-            surroundingCondition = len(nearItemsWithValidDstCode) / max(len(nearItems), 1)
+        surroundingCondition = len(nearItemsWithValidDstCode) / max(len(nearItems), 1)
     else:
         surroundingCondition = 0
 
@@ -529,11 +524,12 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
     if PP[1]:
         # Get the item that generated the potential point in which the new item is being inserted.
         sharePlaneItems = list(
-            filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.00151,
+            filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.0016,
                    placedItems))
         itemBehind = getSurroundingItems(PP, sharePlaneItems, 1)[0]
         itemBehindCondition = int(itemBehind["dstCode"] == item["dstCode"])
 
+        # This is a way to avoid mistaken subgrouping in the latest packing stages.
         if stage == 3:
             surroundingCondition = -stageFW[3] if item["dstCode"] < itemBehind["dstCode"] else surroundingCondition
         # Check how similar are the areas between the item being inserted and the item behind.
@@ -783,7 +779,7 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
     This function creates a solution from a list of packets and a given potential points above the first layer
     base of items of the truck.
 
-    :param candidateList:
+    :param candidateList: discard list from previous phase.
     :param potentialPoints:
     :param truck: truck object.
     :param retry: binary condition to reorient each item in their insertion evaluation.
@@ -796,7 +792,7 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
     discardList = []
     for i in candidateList:
         # Update average list excluding those items which have been already placed.
-        notPlacedMaxWeight = getMaxWeight(list(filter(lambda x: x not in placedItems, candidateList)))
+        notPlacedMaxWeight = getMaxWeight(candidateList)
         # Using the method as a retryList fill.
         if retry:
             i = reorient(i)
