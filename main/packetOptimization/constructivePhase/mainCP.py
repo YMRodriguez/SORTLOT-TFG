@@ -10,16 +10,15 @@ np.set_printoptions(suppress=True)
 
 
 # --------------------- Weight Limit - C1 -------------------------------------------------------------
-def isWeightExceeded(placedItems, newItem, truck):
+def isWeightExceeded(newItem, truck):
     """
     This function checks is the weight allowed by the container has been exceeded.
 
-    :param placedItems: set of items already placed in the truck.
     :param newItem: new item to be placed.
     :param truck: truck or container with weight limit.
     :return: True is the weight has been exceeded, False otherwise.
     """
-    return sum(list(map(lambda x: x["weight"], placedItems))) + newItem["weight"] > truck["tonnage"]
+    return truck["weight"] + newItem["weight"] > truck["tonnage"]
 
 
 # ----------------- Weight Distribution and load balancing - C2 --------------------------------------
@@ -151,6 +150,7 @@ def addItemWeightToTruckSubzones(itemSubzones, truck):
         for i in itemSubzones:
             if i[0] == j["id"]:
                 j["weight"] = j["weight"] + i[3]
+    truck["weight"] = sum(list(map(lambda x: x["weight"], truck["subzones"])))
     return truck
 
 
@@ -364,7 +364,7 @@ def isNotOverlapping(item, placedItems):
     :return: True if the item does not overlap other items around it, False otherwise.
     """
     if len(placedItems):
-        nearItems = getSurroundingItems(item["mass_center"].reshape(1, 3), placedItems, 10)
+        nearItems = getSurroundingItems(item["mass_center"].reshape(1, 3), placedItems, 20)
         # Generate points for item evaluated.
         p1all = getPlanesFor(item)
         # Validate overlapping conditions item vs. placedItems and vice versa.
@@ -383,7 +383,7 @@ def physicalConstrains(placedItems, item, truck):
     :param truck: truck object.
     :return: True if they are all satisfied, false otherwise.
     """
-    return not isWeightExceeded(placedItems, item, truck) \
+    return not isWeightExceeded(item, truck) \
            and isWithinTruckDimensionsConstrains(item, {"width": truck["width"], "height": truck["height"],
                                                         "length": truck["length"]}) \
            and isADRSuitable(item, getTruckBRR(truck)[2]) \
@@ -570,7 +570,7 @@ def fitnessForBase(PP, item, containerLength, nDst, placedItems, maxWeight):
     :param placedItems: set of placed items into the container.
     :return: potential point with fitness, format [x, y, z, fitness].
     """
-    fitWeights = [0.3, 0.4, 0.3] if nDst > 1 else [0.5, 0, 0.5]
+    fitWeights = [0.25, 0.25, 0.5] if nDst > 1 else [0.5, 0, 0.5]
     if nDst > 1:
         # For the surrounding customer code objects.
         nItems = 5
@@ -640,6 +640,8 @@ def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim, stage):
     BRx = getBRR(item) + np.array([0, 0, 0.0015]) if BRF[0] >= truckWidth - minDim else BRF
     TLF = getTLF(item) + np.array([0, 0.0015, 0])
     TRF = getTRF(item) + np.array([0, 0.0015, 0])
+    # Include TRF when we can ensure that the insertion of a new packet will be made from right to left.
+    # Include TRF in last stage to maximize top insertions.
     if stage > 1 or TRF[0] >= truckWidth - minDim:
         result = np.array([TLF, TRF]) if TLF[1] < truckHeight - minDim else []
     else:
@@ -717,7 +719,7 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
             # Get the potential point with lower z-coordinate (closest to the front of the container).
             pp = sorted(potentialPoints, key=lambda x: x[2])[0]
             # Gather in one list the current destination and the next.
-            candidatesByDst = candidateList[d]
+            candidatesByDst = candidateList[d] + candidateList[d+1] if d!=nDst-1 else candidateList[d]
             # Only proceed with the search if the item is in the floor.
             if not pp[1]:
                 for i in candidatesByDst:
