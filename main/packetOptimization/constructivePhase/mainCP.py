@@ -75,7 +75,6 @@ def getNeededExtraSubzonesForItem(subzonesLength, itemLength, outSubzone):
     return (outSubzone * itemLength) / subzonesLength
 
 
-# TODO, change the subzones system to make it just numeric.
 def setItemSubzones(subzones, item):
     """
     This function sets in which zones is the item, for those, it returns an array with the id and the percentage of the base in.
@@ -88,7 +87,6 @@ def setItemSubzones(subzones, item):
     """
     item_blf_z = getBLF(item)[2]
     item_brr_z = getBRR(item)[2]
-    # TODO, this may go inside the for block if the length of the subzones is not equal.
     subzonesLength = getSubzoneLength(subzones)
     itemSubzones = []
     for i in range(len(subzones)):
@@ -116,7 +114,7 @@ def setItemSubzones(subzones, item):
                     itemSubzones.append([subzones[i]["id"] + s, subzonesLength / item["length"]])
         else:
             continue
-    item["subzones"] = np.asarray(itemSubzones)
+    item["subzones"] = itemSubzones
     return item
 
 
@@ -129,12 +127,10 @@ def addWeightContributionTo(item):
     :return: Output Item Subzone Format: item["subzones"]=[[id_subzone, percentageIn, contactAreaIn, weightIn],...]
 
     """
-    itemSubzones = item["subzones"].tolist()
     bottomPlaneArea = getBottomPlaneArea(item)
-    for i in itemSubzones:
+    for i in item["subzones"]:
         # Is not the same the contactAreaIn than the percentage because not all the percentage may be supported nor in contact.
         i.append((i[2] / bottomPlaneArea) * item["weight"])
-    item["subzones"] = np.asarray(itemSubzones)
     return item
 
 
@@ -173,7 +169,7 @@ def itemContributionNotExceedingSubzonesWeightLimit(item, truckSubzones):
         weightNotExceeded.append(all(list(filter(lambda x: x is not None, map(
             lambda x: (i[3] + x["weight"]) <= x["weight_limit"] if i[0] == x["id"] else None,
             truckSubzones)))))
-    return np.array([[weightNotExceeded[0], itemWithWeightContribution]])
+    return [weightNotExceeded[0], itemWithWeightContribution]
 
 
 # ------------------ Stackability - C5 ---------------------------------------------
@@ -202,7 +198,7 @@ def isStackable(item, placedItems):
             stackableForSharePlaneItems.append(True)
         else:
             stackableForSharePlaneItems.append(False)
-    return np.all(np.asarray(stackableForSharePlaneItems))
+    return all(stackableForSharePlaneItems)
 
 
 # ------------------ ADR cargo - C6 ------------------------------------------------
@@ -227,7 +223,7 @@ def addContactAreaTo(item, placedItems):
     :return: item object with subzone format [[id_subzone, percentageIn, contactAreaIn],...].
     """
     newItem = deepcopy(item)
-    itemSubzones = deepcopy(item["subzones"].tolist())
+    itemSubzones = deepcopy(item["subzones"])
     # Go over the subzones the item is in.
     for i in itemSubzones:
         if isInFloor(item):
@@ -245,7 +241,7 @@ def addContactAreaTo(item, placedItems):
                 list(map(lambda x: generalIntersectionArea(getZXPlaneFor(x), itemZXPlane), sharePlaneItems))) * i[1]
         # For each subzone the item is in we also have the contact area which is not the same as the percentage within the subzone.
         i.append(totalContactAreaInSubzone)
-    newItem["subzones"] = np.asarray(itemSubzones)
+    newItem["subzones"] = itemSubzones
     return newItem
 
 
@@ -263,8 +259,8 @@ def isStable(item, placedItems, stage):
     totalItemContactArea = sum(list(map(lambda x: x[2], itemWithContactArea["subzones"])))
     contactAreaPercentage = totalItemContactArea / getBottomPlaneArea(item)
     if contactAreaPercentage >= threshold:
-        return np.array([[1, itemWithContactArea]])
-    return np.array([[0, itemWithContactArea]])
+        return [1, itemWithContactArea]
+    return [0, itemWithContactArea]
 
 
 # ------------------ Physical constrains - Truck-related ----------------------------------------
@@ -364,7 +360,7 @@ def isNotOverlapping(item, placedItems):
     :return: True if the item does not overlap other items around it, False otherwise.
     """
     if len(placedItems):
-        nearItems = getSurroundingItems(item["mass_center"].reshape(1, 3), placedItems, 20)
+        nearItems = getSurroundingItems(item["mass_center"].reshape(1, 3), placedItems, 15)
         # Generate points for item evaluated.
         p1all = getPlanesFor(item)
         # Validate overlapping conditions item vs. placedItems and vice versa.
@@ -412,17 +408,17 @@ def isFeasible(potentialPoint, placedItems, newItem, minDim, truck, stage):
         # This item is [condition, itemWithContactAreaForEachSubzone]
         i3WithCondition = isStable(itemWithSubzones, placedItems, stage)
         # Checks if it is stable and stackable.
-        if i3WithCondition[0][0] and isStackable(item, placedItems):
+        if i3WithCondition[0] and isStackable(item, placedItems):
             # Way of keeping the modified object and if the condition state.
-            i4WithCondition = itemContributionNotExceedingSubzonesWeightLimit(i3WithCondition[0][1], truckSubzones)
-            if i4WithCondition[0][0]:
-                return np.array([[1, i4WithCondition[0][1]]])
+            i4WithCondition = itemContributionNotExceedingSubzonesWeightLimit(i3WithCondition[1], truckSubzones)
+            if i4WithCondition[0]:
+                return [1, i4WithCondition[1]]
             else:
-                return np.array([[0, newItem]])
+                return [0, newItem]
         else:
-            return np.array([[0, newItem]])
+            return [0, newItem]
     else:
-        return np.array([[0, newItem]])
+        return [0, newItem]
 
 
 def areaConstraint(currentAreas, maxAreas, item):
@@ -460,17 +456,17 @@ def feasibleInFillingBase(potentialPoint, placedItems, newItem, currentAreas, ma
             # This item is [condition, itemWithContactAreaForEachSubzone]
             i3WithCondition = isStable(itemWithSubzones, placedItems, 0)
             # Checks if it is stable and stackable.
-            if i3WithCondition[0][0]:
+            if i3WithCondition[0]:
                 # Way of keeping the modified object and if the condition state.
-                i4WithCondition = itemContributionNotExceedingSubzonesWeightLimit(i3WithCondition[0][1], truckSubzones)
-                if i4WithCondition[0][0]:
-                    return np.array([[1, i4WithCondition[0][1]]])
+                i4WithCondition = itemContributionNotExceedingSubzonesWeightLimit(i3WithCondition[1], truckSubzones)
+                if i4WithCondition[0]:
+                    return [1, i4WithCondition[1]]
                 else:
-                    return np.array([[0, newItem]])
+                    return [0, newItem]
             else:
-                return np.array([[0, newItem]])
-        return np.array([[0, newItem]])
-    return np.array([[0, newItem]])
+                return [0, newItem]
+        return [0, newItem]
+    return [0, newItem]
 
 
 def areEnoughPlacedItemsOfTheCstCode(dstCode, placedItems, nItems):
@@ -732,13 +728,13 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
                         # Try to get the best PP for an item.
                         # [condition, item]
                         feasibility = feasibleInFillingBase(pp, placedItems, i, currentAreas, maxAreas, minDim, truck)
-                        if feasibility[0][0]:
-                            ppWithFitness = fitnessForBase(pp, feasibility[0][1], truck["length"], nDst, placedItems, maxWeight)
+                        if feasibility[0]:
+                            ppWithFitness = fitnessForBase(pp, feasibility[1], truck["length"], nDst, placedItems, maxWeight)
                             # Can use the same even thought the concept is different, in all cases the pp is going to be
                             # the same but with diff fitness functions so the highest will save the item.
                             if isBetterPP(ppWithFitness, ppBest):
                                 ppBest = ppWithFitness
-                                feasibleItem = feasibility[0][1]
+                                feasibleItem = feasibility[1]
                     # This condition is only important for the first two items.
                     if ppBest[3] == 1:
                         break
@@ -810,12 +806,12 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
         for pp in potentialPoints:
             # [condition, item]
             feasibility = isFeasible(pp, placedItems, i, minDim, truck, stage)
-            if feasibility[0][0]:
-                ppWithFitness = fitnessFor(pp, feasibility[0][1], placedItems, notPlacedMaxWeight, truck["height"],
+            if feasibility[0]:
+                ppWithFitness = fitnessFor(pp, feasibility[1], placedItems, notPlacedMaxWeight, truck["height"],
                                            truck["length"], stage, nDst)
                 if isBetterPP(ppWithFitness, ppBest):
                     ppBest = ppWithFitness
-                    feasibleItem = feasibility[0][1]
+                    feasibleItem = feasibility[1]
         # If the best is different from the worst there is a PP to insert the item.
         if ppBest[3] != 0:
             # Add pp in which the object is inserted.

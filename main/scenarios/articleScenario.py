@@ -77,7 +77,7 @@ def serializePlacedItem(item):
     :return: item object with nested numpy arrays jsonified.
     """
     item["mass_center"] = item["mass_center"].tolist()
-    item["subzones"] = item["subzones"].tolist()
+    item["subzones"] = item["subzones"]
     item["pp_in"] = item["pp_in"].tolist()
     item["pp_out"] = item["pp_out"].tolist()
     return item
@@ -92,7 +92,7 @@ def serializeDiscardItem(item):
     """
     item["mass_center"] = item["mass_center"].tolist()
     if "subzones" in item:
-        item["subzones"] = item["subzones"].tolist()
+        item["subzones"] = item["subzones"]
     return item
 
 
