@@ -187,7 +187,6 @@ def getZXPlaneFor(item):
     return np.array([blf[2], blf[0], item["length"], item["width"]])
 
 
-# TODO, change these margins.
 def pointInPlane(point, planeLF, planeRR):
     """
     This function checks if a point is inside a plane.
@@ -247,7 +246,7 @@ def generateMaxAreas(nItemsDst, nFilteredDst, truck, nDst):
         for i in range(nDst):
             if i != nDst - 1:
                 # Just cut percentage of the destinations previous to the first out.
-                factor.append(1 - (nDst - i + 2) / 100)
+                factor.append(1 - nDst*(nDst - 1) / 100)
             else:
                 factor.append(1)
         factor = np.asarray(factor)
