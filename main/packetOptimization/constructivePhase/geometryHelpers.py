@@ -210,7 +210,7 @@ def getNearestProjectionPointFor(point, placedItems):
     # Reduce the scope to those items whose top or bottom plane contains the point in (x,z)-axis.
     pointIntoPlaneItems = list(filter(lambda x: pointInPlane(point, getBLF(x), getBRR(x)), placedItems))
     # Sort and get the item with the nearest y-axis value.
-    itemWithNearestProj = sorted(pointIntoPlaneItems, key=lambda x: getTopPlaneHeight(x))
+    itemWithNearestProj = sorted(pointIntoPlaneItems, key=lambda x: getTopPlaneHeight(x), reverse=True)
     if len(itemWithNearestProj) != 0:
         # Return the same point but with y-axis value projected.
         return np.array([point[0], getTopPlaneHeight(itemWithNearestProj[0]) + 0.0015, point[2]])
