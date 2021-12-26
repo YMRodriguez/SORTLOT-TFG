@@ -812,7 +812,7 @@ def getMixedPotentialPoints(potentialPoints):
     :return: potential points of interest in each destination.
     """
     newPPs = []
-    sortedPPByZ = list(map(lambda x: sorted(x, key=lambda y: y[:][2]), potentialPoints))
+    sortedPPByZ = list(map(lambda y: np.asarray(y), list(map(lambda x: sorted(x, key=lambda y: y[:][2]), potentialPoints))))
     # One destination case.
     if len(potentialPoints) == 1:
         return sortedPPByZ
