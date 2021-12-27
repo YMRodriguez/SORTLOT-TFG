@@ -360,7 +360,7 @@ def isNotOverlapping(item, placedItems):
     :return: True if the item does not overlap other items around it, False otherwise.
     """
     if len(placedItems):
-        nearItems = getSurroundingItems(item["mass_center"].reshape(1, 3), placedItems, max(int(len(placedItems)*0.1), 25))
+        nearItems = getSurroundingItems(item["mass_center"].reshape(1, 3), placedItems, max(int(len(placedItems)*0.1), 20))
         # Generate points for item evaluated.
         p1all = getPlanesFor(item)
         # Validate overlapping conditions item vs. placedItems and vice versa.

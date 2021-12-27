@@ -98,32 +98,35 @@ def changeItemOrientation(item, validOrientations):
     :return: item object with a randomly different orientation
     """
     orientation = random.choice(validOrientations)
-    i = deepcopy(item)
-    i2 = deepcopy(item)
-    i2["or"] = orientation
+    # First we need to normalize the measures to o1.
+    dim = sorted([item["width"], item["height"], item["length"]])
+    o1width, o1height, o1length = dim[2], dim[0], dim[1]
+    item["or"] = orientation
     if orientation == 2:
-        i2["width"] = i["length"]
-        i2["height"] = i["height"]
-        i2["length"] = i["width"]
+        item["width"] = o1length
+        item["height"] = o1height
+        item["length"] = o1width
     elif orientation == 3:
-        i2["width"] = i["width"]
-        i2["height"] = i["length"]
-        i2["length"] = i["height"]
+        item["width"] = o1width
+        item["height"] = o1length
+        item["length"] = o1height
     elif orientation == 4:
-        i2["width"] = i["height"]
-        i2["height"] = i["length"]
-        i2["length"] = i["width"]
+        item["width"] = o1height
+        item["height"] = o1length
+        item["length"] = o1width
     elif orientation == 5:
-        i2["width"] = i["length"]
-        i2["height"] = i["width"]
-        i2["length"] = i["height"]
+        item["width"] = o1length
+        item["height"] = o1width
+        item["length"] = o1height
     elif orientation == 6:
-        i2["width"] = i["height"]
-        i2["height"] = i["width"]
-        i2["length"] = i["length"]
+        item["width"] = o1height
+        item["height"] = o1width
+        item["length"] = o1length
     else:
-        pass
-    return i2
+        item["width"] = o1width
+        item["height"] = o1height
+        item["length"] = o1length
+    return item
 
 
 def getWeightStandardDeviation(items):
