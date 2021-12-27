@@ -202,7 +202,6 @@ def isStackable(item, placedItems):
 
 
 # ------------------ ADR cargo - C6 ------------------------------------------------
-# This function returns True if the item in in a suitable position for ADR cargo, False otherwise.
 def isADRSuitable(item, truckBRR_z):
     if item["ADR"]:
         itemBRR_z = getBRR(item)[2]
@@ -341,13 +340,13 @@ def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
         # Extract the mass center of all placed items.
         itemsMCs = np.asarray(list(map(lambda x: x["mass_center"], placedItems)))
         # Compute and sort the distances between the new item mass center and the rest.
-        ndxDistances = getComputedDistIndexes(massCenter, itemsMCs)
+        ndxDistances = getComputedDistancesIndexes(massCenter, itemsMCs)
         # Get the nearest mass centers and its items.
         return (np.asarray(placedItems)[ndxDistances[:min(len(placedItems), amountOfNearItems)]]).tolist()
     return []
 
 
-def getComputedDistIndexes(massCenter, massCenters):
+def getComputedDistancesIndexes(massCenter, massCenters):
     return np.sqrt(np.sum(np.square(massCenter - massCenters), axis=1)).argsort()
 
 
@@ -592,30 +591,6 @@ def isBetterPP(newPP, currentBest):
     return newPP[1] > currentBest[1]
 
 
-def projectPPOverlapped(item, potentialPoints, placedItems):
-    """
-    This function projects potential point to the closest free surface above them.
-
-    :param item: item object.
-    :param potentialPoints: list of spatial coordinates.
-    :param placedItems: list of placed items.
-    :return: list of potential points projected.
-    """
-    potentialPointsOverlapped = np.asarray(list(
-        filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints)))
-    if len(potentialPointsOverlapped):
-        newPotentialPoints = potentialPoints[list(map(lambda x: not any((x == potentialPointsOverlapped).all(axis=1)), potentialPoints))]
-        for p in potentialPointsOverlapped:
-            # TODO, we could maybe avoid this operation for time purposes, the pp_out of each items are used just for development
-            #ppOut = list(map(lambda x: list(filter(lambda y: all(y == p), x["pp_out"])), placedItems))
-            p[1] = getTopPlaneHeight(item) + 0.0015
-            #ppOut[1] = p[1]
-            newPotentialPoints = np.vstack((newPotentialPoints, p))
-        return newPotentialPoints
-    else:
-        return potentialPoints
-
-
 def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim, stage):
     """
     This function creates a list of potential points from a packet after its insertion. Depending on the
@@ -836,6 +811,12 @@ def getMixedPotentialPoints(potentialPoints):
     return newPPs
 
 
+def getPossiblePPsOverlapped(potentialPoints, dstCode):
+    if dstCode:
+        return np.vstack((potentialPoints[dstCode], np.asarray(sorted(potentialPoints[dstCode-1], key=lambda x: x[:][2])[:10])))
+    return potentialPoints[dstCode]
+
+
 def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, placedItems):
     """
     This function creates a solution from a list of packets and a given potential points above the first layer
@@ -851,7 +832,7 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
     :param placedItems: list of items that have been already placed inside the container.
     :return: dictionary with the packed items, non-packed items, current state of the truck and not used potential points.
     """
-    discardList = []
+    discardedPackets = []
     # TODO, try sorting from the front to the rear the potential points in stage 1.
     potentialPoints = potentialPoints if stage == 1 else getMixedPotentialPoints(potentialPoints)
     for i in candidateList:
@@ -879,7 +860,7 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
             # Remove pp_best from potentialPoints list.
             potentialPoints[i["dstCode"]] = potentialPoints[i["dstCode"]][~(potentialPoints[i["dstCode"]] == ppBest[0]).all(axis=1)]
             # Generate new PPs to add to item and potentialPoints.
-            potentialPoints[i["dstCode"]] = projectPPOverlapped(feasibleItem, potentialPoints[i["dstCode"]], placedItems)
+            potentialPoints = projectPPOverlapped(feasibleItem, potentialPoints)
             newPPs = generateNewPPs(feasibleItem, placedItems, truck["height"], truck["width"], minDim, stage)
             feasibleItem["pp_out"] = newPPs
             # Append new potential points to general potential points
@@ -891,14 +872,14 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
             # Update truck weight status
             truck = addItemWeightToTruckSubzones(feasibleItem["subzones"], truck)
         else:
-            discardList.append(i)
-    return {"placed": placedItems, "discard": discardList,
+            discardedPackets.append(i)
+    return {"placed": placedItems, "discard": discardedPackets,
             "truck": truck, "potentialPoints": potentialPoints}
 
 
-def createAndProjectNewPPs(placedItems, potentialPoints):
+def createNewPPs(placedItems, potentialPoints):
     """
-    This function creates new potential points and projects the overlapped ones.
+    This function creates new potential point, BRR in last stages.
 
     :param placedItems: set of placed items that 
     :param potentialPoints: set of potential points from later phases.
@@ -959,7 +940,7 @@ def main_cp(truck, candidateList, nDst):
     fillingS1 = fillList(sortingRefillingPhase(fillingBase["discard"], fillingBase["placed"], subgrouping, nDst),
                          list(map(lambda x: np.unique(x, axis=0), fillingBase["potentialPoints"])), truck, 0, stage,
                          nDst, getMinDim(fillingBase["discard"]), fillingBase["placed"])
-    newPPs = createAndProjectNewPPs(fillingS1["placed"], fillingS1["potentialPoints"])
+    newPPs = createNewPPs(fillingS1["placed"], fillingS1["potentialPoints"])
     stage = stage + 1
 
     # ----- DEBUG-INFO ------
@@ -981,6 +962,7 @@ def main_cp(truck, candidateList, nDst):
     stage = stage + 1
 
     # Got to do a few more tests to check if this additional phase is really relevant.
+    # TODO, would be nice to make a estimation of time increase and decide on that instead of this fixed number.
     if len(candidateList) < 300:
         filling = fillList(filling["discard"],
                            np.unique(filling["potentialPoints"], axis=0),

@@ -25,7 +25,6 @@ def mainSortByFitness(items, maxWeight, maxPrio, nDst):
                                                 nDst - x["dstCode"])), reverse=True)
 
 
-# This function returns sorted items based on a fitness function.
 def refillingSortByFitness(nonPackedItems, maxWeight, maxPrio, packedItems, subgroupingCond, nDst):
     """
     This function sorts in the refilling phase according to a fitness function.

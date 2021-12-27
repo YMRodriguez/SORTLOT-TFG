@@ -73,6 +73,13 @@ def updateStatsWithConditions(solution, stats):
 
 
 def determineUnloadingObstacles(solution):
+    """
+
+    This function estimates the number of obstacles in the unloading of cargo in a packing solution.
+
+    :param solution: dataset with all the items and their corresponding positions.
+    :return: number of unloading obstacles.
+    """
     obstacles = 0
     for i in solution["placed"]:
         nearItems = getSurroundingItems(np.array(i["mass_center"]), [e for e in solution["placed"] if e["id"] != i["id"]], 5)
@@ -118,7 +125,7 @@ def getBestBy(criteria, solutions, solutionStatistics, nSol):
     :param criteria: String with the criteria.
     :param solutions: list of solutions.
     :param solutionStatistics: list of statistics.
-    :param nSol: number of best solutions.
+    :param nSol: number of the best solutions.
     :return: tuple of list of nSol solutions and its stats.
     """
     bestStats = sorted(solutionStatistics, key=lambda x: x[criteria], reverse=True)[:nSol]

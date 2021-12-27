@@ -256,6 +256,34 @@ def generateMaxAreas(nItemsDst, nFilteredDst, truck, nDst):
             truck["length"] * truck["width"])
 
 
+def projectPPOverlapped(item, potentialPoints):
+    """
+    This function projects potential point to the closest free surface above them.
+
+    :param item: item object.
+    :param potentialPoints: list of spatial coordinates.
+    :return: list of potential points projected.
+    """
+    PPsOverlapped = []
+    # Same destination potential points.
+    currentDstPPsOverlapped = np.asarray(list(
+            filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints[item["dstCode"]])))
+    PPsOverlapped.append(currentDstPPsOverlapped)
+    if item["dstCode"]:
+        # TODO comprobar si se tarda mas ordenando.
+        previousDstPPsOverlapped = np.asarray(list(
+            filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints[item["dstCode"] - 1])))
+        PPsOverlapped.append(previousDstPPsOverlapped)
+    for j in range(len(PPsOverlapped)):
+        index = item["dstCode"] if not j else item["dstCode"] - 1
+        if len(PPsOverlapped[j]):
+            nonOverlappedPPs = potentialPoints[index][list(map(lambda x: not any((x == PPsOverlapped[j]).all(axis=1)), potentialPoints[index]))]
+            for p in PPsOverlapped[j]:
+                p[1] = getTopPlaneHeight(item) + 0.0015
+                potentialPoints[index] = np.vstack((nonOverlappedPPs, p))
+    return potentialPoints
+
+
 # ------------------------------ Truck Geometric Helpers ----------------------------------------
 # This function returns the spacial Bottom-Left-Front of the item.
 # TODO, if the truck is modified this changes.
