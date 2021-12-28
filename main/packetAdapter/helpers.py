@@ -151,5 +151,5 @@ def getMinDim(items):
 def getVolumeDistributionByDst(items, nDst, containerVol):
     distribution = []
     for d in range(nDst):
-        distribution.append((len(list(map(lambda x: x["dstCode"] == d, items)))/len(items)) * containerVol)
+        distribution.append((len(list(map(lambda x: x["dstCode"] == d, items))) / len(items)) * containerVol)
     return distribution

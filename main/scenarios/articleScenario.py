@@ -35,7 +35,8 @@ def getDataFromJSONWith(filepath):
 
 
 def getFilepaths():
-    return glob.glob(os.path.dirname(__file__) + os.path.sep + "packetsDatasets" + os.path.sep + "articleDatasets" + os.path.sep + "*.json")
+    return glob.glob(os.path.dirname(
+        __file__) + os.path.sep + "packetsDatasets" + os.path.sep + "articleDatasets" + os.path.sep + "*.json")
 
 
 def getIdFromFilePath(filepath):

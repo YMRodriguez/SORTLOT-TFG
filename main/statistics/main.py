@@ -9,7 +9,8 @@ def solutionStatistics(solution):
     :return: Object of stats.
     """
     placed = pd.DataFrame(solution["placed"])
-    discard = pd.DataFrame(solution["discard"]) if len(solution["discard"]) else placed.iloc[0:1].apply(lambda x: 0, axis=0)
+    discard = pd.DataFrame(solution["discard"]) if len(solution["discard"]) else placed.iloc[0:1].apply(lambda x: 0,
+                                                                                                        axis=0)
     return {"iteration": solution["iteration"], "time": solution["time"],
             "n_placed": len(solution["placed"]), "n_discard": len(solution["discard"]),
             "p_mean_weight": float(placed.weight.mean()), "d_mean_weight": float(discard.weight.mean()),

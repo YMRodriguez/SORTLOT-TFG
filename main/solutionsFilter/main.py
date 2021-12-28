@@ -23,7 +23,7 @@ def filterSolutions(solutions, solutionsStatistics):
     # Filter those which has not been able to place all priority items.
     maxPriority = max(solutions[0]["placed"] + solutions[0]["discard"],
                       key=lambda x: x["priority"])["priority"]
-    if maxPriority!=0:
+    if maxPriority != 0:
         solStatsWithPrio = list(filter(lambda x: x["d_max_priority"] != maxPriority, solutionsStatistics))
     else:
         solStatsWithPrio = solutionsStatistics
@@ -74,7 +74,6 @@ def updateStatsWithConditions(solution, stats):
 
 def determineUnloadingObstacles(solution):
     """
-
     This function estimates the number of obstacles in the unloading of cargo in a packing solution.
 
     :param solution: dataset with all the items and their corresponding positions.
@@ -82,10 +81,11 @@ def determineUnloadingObstacles(solution):
     """
     obstacles = 0
     for i in solution["placed"]:
-        nearItems = getSurroundingItems(np.array(i["mass_center"]), [e for e in solution["placed"] if e["id"] != i["id"]], 5)
-        if i["dstCode"] > 1:
-            condition = list(filter(lambda x: (i["dstCode"] - x["dstCode"]) > 1, nearItems))
-            condition = 1 if len(condition) > 4 else 0
+        nearItems = getSurroundingItems(np.array(i["mass_center"]),
+                                        [e for e in solution["placed"] if e["id"] != i["id"]], 5)
+        if i["dstCode"] > 0:
+            # Consider an obstacle if a packet is surrounded by 5 items of different dst code.
+            condition = 1 if len(list(filter(lambda x: i["dstCode"] != x["dstCode"], nearItems))) > 4 else 0
             obstacles = obstacles + condition
     return obstacles
 

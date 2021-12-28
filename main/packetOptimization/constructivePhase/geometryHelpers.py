@@ -19,9 +19,9 @@ def setItemMassCenter(item, potentialPoint, truckWidth, minDim):
     :return:
     """
     if truckWidth - minDim <= potentialPoint[0] <= truckWidth:
-        item["mass_center"] = potentialPoint + np.array([-item["width"], item["height"], item["length"]])/2
+        item["mass_center"] = potentialPoint + np.array([-item["width"], item["height"], item["length"]]) / 2
     else:
-        item["mass_center"] = potentialPoint + np.array([item["width"], item["height"], item["length"]])/2
+        item["mass_center"] = potentialPoint + np.array([item["width"], item["height"], item["length"]]) / 2
     return item
 
 
@@ -44,7 +44,7 @@ def getBLF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] - [item["width"]/2, item["height"]/2, item["length"]/2]
+    return item["mass_center"] - [item["width"] / 2, item["height"] / 2, item["length"] / 2]
 
 
 def getBRF(item):
@@ -54,7 +54,7 @@ def getBRF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] - np.array([-item["width"], item["height"], item["length"]])/2
+    return item["mass_center"] - np.array([-item["width"], item["height"], item["length"]]) / 2
 
 
 def getBRR(item):
@@ -64,7 +64,7 @@ def getBRR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([item["width"], -item["height"], item["length"]])/2
+    return item["mass_center"] + np.array([item["width"], -item["height"], item["length"]]) / 2
 
 
 def getBLR(item):
@@ -74,7 +74,7 @@ def getBLR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([-item["width"], -item["height"], item["length"]])/2
+    return item["mass_center"] + np.array([-item["width"], -item["height"], item["length"]]) / 2
 
 
 def getTLF(item):
@@ -84,7 +84,7 @@ def getTLF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] - np.array([item["width"], -item["height"], item["length"]])/2
+    return item["mass_center"] - np.array([item["width"], -item["height"], item["length"]]) / 2
 
 
 def getTRF(item):
@@ -94,7 +94,7 @@ def getTRF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([item["width"], item["height"], -item["length"]])/2
+    return item["mass_center"] + np.array([item["width"], item["height"], -item["length"]]) / 2
 
 
 def getTRR(item):
@@ -104,7 +104,7 @@ def getTRR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([item["width"], item["height"], item["length"]])/2
+    return item["mass_center"] + np.array([item["width"], item["height"], item["length"]]) / 2
 
 
 def getTLR(item):
@@ -114,7 +114,7 @@ def getTLR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([-item["width"], item["height"], item["length"]])/2
+    return item["mass_center"] + np.array([-item["width"], item["height"], item["length"]]) / 2
 
 
 def getBottomPlaneHeight(item):
@@ -124,7 +124,7 @@ def getBottomPlaneHeight(item):
     :param item: object representing the item.
     :return: Height in metres.
     """
-    return item["mass_center"][1] - item["height"]/2
+    return item["mass_center"][1] - item["height"] / 2
 
 
 def getTopPlaneHeight(item):
@@ -134,7 +134,7 @@ def getTopPlaneHeight(item):
     :param item: object representing the item.
     :return: Height in metres.
     """
-    return item["mass_center"][1] + item["height"]/2
+    return item["mass_center"][1] + item["height"] / 2
 
 
 def getBottomPlaneArea(item):
@@ -196,7 +196,8 @@ def pointInPlane(point, planeLF, planeRR):
     :param planeRR: cartesian right rear point of the plane.
     :return: True if the point is into plane, False otherwise.
     """
-    return planeRR[0] + 0.0001 >= point[0] >= planeLF[0] - 0.0001 and planeRR[2] + 0.0001 >= point[2] >= planeLF[2] - 0.0001
+    return planeRR[0] + 0.0001 >= point[0] >= planeLF[0] - 0.0001 and planeRR[2] + 0.0001 >= point[2] >= planeLF[
+        2] - 0.0001
 
 
 def getNearestProjectionPointFor(point, placedItems):
@@ -246,7 +247,7 @@ def generateMaxAreas(nItemsDst, nFilteredDst, truck, nDst):
         for i in range(nDst):
             if i != nDst - 1:
                 # Just cut percentage of the destinations previous to the first out.
-                factor.append(1 - nDst*(nDst - 1) / 100)
+                factor.append(1 - nDst * (nDst - 1) / 100)
             else:
                 factor.append(1)
         factor = np.asarray(factor)
@@ -267,7 +268,7 @@ def projectPPOverlapped(item, potentialPoints):
     PPsOverlapped = []
     # Same destination potential points.
     currentDstPPsOverlapped = np.asarray(list(
-            filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints[item["dstCode"]])))
+        filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints[item["dstCode"]])))
     PPsOverlapped.append(currentDstPPsOverlapped)
     if item["dstCode"]:
         # TODO comprobar si se tarda mas ordenando.
@@ -277,7 +278,8 @@ def projectPPOverlapped(item, potentialPoints):
     for j in range(len(PPsOverlapped)):
         index = item["dstCode"] if not j else item["dstCode"] - 1
         if len(PPsOverlapped[j]):
-            nonOverlappedPPs = potentialPoints[index][list(map(lambda x: not any((x == PPsOverlapped[j]).all(axis=1)), potentialPoints[index]))]
+            nonOverlappedPPs = potentialPoints[index][
+                list(map(lambda x: not any((x == PPsOverlapped[j]).all(axis=1)), potentialPoints[index]))]
             for p in PPsOverlapped[j]:
                 p[1] = getTopPlaneHeight(item) + 0.0015
                 potentialPoints[index] = np.vstack((nonOverlappedPPs, p))

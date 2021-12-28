@@ -70,7 +70,7 @@ def adaptPackets(items, alpha):
     avgWeight = itemsDf["weight"].mean()
     weiStdDev = itemsDf["weight"].std(ddof=0)
     # From 'cm' to 'm'
-    itemsDf[["width", "height", "length"]] = itemsDf[["width", "height", "length"]]/100
+    itemsDf[["width", "height", "length"]] = itemsDf[["width", "height", "length"]] / 100
     items = list(map(lambda x: changeOrientationToBest(avgWeight, weiStdDev, x), itemsDf.to_dict(orient="records")))
     if not areTaxed(items):
         return addTaxToDataset(items, alpha)
