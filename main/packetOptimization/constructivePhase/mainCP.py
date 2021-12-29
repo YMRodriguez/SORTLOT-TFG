@@ -240,7 +240,7 @@ def addContactAreaTo(item, placedItems):
             placedItemsSubzone = list(filter(lambda x: i[0] in getItemSubzones(x), placedItems))
             # Reduce the scope of items to those sharing their top y-axis Plane with bottom y-axis Plane of the new item.
             sharePlaneItems = list(
-                filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.02151,
+                filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.0151,
                        placedItemsSubzone))
             # Calculate the area of intersection between the sharedPlaneItems and the new item in a subzone.
             itemZXPlane = getZXPlaneFor(item)
@@ -693,19 +693,21 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
     filteredCandidates = []
     for d in range(nDst):
         filteredCandidates.append(list(
-            filter(lambda x: x["dstCode"] == d and x["weight"] >= avgWeight - stdDev/2, candidateList)))
+            filter(lambda x: x["dstCode"] == d and x["weight"] >= avgWeight - stdDev / 2, candidateList)))
     # Count amount of filtered for each destination.
     nFilteredDst = list(map(lambda x: len(x), filteredCandidates))
     # Create max area items of a destination can occupy within the container.
     maxAreas = generateMaxAreas(nItemDst, nFilteredDst, truck, nDst)
     # Make sure there are not too many packets nor very few caused by a really low std dev.
     for d in range(nDst):
-        nItemsEstimation = int(maxAreas[d]/(meanDim[d]**2))
+        nItemsEstimation = int(maxAreas[d] / (meanDim[d] ** 2))
         if len(filteredCandidates[d]) < nItemsEstimation:
-            filteredCandidates[d] = sorted(list(filter(lambda x: x["dstCode"] == d, candidateList)), key=lambda y: y["weight"], reverse=True)[:nItemsEstimation]
+            filteredCandidates[d] = sorted(list(filter(lambda x: x["dstCode"] == d, candidateList)),
+                                           key=lambda y: y["weight"], reverse=True)[:nItemsEstimation]
         # Case too many packets.
         elif len(filteredCandidates[d]) > int(nItemsEstimation * 1.2):
-            filteredCandidates[d] = sorted(list(filter(lambda x: x["dstCode"] == d, candidateList)), key=lambda y: y["weight"], reverse=True)[:int(nItemsEstimation*1.2)]
+            filteredCandidates[d] = sorted(list(filter(lambda x: x["dstCode"] == d, candidateList)),
+                                           key=lambda y: y["weight"], reverse=True)[:int(nItemsEstimation * 1.2)]
     # Initialize current areas.
     currentAreas = np.zeros((1, nDst))
     # Group items that did not pass the filter.
