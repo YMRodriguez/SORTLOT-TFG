@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import pandas as pd
 
 
 def getAverageWeight(items):
@@ -10,6 +11,11 @@ def getAverageWeight(items):
     :return: average weight in kilograms.
     """
     return sum(list(map(lambda x: x["weight"], items))) / len(items)
+
+
+def getStatsForBase(items):
+    df = pd.DataFrame(items)
+    return df.groupby(["dstCode"])[["width", "height", "length"]].mean().mean(axis=1), df["weight"].mean(), df["weight"].std(ddof=0)
 
 
 def getAverageVolume(items):

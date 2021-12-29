@@ -1,10 +1,11 @@
 from main.packetOptimization.constructivePhase.geometryHelpers import *
-from main.packetAdapter.helpers import getAverageWeight, getMinDim, getMaxWeight
+from main.packetAdapter.helpers import getStatsForBase, getMinDim, getMaxWeight
 from main.packetOptimization.randomizationAndSorting.sorting import sortingRefillingPhase
 from copy import deepcopy
 import random
 import numpy as np
 import math
+import time
 
 np.set_printoptions(suppress=True)
 
@@ -184,8 +185,8 @@ def isStackable(item, placedItems):
     """
     # Reduce the scope of items to those sharing their top y Plane with bottom y Plane of the new item.
     sharePlaneItems = list(
-        filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.00151, placedItems))
-    # This ndarray will store if the conditions are met for every item the newItem is above.
+        filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.0016, placedItems))
+    # Store if we can stack an item above others.
     stackableForSharePlaneItems = []
     for i in sharePlaneItems:
         # % of area between the newItem and the placed items underneath * newItem["weight"]
@@ -194,6 +195,7 @@ def isStackable(item, placedItems):
         # Portion of weight above fragile item cannot be more than 50% of the weight of the fragile item.
         if i["fragility"] and itemWeightContribution <= 0.5 * i["weight"]:
             stackableForSharePlaneItems.append(True)
+        # Weight above an item must not exceed its weight.
         elif not i["fragility"] and itemWeightContribution <= i["weight"]:
             stackableForSharePlaneItems.append(True)
         else:
@@ -203,11 +205,17 @@ def isStackable(item, placedItems):
 
 # ------------------ ADR cargo - C6 ------------------------------------------------
 def isADRSuitable(item, truckBRR_z):
+    """
+    Checks whether an ADR packet can go into the container.
+
+    :param item: packet.
+    :param truckBRR_z: greater z coordinate of the container.
+    :return: True if the packet can be introduced, False otherwise.
+    """
     if item["ADR"]:
-        itemBRR_z = getBRR(item)[2]
-        # The item must have its extreme between the rear of the truck and one meter behind.
-        # TODO, make tests on this predefined condition(1 meter).
-        return (itemBRR_z >= truckBRR_z - 1) and (itemBRR_z <= truckBRR_z)
+        # This condition would really depend on the regulation. There are cases in which ADR packets can not be staked
+        # However, since this condition is just binary lets consider that
+        return max([item["width"], item["height"], item["length"]]) >= truckBRR_z - item["mass_center"][2]
     else:
         return True
 
@@ -677,26 +685,34 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
     nItemDst = []
     for n in range(nDst):
         nItemDst.append(len(list(filter(lambda x: x["dstCode"] == n, candidateList))))
-    # Average weight of candidateList.
-    avgWeightGeneral = getAverageWeight(candidateList)
+    # Statistics on the candidateList.
+    meanDim, avgWeight, stdDev = getStatsForBase(candidateList)
     # Obtain the maximum weight of the candidateList.
     maxWeight = getMaxWeight(candidateList)
     # Filter the candidates for each destination that are greater than half the average weight.
     filteredCandidates = []
-    for d in list(range(nDst)):
+    for d in range(nDst):
         filteredCandidates.append(list(
-            filter(lambda x: x["dstCode"] == d and x["weight"] >= avgWeightGeneral * 0.5, candidateList)))
+            filter(lambda x: x["dstCode"] == d and x["weight"] >= avgWeight - stdDev/2, candidateList)))
     # Count amount of filtered for each destination.
     nFilteredDst = list(map(lambda x: len(x), filteredCandidates))
+    # Create max area items of a destination can occupy within the container.
+    maxAreas = generateMaxAreas(nItemDst, nFilteredDst, truck, nDst)
+    # Make sure there are not too many packets nor very few caused by a really low std dev.
+    for d in range(nDst):
+        nItemsEstimation = int(maxAreas[d]/(meanDim[d]**2))
+        if len(filteredCandidates[d]) < nItemsEstimation:
+            filteredCandidates[d] = sorted(list(filter(lambda x: x["dstCode"] == d, candidateList)), key=lambda y: y["weight"], reverse=True)[:nItemsEstimation]
+        # Case too many packets.
+        elif len(filteredCandidates[d]) > int(nItemsEstimation * 1.2):
+            filteredCandidates[d] = sorted(list(filter(lambda x: x["dstCode"] == d, candidateList)), key=lambda y: y["weight"], reverse=True)[:int(nItemsEstimation*1.2)]
+    # Initialize current areas.
+    currentAreas = np.zeros((1, nDst))
     # Group items that did not pass the filter.
     flattenedFilteredCandidates = [item for sublist in filteredCandidates for item in sublist]
     discardList = list(filter(lambda x: x not in flattenedFilteredCandidates, candidateList))
     # Update list with the items that passed the filter.
     candidateList = filteredCandidates
-    # Create max area items of a destination can occupy within the container.
-    maxAreas = generateMaxAreas(nItemDst, nFilteredDst, truck, nDst)
-    # Initialize current areas.
-    currentAreas = np.zeros((1, nDst))
     # Auxiliary list to group PP that are not important in this stage(those that are not in the floor).
     notInFloorPPByDst = list(map(lambda x: [], range(nDst)))
     # Check the best item for each Potential Point in order of destination.
@@ -941,11 +957,11 @@ def main_cp(truck, candidateList, nDst):
     # Determine if there is relevant subgrouping conditions
     subgrouping = checkSubgroupingCondition(candidateList)
     stage = 0
-    #    startTime0 = time.time()
+    startTime0 = time.time()
     fillingBase = fillListBase(candidateList, potentialPointsByDst, truck, nDst, minDim, [])
     # ----- DEBUG-INFO ------
-    #    print("Time stage " + str(time.time() - startTime0))
-    #    print("Number of items packed after stage" + len(filling0["placed"]))
+    print("Time stage " + str(time.time() - startTime0))
+    #    print("Number of items packed after stage" + len(fillingBase["placed"]))
     #    startTime1 = time.time()
     # ----- DEBUG-INFO ------
 
