@@ -702,12 +702,10 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
     for d in range(nDst):
         nItemsEstimation = int(maxAreas[d] / (meanDim[d] ** 2))
         if len(filteredCandidates[d]) < nItemsEstimation:
-            filteredCandidates[d] = sorted(list(filter(lambda x: x["dstCode"] == d, candidateList)),
-                                           key=lambda y: y["weight"], reverse=True)[:nItemsEstimation]
+            filteredCandidates[d] = list(filter(lambda x: x["dstCode"] == d, candidateList))[:nItemsEstimation]
         # Case too many packets.
         elif len(filteredCandidates[d]) > int(nItemsEstimation * 1.2):
-            filteredCandidates[d] = sorted(list(filter(lambda x: x["dstCode"] == d, candidateList)),
-                                           key=lambda y: y["weight"], reverse=True)[:int(nItemsEstimation * 1.2)]
+            filteredCandidates[d] = list(filter(lambda x: x["dstCode"] == d, candidateList))[:int(nItemsEstimation * 1.2)]
     # Initialize current areas.
     currentAreas = np.zeros((1, nDst))
     # Group items that did not pass the filter.
