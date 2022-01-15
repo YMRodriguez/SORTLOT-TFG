@@ -719,9 +719,9 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
     notInFloorPPByDst = list(map(lambda x: [], range(nDst)))
     # Check the best item for each Potential Point in order of destination.
     for d in range(nDst):
-        # Closest to rear potential points for the first packed destination will be the base for the next destination.
+        # Add to next destination the potential points of the previous destination.
         if d:
-            potentialPoints.append(np.array(sorted(potentialPoints[d - 1], key=lambda y: y[:][2])))
+            potentialPoints.append(np.array(potentialPoints[d - 1]))
         # The intention is to fill the max area of the container assigned to a destination,
         # so it checks this condition for each potential point, each item and each item orientation.
         while (currentAreas[0][d] <= maxAreas[d]) and len(potentialPoints[d]):
@@ -788,7 +788,8 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
                     # Update truck weight status
                     truck = addItemWeightToTruckSubzones(feasibleItem["subzones"], truck)
                 else:
-                    # There is no item and item orientation for this potential point (used to included in discarded).
+                    # There is no item and item orientation for this potential point.
+                    # Delete it from the list of potential points.
                     potentialPoints[d] = potentialPoints[d][~(potentialPoints[d] == pp).all(axis=1)]
             else:
                 # Add potential point that is not on the floor.
