@@ -14,7 +14,7 @@ from main.packetOptimization.randomizationAndSorting.randomization import random
 from main.packetOptimization.randomizationAndSorting.sorting import sortingPhase
 from main.packetOptimization.constructivePhase.mainCP import main_cp
 from main.statistics.main import solutionStatistics
-from main.solutionsFilter.main import filterSolutions, getBest, filterSolutionsWithoutExcluding
+from main.solutionsFilter.main import filterSolutions, getBest, getUpdatedStatsWithConditions
 from main.scenarios.dataSaver import persistInLocal, persistStats
 import glob
 import os
@@ -164,8 +164,11 @@ for fp in getFilepaths():
                                                "truck": x["truck"],
                                                "iteration": x["iteration"],
                                                "time": x["time"]}, solutions))
-        updatedStats = filterSolutionsWithoutExcluding(solutionsCleaned, solutionsStats)
+        # ------------- Iterations data -------------------------
+        updatedStats = getUpdatedStatsWithConditions(solutionsCleaned, solutionsStats)
+        # Keep stats of all iterations, useful for graphics.
         persistStats(updatedStats, ID)
+        # -------------------------------------------------------
         # Get best filtered and unfiltered.
         serializedSolutions = serializeSolutions(solutionsCleaned)
         filteredSolutions, filteredStats = filterSolutions(serializedSolutions, solutionsStats)

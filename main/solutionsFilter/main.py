@@ -16,24 +16,15 @@ def filterSolutions(solutions, solutionsStatistics):
     :param solutionsStatistics: set of statistics.
     :return: one set of filtered solutions and another set with its stats.
     """
-    # Keep those that satisfies horizontal stability.
-    solutions = list(filter(lambda x: isHorizontallyStable(x["placed"], x["truck"]["width"]), solutions))
-    iterations = list(map(lambda x: x["iteration"], solutions))
-    solutionsStatistics = list(filter(lambda x: x["iteration"] in iterations, solutionsStatistics))
-    # Filter those which has not been able to place all priority items.
-    maxPriority = max(solutions[0]["placed"] + solutions[0]["discard"],
-                      key=lambda x: x["priority"])["priority"]
-    if maxPriority != 0:
-        solStatsWithPrio = list(filter(lambda x: x["d_max_priority"] != maxPriority, solutionsStatistics))
-    else:
-        solStatsWithPrio = solutionsStatistics
-    iterWithPrio = list(map(lambda x: x["iteration"], solStatsWithPrio))
-    sols = list(filter(lambda x: x["iteration"] in iterWithPrio, solutions))
-    sols = addUnloadingOrderTo(sols)
-    return sols, solStatsWithPrio
+    # Keep those that satisfies conditions.
+    solutionsStatistics = list(filter(lambda x: x["p_cond"] and x["hs_cond"] and x["sub_cond"], solutionsStatistics))
+    feasibleIterations = list(map(lambda x: x["iteration"], solutionsStatistics))
+    solutions = list(filter(lambda x: x["iteration"] in feasibleIterations, solutions))
+    solutions = addLoadingOrderTo(solutions)
+    return solutions, solutionsStatistics
 
 
-def addUnloadingOrderTo(sols):
+def addLoadingOrderTo(sols):
     for sol in sols:
         # Extract the mass center of all placed items.
         itemsIDs = np.asarray(list(map(lambda x: x["in_id"], sol["placed"])))
@@ -48,27 +39,22 @@ def addUnloadingOrderTo(sols):
     return sols
 
 
-def filterSolutionsWithoutExcluding(solutions, solutionsStatistics):
+def getUpdatedStatsWithConditions(solutions, solutionsStatistics):
     """
-    This function determines if a set of solutions and its statistics satisfy by this constrains:
-    - Not horizontal stability in the truck.
-    - Left priority items unloaded.
+    This function overwrites stats to denote if the conditions have been satisfied.
 
     :param solutions: set of solutions in this format [{"solution":'', "iteration":'', "time":''}, ...]
     :param solutionsStatistics: set of statistics.
-    :return: one set of solutions and another set with its stats including if satisfies the filter.
+    :return: set of stats with conditions updated.
     """
-    # Keep those that satisfies horizontal stability.
-    stats = list(map(lambda x: updateStatsWithConditions(x, solutionsStatistics[x["iteration"]]), solutions))
-    return stats
+    return list(map(lambda x: updateStatsWithConditions(x, solutionsStatistics[x["iteration"]]), solutions))
 
 
 def updateStatsWithConditions(solution, stats):
     stats["unload_obs"] = determineUnloadingObstacles(solution)
     stats["hs_cond"] = int(isHorizontallyStable(solution["placed"], solution["truck"]["width"]))
-    maxPriority = max(solution["placed"] + solution["discard"],
-                      key=lambda x: x["priority"])["priority"]
-    stats["p_cond"] = int(stats["d_max_priority"] != maxPriority if maxPriority != 0 else 1)
+    stats["p_cond"] = checkPriorityCondition(solution["discard"])
+    stats["sub_cond"] = checkSubgroupingCondition(solution)
     return stats
 
 
@@ -148,3 +134,25 @@ def isHorizontallyStable(solutionPlacedItems, truckWidth):
                  np.append(x["mass_center"], x["weight"]), solutionPlacedItems)))
     containerMC = np.average(massCenterWithWeight[:, :3], axis=0, weights=massCenterWithWeight[:, 3])
     return truckWidth * 0.3 < containerMC[0] < truckWidth * 0.7
+
+
+def checkSubgroupingCondition(solution):
+    """
+    This function checks if there are no items unpacked with a certain subgroup that has been partially packed.
+
+    :param solution:
+    :return: True if condition satisfied, false otherwise.
+    """
+    placedSubgroups = list(map(lambda x: x["subgroupId"], solution["placed"]))
+    return int(len(list(filter(lambda x: x["subgroupId"] not in placedSubgroups, solution["discard"]))) == 0)
+
+
+def checkPriorityCondition(solutionDiscarded, priorityLevelThreshold=1):
+    """
+    This function checks if a certain solution has packed all its priority items.
+
+    :param priorityLevelThreshold: numeric priority item level, from which a solution is not feasible.
+    :param solutionDiscarded: set of discarded items from a solution.
+    :return: True if condition satisfied, False otherwise.
+    """
+    return int(len(list(filter(lambda x: x["priority"] >= priorityLevelThreshold, solutionDiscarded))) == 0)
