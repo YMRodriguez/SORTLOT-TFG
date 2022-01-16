@@ -701,11 +701,8 @@ def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItem
     # Make sure there are not too many packets nor very few caused by a really low std dev.
     for d in range(nDst):
         nItemsEstimation = int(maxAreas[d] / (meanDim[d] ** 2))
-        if len(filteredCandidates[d]) < nItemsEstimation:
-            filteredCandidates[d] = list(filter(lambda x: x["dstCode"] == d, candidateList))[:nItemsEstimation]
-        # Case too many packets.
-        elif len(filteredCandidates[d]) > int(nItemsEstimation * 1.2):
-            filteredCandidates[d] = list(filter(lambda x: x["dstCode"] == d, candidateList))[:int(nItemsEstimation * 1.2)]
+        # Added filtered candidates based on estimation.
+        filteredCandidates[d] = list(filter(lambda x: x["dstCode"] == d, candidateList))[:int(nItemsEstimation * 1.5)]
     # Initialize current areas.
     currentAreas = np.zeros((1, nDst))
     # Group items that did not pass the filter.
