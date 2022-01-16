@@ -8,7 +8,7 @@ from main.packetAdapter.helpers import *
 
 # -------------- Types -----------------------------------------
 
-def mainSortByFitness(items, maxWeight, maxPrio, nDst):
+def sortByFitness(items, maxWeight, maxPrio, nDst):
     """
     This function sorts items according to a fitness function.
 
@@ -18,38 +18,37 @@ def mainSortByFitness(items, maxWeight, maxPrio, nDst):
     :param nDst: number of destinations of the cargo.
     :return: sorted set of packets.
     """
-    fitweights = [0.8, 0.2] if maxPrio else [0.5, 0]
+    fitweights = [0.8, 0.2] if maxPrio else [1, 0]
     return sorted(items, key=lambda x: (((x["weight"] / maxWeight) *
                                          fitweights[0] + (x["priority"] / max(maxPrio, 1)) * fitweights[1]) + (
                                                 nDst - x["dstCode"])), reverse=True)
 
 
-def refillingSortByFitness(nonPackedItems, maxWeight, maxPrio, packedItems, subgroupingCond, nDst):
+def reSortByFitness(nonPackedItems, maxWeight, packedItems, subgroupingCond, nDst):
     """
-    This function sorts in the refilling phase according to a fitness function.
+    This function sorts after the base has been loaded. It also reduces subgrouping condition to priority.
 
     :param subgroupingCond: True if subgrouping considered, False otherwise.
     :param packedItems: array of already packed items.
     :param nonPackedItems: array of objects representing the packets.
     :param maxWeight: maximum weight of the cargo.
-    :param maxPrio: maximum priority of the cargo.
     :param nDst: number of destinations of the cargo.
     :return: sorted set of packets.
     """
     if subgroupingCond:
         # Get the subgroups that have been already packed.
-        subgroups = list(map(lambda x: x["subgroupId"], packedItems))
-        fitweights = [0.2, 0.4, 0.4] if maxPrio else [0.5, 0.5, 0]
-        return sorted(nonPackedItems, key=lambda x: (int(x["subgroupId"] in subgroups) * fitweights[0]) + (
-                ((x["weight"] / maxWeight) * fitweights[1] + (x["priority"] / max(maxPrio, 1)) * fitweights[2]) + (
-                    nDst - x["dstCode"])),
-                      reverse=True)
-    else:
-        fitweights = [0.55, 0.45] if maxPrio else [1, 0]
-        return sorted(nonPackedItems, key=lambda x: (((x["weight"] / maxWeight) * fitweights[0] +
-                                                      (x["priority"] / max(maxPrio, 1)) * fitweights[1]) + (
-                                                             nDst - x["dstCode"])),
-                      reverse=True)
+        packedSubgroups = list(map(lambda x: x["subgroupId"], packedItems))
+        for i in nonPackedItems:
+            # Simplification of conditions. From subgrouping to priority.
+            if i["subgroupId"] in packedSubgroups:
+                # TODO, should be maxPrio but the case of active subgrouping and no priority is a non-working exception.
+                i["priority"] = 1
+    maxPrio = getMaxPriority(nonPackedItems)
+    fitweights = [0.55, 0.45] if maxPrio else [1, 0]
+    return sorted(nonPackedItems, key=lambda x: (((x["weight"] / maxWeight) * fitweights[0] +
+                                                  (x["priority"] / max(maxPrio, 1)) * fitweights[1]) + (
+                                                         nDst - x["dstCode"])),
+                  reverse=True)
 
 
 # ----------- Main functions ----------------------------------
@@ -61,11 +60,11 @@ def sortingPhase(items, nDst):
     :param nDst: number of destinations of the cargo.
     :return: sorted set of packets.
     """
-    return mainSortByFitness(items, getMaxWeight(items),
-                             getMaxPriority(items), nDst)
+    return sortByFitness(items, getMaxWeight(items),
+                         getMaxPriority(items), nDst)
 
 
-def sortingRefillingPhase(nonPackedItems, packedItems, subgroupingCond, nDst):
+def reSortingPhase(nonPackedItems, packedItems, subgroupingCond, nDst):
     """
     This function handles the second sorting phase.
 
@@ -75,5 +74,4 @@ def sortingRefillingPhase(nonPackedItems, packedItems, subgroupingCond, nDst):
     :param nDst: number of destinations of the cargo.
     :return: sorted set of packets.
     """
-    return refillingSortByFitness(nonPackedItems, getMaxWeight(nonPackedItems),
-                                  getMaxPriority(nonPackedItems), packedItems, subgroupingCond, nDst)
+    return reSortByFitness(nonPackedItems, getMaxWeight(nonPackedItems), packedItems, subgroupingCond, nDst)

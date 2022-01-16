@@ -1,6 +1,6 @@
 from main.packetOptimization.constructivePhase.geometryHelpers import *
 from main.packetAdapter.helpers import getStatsForBase, getMinDim, getMaxWeight
-from main.packetOptimization.randomizationAndSorting.sorting import sortingRefillingPhase
+from main.packetOptimization.randomizationAndSorting.sorting import reSortingPhase
 from copy import deepcopy
 import random
 import numpy as np
@@ -669,7 +669,7 @@ def getCandidatesByDestination(candidates, nDst, index):
             return candidates[index]
 
 
-def fillListBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems):
+def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems):
     """
     This function creates a solution from a list of packets and a given potential points in the base of the truck.
 
@@ -843,7 +843,7 @@ def getPossiblePPsOverlapped(potentialPoints, dstCode):
     return potentialPoints[dstCode]
 
 
-def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, placedItems):
+def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, placedItems):
     """
     This function creates a solution from a list of packets and a given potential points above the first layer
     base of items of the truck.
@@ -891,7 +891,8 @@ def fillList(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, 
             newPPs = generateNewPPs(feasibleItem, placedItems, truck["height"], truck["width"], minDim, stage)
             feasibleItem["pp_out"] = newPPs
             # Append new potential points to general potential points
-            potentialPoints[i["dstCode"]] = np.vstack((potentialPoints[i["dstCode"]], newPPs)) if len(newPPs) else potentialPoints[i["dstCode"]]
+            potentialPoints[i["dstCode"]] = np.vstack((potentialPoints[i["dstCode"]], newPPs)) if len(newPPs) else \
+                potentialPoints[i["dstCode"]]
             # Add insertion order to item.
             feasibleItem["in_id"] = len(placedItems)
             # Add item to placedItems.
@@ -933,13 +934,14 @@ def checkSubgroupingCondition(packets):
     :param packets: list of packets.
     :return: True if there is subgrouping, False otherwise.
     """
-    return len(list(map(lambda x: x["subgroupId"], packets))) < len(packets)
+    return len(set(map(lambda x: x["subgroupId"], packets))) < len(packets)
 
 
-def main_cp(truck, candidateList, nDst):
+def main_cp(truck, candidateList, nDst, subgroupingEnabled=1):
     """
     This function is the main part of the core of the solution builder.
 
+    :param subgroupingEnabled: 0 to force omitting subgrouping condition.
     :param truck: truck object.
     :param candidateList: list of objects representing the cargo.
     :param nDst: number of destinations in the cargo.
@@ -953,10 +955,10 @@ def main_cp(truck, candidateList, nDst):
     minDim = getMinDim(candidateList)
 
     # Determine if there is relevant subgrouping conditions
-    subgrouping = checkSubgroupingCondition(candidateList)
+    subgrouping = checkSubgroupingCondition(candidateList) if subgroupingEnabled else 0
     stage = 0
     startTime0 = time.time()
-    fillingBase = fillListBase(candidateList, potentialPointsByDst, truck, nDst, minDim, [])
+    loadedBase = loadBase(candidateList, potentialPointsByDst, truck, nDst, minDim, [])
     # ----- DEBUG-INFO ------
     print("Time stage " + str(time.time() - startTime0))
     #    print("Number of items packed after stage" + len(fillingBase["placed"]))
@@ -964,10 +966,10 @@ def main_cp(truck, candidateList, nDst):
     # ----- DEBUG-INFO ------
 
     stage = stage + 1
-    fillingS1 = fillList(sortingRefillingPhase(fillingBase["discard"], fillingBase["placed"], subgrouping, nDst),
-                         list(map(lambda x: np.unique(x, axis=0), fillingBase["potentialPoints"])), truck, 0, stage,
-                         nDst, getMinDim(fillingBase["discard"]), fillingBase["placed"])
-    newPPs = createNewPPs(fillingS1["placed"], fillingS1["potentialPoints"])
+    loadedS1 = load(reSortingPhase(loadedBase["discard"], loadedBase["placed"], subgrouping, nDst),
+                    list(map(lambda x: np.unique(x, axis=0), loadedBase["potentialPoints"])), loadedBase["truck"], 0, stage,
+                    nDst, getMinDim(loadedBase["discard"]), loadedBase["placed"])
+    newPPs = createNewPPs(loadedS1["placed"], loadedS1["potentialPoints"])
     stage = stage + 1
 
     # ----- DEBUG-INFO ------
@@ -976,10 +978,10 @@ def main_cp(truck, candidateList, nDst):
     #    print("Number of items packed after stage" + len(filling1["placed"]))
     # ----- DEBUG-INFO ------
 
-    filling = fillList(fillingS1["discard"],
+    loadingRest = load(reSortingPhase(loadedS1["discard"], loadedS1["placed"], subgrouping, nDst),
                        list(map(lambda x: np.unique(x, axis=0), newPPs)),
-                       fillingS1["truck"], 1, stage, nDst,
-                       getMinDim(fillingS1["discard"]), fillingS1["placed"])
+                       loadedS1["truck"], 1, stage, nDst,
+                       getMinDim(loadedS1["discard"]), loadedS1["placed"])
     # ----- DEBUG-INFO ------
     #    print("Time stage " + str(time.time() - startTime2))
     #    startTime3 = time.time()
@@ -991,12 +993,12 @@ def main_cp(truck, candidateList, nDst):
     # Got to do a few more tests to check if this additional phase is really relevant.
     # TODO, would be nice to make a estimation of time increase and decide on that instead of this fixed number.
     if len(candidateList) < 300:
-        filling = fillList(filling["discard"],
-                           np.unique(filling["potentialPoints"], axis=0),
-                           filling["truck"], 1, stage, nDst,
-                           getMinDim(filling["discard"]), filling["placed"])
+        loadingRest = load(loadingRest["discard"],
+                           np.unique(loadingRest["potentialPoints"], axis=0),
+                           loadingRest["truck"], 1, stage, nDst,
+                           getMinDim(loadingRest["discard"]), loadingRest["placed"])
     # ----- DEBUG-INFO ------
     #    print("Number of items packed after stage" + len(fillingSA["placed"]))
     #    print("Stage time: " + str(time.time() - startTime3))
     # ----- DEBUG-INFO ------
-    return filling
+    return loadingRest
