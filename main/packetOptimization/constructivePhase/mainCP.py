@@ -535,7 +535,6 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
             filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.0016,
                    placedItems))
         itemBehind = getSurroundingItems(PP, sharePlaneItems, 1)[0]
-        itemBehindCondition = int(itemBehind["dstCode"] == item["dstCode"])
 
         # This is a way to avoid mistaken subgrouping in the latest packing stages.
         if stage == 3:
@@ -545,11 +544,7 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
         areaCondition = areaCondition if (1 >= areaCondition >= 0) else 0
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
                    areaCondition * stageFW[2] + heightWeightRelation * stageFW[3]
-        # Threshold in fitness value.
-        if stage == 1:
-            fitvalue = fitvalue if itemBehindCondition else 0
-        else:
-            fitvalue = fitvalue if fitvalue >= 0 else 0
+        fitvalue = fitvalue if fitvalue >= 0 else 0
         return [PP, fitvalue]
     else:
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
