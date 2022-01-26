@@ -8,6 +8,7 @@ import json
 import time
 import sys
 from copy import deepcopy
+import numpy as np
 from main.truckAdapter.adapter import adaptTruck
 from main.packetAdapter.adapter import adaptPackets
 from main.packetOptimization.randomizationAndSorting.randomization import randomization
@@ -19,8 +20,9 @@ from main.scenarios.dataSaver import persistInLocal, persistStats
 import glob
 import os
 from pyswarms.backend.topology import Star
+from pyswarms.backend.handlers import OptionsHandler
+from pyswarms.single import GlobalBestPSO
 import pyswarms.backend as P
-
 
 # ----------------------- MongoDB extraction ----------------------
 truck_var = json.load(open(os.path.dirname(__file__) + os.path.sep + "packetsDatasets" + os.path.sep + "truckvar.json"))
@@ -47,7 +49,7 @@ def getIdFromFilePath(filepath):
 
 
 # -------------------- Main Processes -----------------------------
-def main_scenario(packets, truck, nDst, nIteration, rangeOrientations=None):
+def main_scenario(packets, coefficients, truck, nDst, nIteration, rangeOrientations=None):
     if rangeOrientations is None:
         rangeOrientations = [1, 2, 3, 4, 5, 6]
     # ------ Packet adaptation------
@@ -155,22 +157,25 @@ else:
     iterations, exp, cores, psoIterations, particles = 1, 0, 1, 50, 50
 
 
-# ---------- Swarm structure creation ------------------------
-topology = Star()
-options = {}
-swarm = P.create_swarm(n_particles=particles, dimensions=15, options=options)
+def objectiveFunction(coefficients):
+    # Repeat operation in case the cost is max due to no feasible solutions.
+    costFunction = computeAlgorithm(coefficients)
+    if costFunction == 1:
+        costFunction = computeAlgorithm(coefficients, mult_iter=3)
+    return costFunction
 
-for i in range(psoIterations):
+
+def computeAlgorithm(coefficients, mult_iter=1, n_cores=5):
     experiment = getFilepaths()[exp]
     # ------ Get packets dataset -------
     ID = getIdFromFilePath(experiment)
     items, ndst = getDataFromJSONWith(experiment)
 
     # ------ Iterations ------------
-    with parallel_backend(backend="loky", n_jobs=cores):
+    with parallel_backend(backend="loky", n_jobs=n_cores):
         parallel = Parallel(verbose=100)
         solutions = parallel(
-            [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, i) for i in range(iterations)])
+            [delayed(main_scenario)(deepcopy(items), coefficients, deepcopy(truck_var), ndst, i) for i in range(mult_iter)])
         solutionsStats = list(map(lambda x: solutionStatistics(x), solutions))
 
         # ------- Process set of solutions --------
@@ -191,6 +196,13 @@ for i in range(psoIterations):
         bestFiltered = getBest(filteredSolutions, filteredStats, 5)
         bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 5)
 
+        # Get the average volume of the iterations.
+        averageVolume = sum([j["used_volume"] for j in solutionsStats]) / mult_iter
+        # Let's check if there is any feasible solution.
+        feasibleSols = len(filteredSolutions)
+        # Opposite to volume occupation.
+        costFunction = 1 - averageVolume if feasibleSols else 1
+
         # Make it json serializable
         bestSolsFiltered = {"volume": bestFiltered["volume"][0],
                             "weight": bestFiltered["weight"][0],
@@ -206,3 +218,37 @@ for i in range(psoIterations):
                                "taxability": bestUnfiltered["taxability"][1]}
 
         persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)
+    return costFunction
+
+
+# ---------- Swarm structure creation ------------------------
+topology = Star()
+initPositions = [0.8, 0.2, 0.55, 0.45, 0.35, 0.25, 0.4, 0.45, 0.45, 0.05, 0.05, 0.3, 0.5, 0.1, 0.1]
+bounds = (0, 1)
+opHandler = OptionsHandler(strategy={"w": "lin_variation"})
+options = {"w": 0.9, "c1": 0.5, "c2": 0.3}
+
+mySwarm = P.create_swarm(n_particles=particles, dimensions=14, options=options, bounds=bounds)
+for p in range(psoIterations):
+    # Part 1: Update personal best
+    mySwarm.current_cost = objectiveFunction(mySwarm.position)  # Compute current cost
+    mySwarm.pbest_cost = objectiveFunction(mySwarm.pbest_pos)  # Compute personal best pos
+    mySwarm.pbest_pos, mySwarm.pbest_cost = P.compute_pbest(mySwarm)  # Update and store
+
+    # Part 2: Update global best
+    # Note that gbest computation is dependent on your topology
+    if np.min(mySwarm.pbest_cost) < mySwarm.best_cost:
+        mySwarm.best_pos, mySwarm.best_cost = topology.compute_gbest(mySwarm)
+
+    # Let's print our output
+    if p % 20 == 0:
+        print('Iteration: {} | my_swarm.best_cost: {:.4f}'.format(p + 1, mySwarm.best_cost))
+
+    # Part 3: Update position and velocity matrices
+    # Note that position and velocity updates are dependent on your topology
+    mySwarm.velocity = topology.compute_velocity(mySwarm)
+    mySwarm.position = topology.compute_position(mySwarm)
+    mySwarm.options = opHandler(options, iternow=p, itermax=psoIterations)
+
+print('The best cost found by our swarm is: {:.4f}'.format(mySwarm.best_cost))
+print('The best position found by our swarm is: {}'.format(mySwarm.best_pos))
