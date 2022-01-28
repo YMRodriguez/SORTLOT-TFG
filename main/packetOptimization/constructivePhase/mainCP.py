@@ -956,10 +956,10 @@ def main_cp(truck, candidateList, nDst, coefficients, subgroupingEnabled=1):
     # Determine if there is relevant subgrouping conditions
     subgrouping = checkSubgroupingCondition(candidateList) if subgroupingEnabled else 0
     stage = 0
-    startTime0 = time.time()
+    # startTime0 = time.time()
     loadedBase = loadBase(candidateList, potentialPointsByDst, truck, nDst, minDim, [], coefficientsBase)
     # ----- DEBUG-INFO ------
-    print("Time stage " + str(time.time() - startTime0))
+    # print("Time stage " + str(time.time() - startTime0))
     #    print("Number of items packed after stage" + len(fillingBase["placed"]))
     #    startTime1 = time.time()
     # ----- DEBUG-INFO ------
