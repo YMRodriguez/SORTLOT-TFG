@@ -57,11 +57,11 @@ def main_scenario(packets, coefficients, truck, nDst, nIteration, rangeOrientati
     packets = adaptPackets(packets, 333)
     # ------ Truck adaptation ------
     truck = adaptTruck(truck, 4)
-    sort_output = sortingPhase(packets, nDst)
+    sort_output = sortingPhase(packets, nDst, coefficients[:2])
     rand_output = randomization(deepcopy(sort_output))
     # ------- Solution builder --------
     startTime = time.time()
-    iteration = main_cp(truck, rand_output, nDst)
+    iteration = main_cp(truck, rand_output, nDst, coefficients[2:])
     endTime = time.time()
     # It may be relevant to know the sorting method used.
     return {"placed": iteration["placed"],
@@ -152,30 +152,36 @@ if len(sys.argv) > 1:
     try:
         particles = int(sys.argv[5])
     except ValueError:
-        particles = 50
+        particles = 15
 else:
-    iterations, exp, cores, psoIterations, particles = 1, 0, 1, 50, 50
+    iterations, exp, cores, psoIterations, particles = 1, 0, 3, 50, 15
 
 
-def objectiveFunction(coefficients):
-    # Repeat operation in case the cost is max due to no feasible solutions.
-    costFunction = computeAlgorithm(coefficients)
-    if costFunction == 1:
-        costFunction = computeAlgorithm(coefficients, mult_iter=3)
+def objectiveFunction(coefficients, nParticles, nCores=1):
+    # Base list to put the cost function of each of the particles.
+    costFunction = []
+    for i in range(nParticles):
+        # Repeat operation in case the cost is max due to no feasible solutions.
+        costFunctionForParticle = computeAlgorithm(coefficients[i], multIter=nCores, nCores=nCores)
+        if costFunctionForParticle == 1:
+            print("No feasible solution found for:" + str(coefficients))
+            costFunctionForParticle = computeAlgorithm(coefficients[i], multIter=nCores*2, nCores=nCores)
+            print("Computed another 3 solutions for particle and the cost was " + str(costFunctionForParticle))
+        costFunction.append(costFunctionForParticle)
     return costFunction
 
 
-def computeAlgorithm(coefficients, mult_iter=1, n_cores=5):
+def computeAlgorithm(coefficients, multIter=1, nCores=1):
     experiment = getFilepaths()[exp]
     # ------ Get packets dataset -------
     ID = getIdFromFilePath(experiment)
     items, ndst = getDataFromJSONWith(experiment)
 
     # ------ Iterations ------------
-    with parallel_backend(backend="loky", n_jobs=n_cores):
+    with parallel_backend(backend="loky", n_jobs=nCores):
         parallel = Parallel(verbose=100)
         solutions = parallel(
-            [delayed(main_scenario)(deepcopy(items), coefficients, deepcopy(truck_var), ndst, i) for i in range(mult_iter)])
+            [delayed(main_scenario)(deepcopy(items), coefficients, deepcopy(truck_var), ndst, i) for i in range(multIter)])
         solutionsStats = list(map(lambda x: solutionStatistics(x), solutions))
 
         # ------- Process set of solutions --------
@@ -197,7 +203,7 @@ def computeAlgorithm(coefficients, mult_iter=1, n_cores=5):
         bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 5)
 
         # Get the average volume of the iterations.
-        averageVolume = sum([j["used_volume"] for j in solutionsStats]) / mult_iter
+        averageVolume = sum([j["used_volume"] for j in solutionsStats]) / multIter
         # Let's check if there is any feasible solution.
         feasibleSols = len(filteredSolutions)
         # Opposite to volume occupation.
@@ -223,16 +229,17 @@ def computeAlgorithm(coefficients, mult_iter=1, n_cores=5):
 
 # ---------- Swarm structure creation ------------------------
 topology = Star()
-initPositions = [0.8, 0.2, 0.55, 0.45, 0.35, 0.25, 0.4, 0.45, 0.45, 0.05, 0.05, 0.3, 0.5, 0.1, 0.1]
-bounds = (0, 1)
+initPositionsList = [0.8, 0.2, 0.55, 0.45, 0.35, 0.25, 0.4, 0.45, 0.45, 0.05, 0.05, 0.3, 0.5, 0.1, 0.1]
+initPositions = np.tile(initPositionsList, (particles, 1))
+bounds = (np.zeros(15), np.ones(15))
 opHandler = OptionsHandler(strategy={"w": "lin_variation"})
 options = {"w": 0.9, "c1": 0.5, "c2": 0.3}
 
-mySwarm = P.create_swarm(n_particles=particles, dimensions=14, options=options, bounds=bounds)
+mySwarm = P.create_swarm(n_particles=particles, dimensions=15, options=options, bounds=bounds, init_pos=initPositions)
 for p in range(psoIterations):
     # Part 1: Update personal best
-    mySwarm.current_cost = objectiveFunction(mySwarm.position)  # Compute current cost
-    mySwarm.pbest_cost = objectiveFunction(mySwarm.pbest_pos)  # Compute personal best pos
+    mySwarm.current_cost = objectiveFunction(mySwarm.position, particles, cores)  # Compute current cost
+    mySwarm.pbest_cost = objectiveFunction(mySwarm.pbest_pos, particles, cores)  # Compute personal best pos
     mySwarm.pbest_pos, mySwarm.pbest_cost = P.compute_pbest(mySwarm)  # Update and store
 
     # Part 2: Update global best
@@ -249,6 +256,12 @@ for p in range(psoIterations):
     mySwarm.velocity = topology.compute_velocity(mySwarm)
     mySwarm.position = topology.compute_position(mySwarm)
     mySwarm.options = opHandler(options, iternow=p, itermax=psoIterations)
+    print("-----------------")
+    print("Iteration " + str(p) + " of the PSO completed")
+    print("Current cost is: " + mySwarm.best_cost)
+    print("Best cost is: " + mySwarm.best_cost)
+    print("-----------------")
+
 
 print('The best cost found by our swarm is: {:.4f}'.format(mySwarm.best_cost))
 print('The best position found by our swarm is: {}'.format(mySwarm.best_pos))

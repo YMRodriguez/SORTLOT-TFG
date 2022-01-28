@@ -8,7 +8,7 @@ from main.packetAdapter.helpers import *
 
 # -------------- Types -----------------------------------------
 
-def sortByFitness(items, maxWeight, maxPrio, nDst):
+def sortByFitness(items, maxWeight, maxPrio, nDst, coefficients):
     """
     This function sorts items according to a fitness function.
 
@@ -18,13 +18,13 @@ def sortByFitness(items, maxWeight, maxPrio, nDst):
     :param nDst: number of destinations of the cargo.
     :return: sorted set of packets.
     """
-    fitweights = [0.8, 0.2] if maxPrio else [1, 0]
+    fitweights = coefficients if maxPrio else [1, 0]
     return sorted(items, key=lambda x: (((x["weight"] / maxWeight) *
                                          fitweights[0] + (x["priority"] / max(maxPrio, 1)) * fitweights[1]) + (
                                                 nDst - x["dstCode"])), reverse=True)
 
 
-def reSortByFitness(nonPackedItems, maxWeight, packedItems, subgroupingCond, nDst):
+def reSortByFitness(nonPackedItems, maxWeight, packedItems, subgroupingCond, nDst, coefficients):
     """
     This function sorts after the base has been loaded. It also reduces subgrouping condition to priority.
 
@@ -44,7 +44,7 @@ def reSortByFitness(nonPackedItems, maxWeight, packedItems, subgroupingCond, nDs
                 # TODO, should be maxPrio but the case of active subgrouping and no priority is a non-working exception.
                 i["priority"] = 1
     maxPrio = getMaxPriority(nonPackedItems)
-    fitweights = [0.55, 0.45] if maxPrio else [1, 0]
+    fitweights = coefficients if maxPrio else [1, 0]
     return sorted(nonPackedItems, key=lambda x: (((x["weight"] / maxWeight) * fitweights[0] +
                                                   (x["priority"] / max(maxPrio, 1)) * fitweights[1]) + (
                                                          nDst - x["dstCode"])),
@@ -52,7 +52,7 @@ def reSortByFitness(nonPackedItems, maxWeight, packedItems, subgroupingCond, nDs
 
 
 # ----------- Main functions ----------------------------------
-def sortingPhase(items, nDst):
+def sortingPhase(items, nDst, coefficients):
     """
     This function handles the sorting phase.
 
@@ -61,10 +61,10 @@ def sortingPhase(items, nDst):
     :return: sorted set of packets.
     """
     return sortByFitness(items, getMaxWeight(items),
-                         getMaxPriority(items), nDst)
+                         getMaxPriority(items), nDst, coefficients)
 
 
-def reSortingPhase(nonPackedItems, packedItems, subgroupingCond, nDst):
+def reSortingPhase(nonPackedItems, packedItems, subgroupingCond, nDst, coefficients):
     """
     This function handles the second sorting phase.
 
@@ -74,4 +74,4 @@ def reSortingPhase(nonPackedItems, packedItems, subgroupingCond, nDst):
     :param nDst: number of destinations of the cargo.
     :return: sorted set of packets.
     """
-    return reSortByFitness(nonPackedItems, getMaxWeight(nonPackedItems), packedItems, subgroupingCond, nDst)
+    return reSortByFitness(nonPackedItems, getMaxWeight(nonPackedItems), packedItems, subgroupingCond, nDst, coefficients)

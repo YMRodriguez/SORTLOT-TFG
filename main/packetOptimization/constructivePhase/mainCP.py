@@ -489,7 +489,7 @@ def areEnoughPlacedItemsOfTheCstCode(dstCode, placedItems, nItems):
     return len(list(filter(lambda x: dstCode == x["dstCode"], placedItems))) >= nItems
 
 
-def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, stage, nDst):
+def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, stage, nDst, coeffs):
     """
     This function computes the fitness value for a potential point.
 
@@ -504,11 +504,11 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
     :return: potential point with fitness, format [x, y, z, fitness].
     """
 
-    fitWeights = [[0.45, 0.45, 0.05, 0.05],
-                  [0.3, 0.5, 0.1, 0.1],
-                  [0.15, 0.6, 0.15, 0.1]] if nDst > 1 else [[0.4, 0.0, 0.3, 0.3],
-                                                            [0.5, 0.0, 0.3, 0.2],
-                                                            [0.5, 0.0, 0.3, 0.2]]
+    fitWeights = [coeffs[:4],
+                  coeffs[4:],
+                  coeffs[4:]] if nDst > 1 else [[coeffs[0], 0, coeffs[2], coeffs[3]],
+                                                 [coeffs[4], 0, coeffs[6], coeffs[7]],
+                                                 [coeffs[4], 0, coeffs[6], coeffs[4]]]
     # Take the weights of the stage.
     stageFW = fitWeights[stage - 1]
     # Length condition in the fitness function.
@@ -554,7 +554,7 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
         return [PP, fitvalue]
 
 
-def fitnessForBase(PP, item, containerLength, nDst, placedItems, maxWeight):
+def fitnessForBase(PP, item, containerLength, nDst, placedItems, maxWeight, coefficients):
     """
     This function computes the fitness value for a potential point.
 
@@ -565,7 +565,7 @@ def fitnessForBase(PP, item, containerLength, nDst, placedItems, maxWeight):
     :param placedItems: set of placed items into the container.
     :return: potential point with fitness, format [x, y, z, fitness].
     """
-    fitWeights = [0.35, 0.25, 0.4] if nDst > 1 else [0.5, 0, 0.5]
+    fitWeights = coefficients if nDst > 1 else [coefficients[0], 0, coefficients[2]]
     if nDst > 1:
         # For the surrounding customer code objects.
         nItems = 5
@@ -664,7 +664,7 @@ def getCandidatesByDestination(candidates, nDst, index):
             return candidates[index]
 
 
-def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems):
+def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, coefficients):
     """
     This function creates a solution from a list of packets and a given potential points in the base of the truck.
 
@@ -740,7 +740,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems):
                         feasibility = feasibleInFillingBase(pp, placedItems, i, currentAreas, maxAreas, minDim, truck)
                         if feasibility[0]:
                             ppWithFitness = fitnessForBase(pp, feasibility[1], truck["length"], nDst, placedItems,
-                                                           maxWeight)
+                                                           maxWeight, coefficients)
                             # Can use the same even thought the concept is different, in all cases the pp is going to be
                             # the same but with diff fitness functions so the highest will save the item.
                             if isBetterPP(ppWithFitness, ppBest):
@@ -838,7 +838,7 @@ def getPossiblePPsOverlapped(potentialPoints, dstCode):
     return potentialPoints[dstCode]
 
 
-def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, placedItems):
+def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, placedItems, coefficients):
     """
     This function creates a solution from a list of packets and a given potential points above the first layer
     base of items of the truck.
@@ -870,7 +870,7 @@ def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, plac
             feasibility = isFeasible(pp, placedItems, i, minDim, truck, stage)
             if feasibility[0]:
                 ppWithFitness = fitnessFor(pp, feasibility[1], placedItems, notPlacedMaxWeight, truck["height"],
-                                           truck["length"], stage, nDst)
+                                           truck["length"], stage, nDst, coefficients)
                 if isBetterPP(ppWithFitness, ppBest):
                     ppBest = ppWithFitness
                     feasibleItem = feasibility[1]
@@ -932,7 +932,7 @@ def checkSubgroupingCondition(packets):
     return len(set(map(lambda x: x["subgroupId"], packets))) < len(packets)
 
 
-def main_cp(truck, candidateList, nDst, subgroupingEnabled=1):
+def main_cp(truck, candidateList, nDst, coefficients, subgroupingEnabled=1):
     """
     This function is the main part of the core of the solution builder.
 
@@ -942,8 +942,12 @@ def main_cp(truck, candidateList, nDst, subgroupingEnabled=1):
     :param nDst: number of destinations in the cargo.
     :return: dictionary with the packed items, non-packed items, current state of the truck and not used potential points.
     """
+    # Map the coefficients.
+    coefficientsResorting = coefficients[0:2]
+    coefficientsBase = coefficients[2:5]
+    coefficientsLoading = coefficients[5:]
 
-    # Fetch the new potential points from the truck
+    # Fetch the new potential points from the truck.
     potentialPoints = truck["pp"]
     # Add these potential points to the first batch.
     potentialPointsByDst = [potentialPoints]
@@ -953,7 +957,7 @@ def main_cp(truck, candidateList, nDst, subgroupingEnabled=1):
     subgrouping = checkSubgroupingCondition(candidateList) if subgroupingEnabled else 0
     stage = 0
     startTime0 = time.time()
-    loadedBase = loadBase(candidateList, potentialPointsByDst, truck, nDst, minDim, [])
+    loadedBase = loadBase(candidateList, potentialPointsByDst, truck, nDst, minDim, [], coefficientsBase)
     # ----- DEBUG-INFO ------
     print("Time stage " + str(time.time() - startTime0))
     #    print("Number of items packed after stage" + len(fillingBase["placed"]))
@@ -961,9 +965,10 @@ def main_cp(truck, candidateList, nDst, subgroupingEnabled=1):
     # ----- DEBUG-INFO ------
 
     stage = stage + 1
-    loadedS1 = load(reSortingPhase(loadedBase["discard"], loadedBase["placed"], subgrouping, nDst),
-                    list(map(lambda x: np.unique(x, axis=0), loadedBase["potentialPoints"])), loadedBase["truck"], 0, stage,
-                    nDst, getMinDim(loadedBase["discard"]), loadedBase["placed"])
+    loadedS1 = load(reSortingPhase(loadedBase["discard"], loadedBase["placed"], subgrouping, nDst, coefficientsResorting),
+                    list(map(lambda x: np.unique(x, axis=0), loadedBase["potentialPoints"])), loadedBase["truck"], 0,
+                    stage,
+                    nDst, getMinDim(loadedBase["discard"]), loadedBase["placed"], coefficientsLoading)
     newPPs = createNewPPs(loadedS1["placed"], loadedS1["potentialPoints"])
     stage = stage + 1
 
@@ -973,10 +978,10 @@ def main_cp(truck, candidateList, nDst, subgroupingEnabled=1):
     #    print("Number of items packed after stage" + len(filling1["placed"]))
     # ----- DEBUG-INFO ------
 
-    loadingRest = load(reSortingPhase(loadedS1["discard"], loadedS1["placed"], subgrouping, nDst),
+    loadingRest = load(reSortingPhase(loadedS1["discard"], loadedS1["placed"], subgrouping, nDst, coefficientsResorting),
                        list(map(lambda x: np.unique(x, axis=0), newPPs)),
                        loadedS1["truck"], 1, stage, nDst,
-                       getMinDim(loadedS1["discard"]), loadedS1["placed"])
+                       getMinDim(loadedS1["discard"]), loadedS1["placed"], coefficientsLoading)
     # ----- DEBUG-INFO ------
     #    print("Time stage " + str(time.time() - startTime2))
     #    startTime3 = time.time()
@@ -991,7 +996,7 @@ def main_cp(truck, candidateList, nDst, subgroupingEnabled=1):
         loadingRest = load(loadingRest["discard"],
                            np.unique(loadingRest["potentialPoints"], axis=0),
                            loadingRest["truck"], 1, stage, nDst,
-                           getMinDim(loadingRest["discard"]), loadingRest["placed"])
+                           getMinDim(loadingRest["discard"]), loadingRest["placed"], coefficientsLoading)
     # ----- DEBUG-INFO ------
     #    print("Number of items packed after stage" + len(fillingSA["placed"]))
     #    print("Stage time: " + str(time.time() - startTime3))
