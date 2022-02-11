@@ -507,8 +507,8 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
     fitWeights = [coeffs[:4],
                   coeffs[4:],
                   coeffs[4:]] if nDst > 1 else [[coeffs[0], 0, coeffs[2], coeffs[3]],
-                                                 [coeffs[4], 0, coeffs[6], coeffs[7]],
-                                                 [coeffs[4], 0, coeffs[6], coeffs[4]]]
+                                                [coeffs[4], 0, coeffs[6], coeffs[7]],
+                                                [coeffs[4], 0, coeffs[6], coeffs[4]]]
     # Take the weights of the stage.
     stageFW = fitWeights[stage - 1]
     # Length condition in the fitness function.
@@ -678,26 +678,23 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     """
     # Fill number of items per destination.
     nItemDst = []
+    filteredCandidates = []
     for n in range(nDst):
-        nItemDst.append(len(list(filter(lambda x: x["dstCode"] == n, candidateList))))
+        filteredCandidates.append(list(filter(lambda x: x["dstCode"] == n, candidateList)))
+        nItemDst.append(len(filteredCandidates[n]))
     # Statistics on the candidateList.
     meanDim, avgWeight, stdDev = getStatsForBase(candidateList)
     # Obtain the maximum weight of the candidateList.
     maxWeight = getMaxWeight(candidateList)
-    # Filter the candidates for each destination that are greater than half the average weight.
-    filteredCandidates = []
-    for d in range(nDst):
-        filteredCandidates.append(list(
-            filter(lambda x: x["dstCode"] == d and x["weight"] >= avgWeight - stdDev / 2, candidateList)))
     # Count amount of filtered for each destination.
     nFilteredDst = list(map(lambda x: len(x), filteredCandidates))
     # Create max area items of a destination can occupy within the container.
     maxAreas = generateMaxAreas(nItemDst, nFilteredDst, truck, nDst)
-    # Make sure there are not too many packets nor very few caused by a really low std dev.
+    # Make sure there are neither too many packets nor very few caused by a really low std dev.
     for d in range(nDst):
         nItemsEstimation = int(maxAreas[d] / (meanDim[d] ** 2))
         # Added filtered candidates based on estimation.
-        filteredCandidates[d] = list(filter(lambda x: x["dstCode"] == d, candidateList))[:int(nItemsEstimation * 1.5)]
+        filteredCandidates[d] = filteredCandidates[d][:int(nItemsEstimation * 1.5)]
     # Initialize current areas.
     currentAreas = np.zeros((1, nDst))
     # Group items that did not pass the filter.
@@ -819,15 +816,20 @@ def getMixedPotentialPoints(potentialPoints):
             for i in range(len(potentialPoints)):
                 # For the first destination -> [0, 1-]
                 if not i:
-                    newPPs.append(np.vstack((sortedPPByZ[i], sortedPPByZ[i + 1][:int(len(potentialPoints[i]) / 2)])))
+                    newPPs.append(
+                        np.vstack((sortedPPByZ[i], sortedPPByZ[i + 1][:int(len(potentialPoints[i + 1]) / 2)])))
                 # [(nDst-2)+, (nDst-1)] = [(dstCode-1)+, (dstCode)]
                 elif i == len(potentialPoints) - 1:
                     newPPs.append(
                         np.vstack((sortedPPByZ[i - 1][-int(len(potentialPoints[i - 1]) / 2):], sortedPPByZ[i])))
                 # [(dstCode-1)+, dstCode, (dstCode+1)-]
                 else:
-                    newPPs.append(np.vstack((sortedPPByZ[i - 1][-int(len(potentialPoints[i - 1]) / 2):], sortedPPByZ[i],
-                                             sortedPPByZ[i + 1][:int(len(potentialPoints[i + 1]) / 2)])))
+                    try:
+                        newPPs.append(
+                            np.vstack((sortedPPByZ[i - 1][-int(len(potentialPoints[i - 1]) / 2):], sortedPPByZ[i],
+                                       sortedPPByZ[i + 1][:int(len(potentialPoints[i + 1]) / 2)])))
+                    except Exception:
+                        print("No fair base distribution error")
     return newPPs
 
 
@@ -965,10 +967,11 @@ def main_cp(truck, candidateList, nDst, coefficients, subgroupingEnabled=1):
     # ----- DEBUG-INFO ------
 
     stage = stage + 1
-    loadedS1 = load(reSortingPhase(loadedBase["discard"], loadedBase["placed"], subgrouping, nDst, coefficientsResorting),
-                    list(map(lambda x: np.unique(x, axis=0), loadedBase["potentialPoints"])), loadedBase["truck"], 0,
-                    stage,
-                    nDst, getMinDim(loadedBase["discard"]), loadedBase["placed"], coefficientsLoading)
+    loadedS1 = load(
+        reSortingPhase(loadedBase["discard"], loadedBase["placed"], subgrouping, nDst, coefficientsResorting),
+        list(map(lambda x: np.unique(x, axis=0), loadedBase["potentialPoints"])), loadedBase["truck"], 0,
+        stage,
+        nDst, getMinDim(loadedBase["discard"]), loadedBase["placed"], coefficientsLoading)
     newPPs = createNewPPs(loadedS1["placed"], loadedS1["potentialPoints"])
     stage = stage + 1
 
@@ -978,10 +981,11 @@ def main_cp(truck, candidateList, nDst, coefficients, subgroupingEnabled=1):
     #    print("Number of items packed after stage" + len(filling1["placed"]))
     # ----- DEBUG-INFO ------
 
-    loadingRest = load(reSortingPhase(loadedS1["discard"], loadedS1["placed"], subgrouping, nDst, coefficientsResorting),
-                       list(map(lambda x: np.unique(x, axis=0), newPPs)),
-                       loadedS1["truck"], 1, stage, nDst,
-                       getMinDim(loadedS1["discard"]), loadedS1["placed"], coefficientsLoading)
+    loadingRest = load(
+        reSortingPhase(loadedS1["discard"], loadedS1["placed"], subgrouping, nDst, coefficientsResorting),
+        list(map(lambda x: np.unique(x, axis=0), newPPs)),
+        loadedS1["truck"], 1, stage, nDst,
+        getMinDim(loadedS1["discard"]), loadedS1["placed"], coefficientsLoading)
     # ----- DEBUG-INFO ------
     #    print("Time stage " + str(time.time() - startTime2))
     #    startTime3 = time.time()
