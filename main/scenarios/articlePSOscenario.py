@@ -16,11 +16,11 @@ from main.packetOptimization.randomizationAndSorting.sorting import sortingPhase
 from main.packetOptimization.constructivePhase.mainCP import main_cp
 from main.statistics.main import solutionStatistics
 from main.solutionsFilter.main import filterSolutions, getBest, getUpdatedStatsWithConditions
-from main.scenarios.dataSaver import persistInLocal, persistStats
+from main.scenarios.dataSaver import persistInLocal, persistStats, logBestPSOExperiment, logPSOHistory
 import glob
 import os
 from pyswarms.backend.topology import Star
-from pyswarms.backend.handlers import OptionsHandler
+from pyswarms.backend.handlers import OptionsHandler, VelocityHandler, BoundaryHandler
 import pyswarms.backend as P
 
 
@@ -154,21 +154,25 @@ if len(sys.argv) > 1:
     except ValueError:
         particles = 15
 else:
-    iterations, exp, cores, psoIterations, particles = 1, 0, 3, 50, 15
+    iterations, exp, cores, psoIterations, particles = 3, 0, 2, 2, 2
 
 
 def objectiveFunction(coefficients, nParticles, expID, packets, nDst, truck, nCores=1):
     # Base list to put the cost function of each of the particles.
     costFunction = []
+    # Computation for each particle.
     for i in range(nParticles):
-        # Repeat operation in case the cost is max due to no feasible solutions.
+        print("Started execution of particle " + str(i+1) + " out of " + str(nParticles))
+        # Max. resources by doing as many iterations as cores being used.
         costFunctionForParticle = computeAlgorithm(coefficients[i], expID, packets, nDst, truck, multIter=nCores, nCores=nCores)
+        # Repeat operation in case the cost is max. caused by no feasible solutions provided.
         if costFunctionForParticle == 1:
-            print("No feasible solution found for:" + str(coefficients))
+            print("No feasible solution found for: " + str(coefficients))
             costFunctionForParticle = computeAlgorithm(coefficients[i], expID, packets, nDst, truck, multIter=nCores*2, nCores=nCores)
-            print("Computed another 3 solutions for particle and the cost was " + str(costFunctionForParticle))
+            print("Computed new set of solutions and the cost was " + str(costFunctionForParticle))
         costFunction.append(costFunctionForParticle)
-    return costFunction
+        print("Finished execution of particle " + str(i+1) + " out of " + str(nParticles))
+    return np.array(costFunction)
 
 
 def computeAlgorithm(coefficients, expID, packets, nDst, truck, multIter=1, nCores=1):
@@ -178,7 +182,6 @@ def computeAlgorithm(coefficients, expID, packets, nDst, truck, multIter=1, nCor
         solutions = parallel(
             [delayed(main_scenario)(deepcopy(packets), coefficients, deepcopy(truck), nDst, i) for i in range(multIter)])
         solutionsStats = list(map(lambda x: solutionStatistics(x), solutions))
-
         # ------- Process set of solutions --------
         # Clean solutions
         solutionsCleaned = list(map(lambda x: {"placed": x["placed"],
@@ -198,7 +201,7 @@ def computeAlgorithm(coefficients, expID, packets, nDst, truck, multIter=1, nCor
         bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 5)
 
         # Get the average volume of the iterations.
-        averageVolume = sum([j["used_volume"] for j in solutionsStats]) / multIter
+        averageVolume = sum([s["used_volume"] for s in solutionsStats]) / multIter
         # Let's check if there is any feasible solution.
         feasibleSols = len(filteredSolutions)
         # Opposite to volume occupation.
@@ -223,6 +226,18 @@ def computeAlgorithm(coefficients, expID, packets, nDst, truck, multIter=1, nCor
 
 
 def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
+    """
+    Perform the PSO in a given experiment.
+
+    :param expID: experiment identification.
+    :param packets: packets of that experiment.
+    :param nDst: number of destinations of that experiment.
+    :param truck: truck variable.
+    :param nParticles: number of particles of the swarm.
+    :param nPSOiters: number of iterations of the PSO.
+    :param nCores: number of cores used in the multiprocessing.
+    :return:
+    """
     # ---------- Swarm structure creation ------------------------
     topology = Star()
     initPositionsList = [0.8, 0.2, 0.55, 0.45, 0.35, 0.25, 0.4, 0.45, 0.45, 0.05, 0.05, 0.3, 0.5, 0.1, 0.1]
@@ -232,34 +247,45 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
     options = {"w": 0.9, "c1": 0.5, "c2": 0.3}
 
     mySwarm = P.create_swarm(n_particles=nParticles, dimensions=15, options=options, bounds=bounds, init_pos=initPositions)
+    bestCostIter = 0
+    history = []
     for p in range(nPSOiters):
         # Part 1: Update personal best
-        mySwarm.current_cost = objectiveFunction(mySwarm.position, particles, expID, packets, nDst, truck, nCores)  # Compute current cost
-        mySwarm.pbest_cost = objectiveFunction(mySwarm.pbest_pos, particles, expID, packets, nDst, truck, nCores)  # Compute personal best pos
+        print("Best position of each particle before computing iteration")
+        print(mySwarm.pbest_pos)
+        print("Swarm current position")
+        print(mySwarm.position)
+        mySwarm.current_cost = objectiveFunction(mySwarm.position, nParticles, expID, packets, nDst, truck, nCores)  # Compute current cost
+        print("Current position cost finished")
+        mySwarm.pbest_cost = objectiveFunction(mySwarm.pbest_pos, nParticles, expID, packets, nDst, truck, nCores)  # Compute personal best pos
+        print("Computed best position for each particle")
+        print(mySwarm.current_cost, mySwarm.pbest_cost)
+        history.append({"position": mySwarm.position, "cost": mySwarm.current_cost, "bestPos": mySwarm.pbest_pos, "bestCost": mySwarm.pbest_cost})
         mySwarm.pbest_pos, mySwarm.pbest_cost = P.compute_pbest(mySwarm)  # Update and store
 
         # Part 2: Update global best
         # Note that gbest computation is dependent on your topology
         if np.min(mySwarm.pbest_cost) < mySwarm.best_cost:
+            bestCostIter = p
             mySwarm.best_pos, mySwarm.best_cost = topology.compute_gbest(mySwarm)
 
-        # Let's print our output
-        if p % 20 == 0:
-            print('Iteration: {} | my_swarm.best_cost: {:.4f}'.format(p + 1, mySwarm.best_cost))
-
         # Part 3: Update position and velocity matrices
+        myVh = VelocityHandler(strategy="invert")
+        myBh = BoundaryHandler(strategy="nearest")
+        clamp = (np.ones(15) * 0.2, np.ones(15) * 0.6)
         # Note that position and velocity updates are dependent on your topology
-        mySwarm.velocity = topology.compute_velocity(mySwarm)
-        mySwarm.position = topology.compute_position(mySwarm)
+        mySwarm.velocity = topology.compute_velocity(mySwarm, vh=myVh, clamp=clamp, bounds=bounds)
+        mySwarm.position = topology.compute_position(mySwarm, bounds=bounds, bh=myBh)
         mySwarm.options = opHandler(options, iternow=p, itermax=nPSOiters)
         print("-----------------")
         print("Iteration " + str(p) + " of the PSO completed")
-        print("Current cost is: " + mySwarm.best_cost)
-        print("Best cost is: " + mySwarm.best_cost)
+        print('Iteration: {} | my_swarm.best_cost: {:.4f}'.format(p + 1, mySwarm.best_cost))
         print("-----------------")
 
     print('The best cost found by our swarm is: {:.4f}'.format(mySwarm.best_cost))
     print('The best position found by our swarm is: {}'.format(mySwarm.best_pos))
+    logBestPSOExperiment(expID, mySwarm.best_cost, mySwarm.best_pos, bestCostIter)
+    logPSOHistory(expID, history)
 
 
 # ---------- Experiments ------------------------------------
@@ -276,5 +302,6 @@ for j in experiments:
     itemsByExp.append(items)
     nDstByExp.append(ndst)
 
+# Perform the PSO for each experiment provided the ID, the items and the numbers of destinations.
 for a, b, c in zip(IDs, itemsByExp, nDstByExp):
     performPSO(a, b, c, truck_var, particles, psoIterations, cores)

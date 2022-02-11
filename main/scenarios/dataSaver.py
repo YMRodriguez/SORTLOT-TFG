@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 
 
 def persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID):
@@ -51,6 +52,27 @@ def persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, best
 def persistStats(stats, ID):
     with open(os.path.dirname(
             __file__) + os.path.sep + 'results' + os.path.sep + 'resultsNew' + os.path.sep + 'simulationNew' + os.path.sep + str(
-            ID) + 'simulationStats.json',
+        ID) + 'simulationStats.json',
               'w+') as file:
         json.dump(stats, file, indent=2, ensure_ascii=False)
+
+
+def logBestPSOExperiment(expID, bestCost, position, iteration):
+    pathlib.Path(os.path.dirname(
+        __file__) + os.path.sep + 'results' + os.path.sep + 'resultsNew' + os.path.sep + 'PSOexperiments').mkdir(
+        parents=True, exist_ok=True)
+    with open(os.path.dirname(
+            __file__) + os.path.sep + 'results' + os.path.sep + 'resultsNew' + os.path.sep + 'PSOexperiments' + os.path.sep + str(
+        expID) + "BestPSO.json",
+              'w+') as file:
+        json.dump(
+            {"expID": expID, "bestCost": int(bestCost), "bestPosition": position.tolist(), "iteration": iteration},
+            file, indent=2, ensure_ascii=False)
+
+
+def logPSOHistory(expID, history):
+    with open(os.path.dirname(
+            __file__) + os.path.sep + 'results' + os.path.sep + 'resultsNew' + os.path.sep + 'PSOexperiments' + os.path.sep + str(
+        expID) + "BestPSO.json",
+              'w+') as file:
+        json.dump(history, file, indent=2, ensure_ascii=False)
