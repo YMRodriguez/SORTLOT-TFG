@@ -577,14 +577,14 @@ def fitnessForBase(PP, item, containerLength, nDst, placedItems, maxWeight):
     else:
         surroundingCondition = 0
     fitnessValue = (item["weight"] / maxWeight) * fitWeights[0] + surroundingCondition * fitWeights[1] + (
-            1 - item["mass_center"][2] / containerLength) * fitWeights[2]
+            1 - (item["mass_center"][2] / containerLength)) * fitWeights[2]
     return [PP, fitnessValue]
 
 
-def isBetterPP(newPP, currentBest):
+def isBetterPP(newPP, currentBest, truckWidth):
     """
     This function decide which potential point is better. Criteria is:
-    - Given same fitness, randomly choose one.
+    - Given same fitness, choose according to a function then randomly choose one.
     - Choose the one with the best fitness value.
 
     :param newPP: potential point being evaluated.
@@ -592,7 +592,7 @@ def isBetterPP(newPP, currentBest):
     :return: True if the newPP is better than the current best, False otherwise.
     """
     if newPP[1] == currentBest[1]:
-        return random.getrandbits(1)
+        return sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth/2))[0]
     return newPP[1] > currentBest[1]
 
 
@@ -629,7 +629,7 @@ def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim, stage):
             filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.0016, placedItems))
         # Check which points are not supported.
         isBLRInPlane = any(list(map(lambda x: pointInPlane(BLR, getBLF(x), getBRR(x)), sharePlaneItems)))
-        isBRxInPlane = any(list(map(lambda x: pointInPlane(BRF, getBLF(x), getBRR(x)), sharePlaneItems)))
+        isBRxInPlane = any(list(map(lambda x: pointInPlane(BRx, getBLF(x), getBRR(x)), sharePlaneItems)))
         # Modify not supported points to its projection.
         if not isBRxInPlane:
             BRx = getNearestProjectionPointFor(BRx, placedItems)
@@ -722,7 +722,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems):
             # Initialization of best point as the worst, in this context the TRR of the truck. And worse fitness value.
             ppBest = [np.array([truck["width"], truck["height"], truck["length"]]), 0]
             # Get the potential point with lower z-coordinate (closest to the front of the container).
-            pp = sorted(potentialPoints[d], key=lambda x: x[:][2])[0]
+            pp = sorted(potentialPoints[d], key=lambda x: (x[:][2], -abs(x[:][0] - truck["width"]/2)))[0]
             # Gather in one list the current destination and the next.
             # TODO, keep in mind this alternative: getCandidatesByDestination()
             candidatesByDst = candidateList[d]
@@ -743,7 +743,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems):
                                                            maxWeight)
                             # Can use the same even thought the concept is different, in all cases the pp is going to be
                             # the same but with diff fitness functions so the highest will save the item.
-                            if isBetterPP(ppWithFitness, ppBest):
+                            if isBetterPP(ppWithFitness, ppBest, truck["width"]):
                                 ppBest = ppWithFitness
                                 feasibleItem = feasibility[1]
                     # This condition is only important for the first two items.
@@ -871,7 +871,7 @@ def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, plac
             if feasibility[0]:
                 ppWithFitness = fitnessFor(pp, feasibility[1], placedItems, notPlacedMaxWeight, truck["height"],
                                            truck["length"], stage, nDst)
-                if isBetterPP(ppWithFitness, ppBest):
+                if isBetterPP(ppWithFitness, ppBest, truck["width"]):
                     ppBest = ppWithFitness
                     feasibleItem = feasibility[1]
         # If the best is different from the worst there is a PP to insert the item.
