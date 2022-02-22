@@ -6,6 +6,7 @@ import random
 import numpy as np
 import math
 import time
+from scipy.spatial import Delaunay
 
 np.set_printoptions(suppress=True)
 
@@ -511,8 +512,8 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
                                                             [0.5, 0.0, 0.3, 0.2]]
     # Take the weights of the stage.
     stageFW = fitWeights[stage - 1]
-    # Length condition in the fitness function.
-    lengthCondition = 1 - (PP[2] / maxLength)
+    # Length condition in the fitness function, tries to be attracted by the origin.
+    lengthCondition = 1 - (getEuclideanDistanceTo(np.array([[0, 0, 0]]), PP) / maxLength)
 
     if nDst > 1:
         # For the surrounding customer code objects.
@@ -565,7 +566,7 @@ def fitnessForBase(PP, item, containerLength, nDst, placedItems, maxWeight):
     :param placedItems: set of placed items into the container.
     :return: potential point with fitness, format [x, y, z, fitness].
     """
-    fitWeights = [0.35, 0.25, 0.4] if nDst > 1 else [0.5, 0, 0.5]
+    fitWeights = [0.4, 0.25, 0.35] if nDst > 1 else [0.5, 0, 0.5]
     if nDst > 1:
         # For the surrounding customer code objects.
         nItems = 5
@@ -592,7 +593,7 @@ def isBetterPP(newPP, currentBest, truckWidth):
     :return: True if the newPP is better than the current best, False otherwise.
     """
     if newPP[1] == currentBest[1]:
-        return sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth/2))[0]
+        return sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth / 2))[0]
     return newPP[1] > currentBest[1]
 
 
@@ -664,6 +665,12 @@ def getCandidatesByDestination(candidates, nDst, index):
             return candidates[index]
 
 
+def estimateOffset(itemsEstimation, offset):
+    while sum([r * offset for r in itemsEstimation]) < 180:
+        offset += 0.1
+    return offset
+
+
 def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems):
     """
     This function creates a solution from a list of packets and a given potential points in the base of the truck.
@@ -688,16 +695,17 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems):
     filteredCandidates = []
     for d in range(nDst):
         filteredCandidates.append(list(
-            filter(lambda x: x["dstCode"] == d and x["weight"] >= avgWeight - stdDev / 2, candidateList)))
+            filter(lambda x: x["dstCode"] == d and x["weight"] >= avgWeight, candidateList)))
     # Count amount of filtered for each destination.
     nFilteredDst = list(map(lambda x: len(x), filteredCandidates))
     # Create max area items of a destination can occupy within the container.
     maxAreas = generateMaxAreas(nItemDst, nFilteredDst, truck, nDst)
+    nItemsEstimation = list(map(lambda x: int(maxAreas[x] / (meanDim[x] ** 2)), range(nDst)))
+    offset = estimateOffset(nItemsEstimation, 1.5)
     # Make sure there are not too many packets nor very few caused by a really low std dev.
     for d in range(nDst):
-        nItemsEstimation = int(maxAreas[d] / (meanDim[d] ** 2))
         # Added filtered candidates based on estimation.
-        filteredCandidates[d] = list(filter(lambda x: x["dstCode"] == d, candidateList))[:int(nItemsEstimation * 1.5)]
+        filteredCandidates[d] = list(filter(lambda x: x["dstCode"] == d, candidateList))[:int(nItemsEstimation[d] * offset)]
     # Initialize current areas.
     currentAreas = np.zeros((1, nDst))
     # Group items that did not pass the filter.
@@ -722,7 +730,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems):
             # Initialization of best point as the worst, in this context the TRR of the truck. And worse fitness value.
             ppBest = [np.array([truck["width"], truck["height"], truck["length"]]), 0]
             # Get the potential point with lower z-coordinate (closest to the front of the container).
-            pp = sorted(potentialPoints[d], key=lambda x: (x[:][2], -abs(x[:][0] - truck["width"]/2)))[0]
+            pp = sorted(potentialPoints[d], key=lambda x: (x[:][2], -abs(x[:][0] - truck["width"] / 2)))[0]
             # Gather in one list the current destination and the next.
             # TODO, keep in mind this alternative: getCandidatesByDestination()
             candidatesByDst = candidateList[d]
@@ -900,6 +908,12 @@ def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, plac
             "truck": truck, "potentialPoints": potentialPoints}
 
 
+def computeAttraction(placedItems):
+    origin = np.array([0, 0, 0])
+    placedItemsToOrigin = sorted(placedItems, key=lambda x: getEuclideanDistanceTo(origin, x["mass_center"]))
+    return
+
+
 def createNewPPs(placedItems, potentialPoints):
     """
     This function creates new potential point, BRR in last stages.
@@ -956,21 +970,23 @@ def main_cp(truck, candidateList, nDst, subgroupingEnabled=1):
     loadedBase = loadBase(candidateList, potentialPointsByDst, truck, nDst, minDim, [])
     # ----- DEBUG-INFO ------
     print("Time stage " + str(time.time() - startTime0))
-    #    print("Number of items packed after stage" + len(fillingBase["placed"]))
-    #    startTime1 = time.time()
+    print("Number of items packed after stage " + str(len(loadedBase["placed"])))
+    startTime1 = time.time()
+
     # ----- DEBUG-INFO ------
 
     stage = stage + 1
     loadedS1 = load(reSortingPhase(loadedBase["discard"], loadedBase["placed"], subgrouping, nDst),
-                    list(map(lambda x: np.unique(x, axis=0), loadedBase["potentialPoints"])), loadedBase["truck"], 0, stage,
+                    list(map(lambda x: np.unique(x, axis=0), loadedBase["potentialPoints"])), loadedBase["truck"], 0,
+                    stage,
                     nDst, getMinDim(loadedBase["discard"]), loadedBase["placed"])
     newPPs = createNewPPs(loadedS1["placed"], loadedS1["potentialPoints"])
     stage = stage + 1
 
     # ----- DEBUG-INFO ------
-    #    print("Time stage " + str(time.time() - startTime1))
-    #    startTime2 = time.time()
-    #    print("Number of items packed after stage" + len(filling1["placed"]))
+    print("Time stage " + str(time.time() - startTime1))
+    startTime2 = time.time()
+    print("Number of items packed after stage " + str(len(loadedS1["placed"])))
     # ----- DEBUG-INFO ------
 
     loadingRest = load(reSortingPhase(loadedS1["discard"], loadedS1["placed"], subgrouping, nDst),
@@ -978,12 +994,14 @@ def main_cp(truck, candidateList, nDst, subgroupingEnabled=1):
                        loadedS1["truck"], 1, stage, nDst,
                        getMinDim(loadedS1["discard"]), loadedS1["placed"])
     # ----- DEBUG-INFO ------
-    #    print("Time stage " + str(time.time() - startTime2))
-    #    startTime3 = time.time()
-    #    print("Number of items packed after stage" + len(filling["placed"]))
+    print("Time stage " + str(time.time() - startTime2))
+    startTime3 = time.time()
+    print("Number of items packed after stage " + str(len(loadingRest["placed"])))
     # ----- DEBUG-INFO ------
 
     stage = stage + 1
+
+    # meshProcessing = computeAttraction(loadingRest["placed"])
 
     # Got to do a few more tests to check if this additional phase is really relevant.
     # TODO, would be nice to make a estimation of time increase and decide on that instead of this fixed number.

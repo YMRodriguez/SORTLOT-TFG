@@ -285,6 +285,9 @@ def projectPPOverlapped(item, potentialPoints):
                 potentialPoints[index] = np.vstack((nonOverlappedPPs, p))
     return potentialPoints
 
+def getEuclideanDistanceTo(objective, fromReference):
+    return np.sqrt(np.sum(np.square(objective - fromReference), axis=1))
+
 
 # ------------------------------ Truck Geometric Helpers ----------------------------------------
 # This function returns the spacial Bottom-Left-Front of the item.
