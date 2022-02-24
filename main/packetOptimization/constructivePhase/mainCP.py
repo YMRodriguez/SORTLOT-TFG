@@ -280,7 +280,7 @@ def isWithinTruckLength(item, truckLength):
     :param truckLength: truck/container length.
     :return: True if within length, False otherwise.
     """
-    return getBRR(item)[2] <= truckLength
+    return truckLength >= getBRR(item)[2] and getBLF(item)[2] >= 0
 
 
 def isWithinTruckWidth(item, truckWidth):
@@ -291,7 +291,7 @@ def isWithinTruckWidth(item, truckWidth):
     :param truckWidth: truck/container width.
     :return: True if within width, False otherwise.
     """
-    return getBRR(item)[0] <= truckWidth
+    return truckWidth >= getBRR(item)[0] and getBLF(item)[0] >= 0
 
 
 def isWithinTruckHeight(item, truckHeight):
@@ -302,7 +302,7 @@ def isWithinTruckHeight(item, truckHeight):
     :param truckHeight: truck/container height.
     :return: True if within height, False otherwise.
     """
-    return getTopPlaneHeight(item) <= truckHeight
+    return truckHeight >= getTopPlaneHeight(item)
 
 
 def isWithinTruckDimensionsConstrains(item, truckDimensions):
@@ -336,11 +336,11 @@ def overlapper(p1all, p2all):
     return False
 
 
-def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
+def getSurroundingItems(referencePoint, placedItems, amountOfNearItems):
     """
     This function gets the neighbours of an item.
 
-    :param massCenter: ndarray with the coordinates of an item mass center.
+    :param referencePoint: ndarray with the coordinates of the reference .
     :param placedItems: list of item objects.
     :param amountOfNearItems: int with the number of desired neighbours.
     :return: list of N neighbours, with N specified.
@@ -349,7 +349,7 @@ def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
         # Extract the mass center of all placed items.
         itemsMCs = np.asarray(list(map(lambda x: x["mass_center"], placedItems)))
         # Compute and sort the distances between the new item mass center and the rest.
-        ndxDistances = getComputedDistancesIndexes(massCenter, itemsMCs)
+        ndxDistances = getComputedDistancesIndexes(referencePoint, itemsMCs)
         # Get the nearest mass centers and its items.
         return (np.asarray(placedItems)[ndxDistances[:min(len(placedItems), amountOfNearItems)]]).tolist()
     return []
@@ -373,8 +373,7 @@ def isNotOverlapping(item, placedItems):
         # Generate points for item evaluated.
         p1all = getPlanesFor(item)
         # Validate overlapping conditions item vs. placedItems and vice versa.
-        itemToNearItemsNotOverlapping = all(list(map(lambda x: overlapper(p1all, getPlanesFor(x)), nearItems)))
-        return itemToNearItemsNotOverlapping
+        return all(list(map(lambda x: overlapper(p1all, getPlanesFor(x)), nearItems)))
     else:
         return True
 
@@ -513,7 +512,7 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
     # Take the weights of the stage.
     stageFW = fitWeights[stage - 1]
     # Length condition in the fitness function, tries to be attracted by the origin.
-    lengthCondition = 1 - (getEuclideanDistanceTo(np.array([[0, 0, 0]]), PP) / maxLength)
+    lengthCondition = 1 - (getEuclideanDistanceTo(np.array([[0, 0, 0]]), PP[:-1]) / maxLength)
 
     if nDst > 1:
         # For the surrounding customer code objects.
@@ -535,7 +534,7 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
         sharePlaneItems = list(
             filter(lambda x: 0 <= abs(getBottomPlaneHeight(item) - getTopPlaneHeight(x)) <= 0.0016,
                    placedItems))
-        itemBehind = getSurroundingItems(PP, sharePlaneItems, 1)[0]
+        itemBehind = getSurroundingItems(PP[:-1], sharePlaneItems, 1)[0]
 
         # This is a way to avoid mistaken subgrouping in the latest packing stages.
         if stage == 3:
@@ -593,7 +592,7 @@ def isBetterPP(newPP, currentBest, truckWidth):
     :return: True if the newPP is better than the current best, False otherwise.
     """
     if newPP[1] == currentBest[1]:
-        return sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth / 2))[0]
+        return sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth / 2))[0][1] == newPP[1]
     return newPP[1] > currentBest[1]
 
 
@@ -611,19 +610,20 @@ def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim, stage):
     :return: array of new potential points.
     """
     # Add margin to z-coordinate.
-    BLR = getBLR(item) + np.array([0, 0, 0.0015])
+    BLR = addOffsetAndDirectionTo('BLR', getBLR(item))
     # Logic: BRR if x >= truckWidth - minDim aprox, BRF otherwise
-    BRF = getBRF(item) + np.array([0.0015, 0, 0])
-    BRR = getBRR(item) + np.array([0, 0, 0.0015])
+    BRF = addOffsetAndDirectionTo('BRF', getBRF(item))
+    BRR = addOffsetAndDirectionTo('BRR', getBRR(item))
     BRx = BRR if BRF[0] >= truckWidth - minDim else BRF
-    TLF = getTLF(item) + np.array([0, 0.0015, 0])
-    TRF = getTRF(item) + np.array([0, 0.0015, 0])
+    BLF = addOffsetAndDirectionTo('BLF', getBLF(item))
+    TLF = addOffsetAndDirectionTo('TLF', getTLF(item))
+    TRF = addOffsetAndDirectionTo('TRF', getTRF(item))
     # Include TRF when we can ensure that the insertion of a new packet will be made from right to left.
     # Include TRF in last stage to maximize top insertions.
-    if stage > 1 or TRF[0] >= truckWidth - minDim:
-        result = np.array([TLF, TRF]) if TLF[1] < truckHeight - minDim else []
+    if stage > 1 or BRF[0] >= truckWidth - minDim:
+        result = [TLF, TRF] if TLF[1] < truckHeight - minDim else []
     else:
-        result = np.array([TLF]) if TLF[1] < truckHeight - minDim else []
+        result = [TLF] if TLF[1] < truckHeight - minDim else []
     if not isInFloor(item):
         # Reduce the scope of items to those sharing their top y-axis Plane with bottom y-axis Plane of the new item.
         sharePlaneItems = list(
@@ -636,19 +636,24 @@ def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim, stage):
             BRx = getNearestProjectionPointFor(BRx, placedItems)
         if not isBLRInPlane:
             BLR = getNearestProjectionPointFor(BLR, placedItems)
-    if len(result):
-        if not stage:
-            result = np.vstack((result, BLR, BRR, BRF))
-        else:
-            result = np.vstack((result, BLR, BRx))
-    else:
+        if BRF[0] >= truckWidth - minDim:
+            isBLFInPlane = any(list(map(lambda x: pointInPlane(BLF, getBLF(x), getBRR(x)), sharePlaneItems)))
+            if not isBLFInPlane:
+                BLF = getNearestProjectionPointFor(BLF, placedItems)
+    # Does not make sense to include BLF.
+    if BLF[0] <= minDim:
+        # In base stage.
         if not stage:
             result.extend((BLR, BRR, BRF))
-            result = np.asarray(result)
         else:
             result.extend((BLR, BRx))
-            result = np.asarray(result)
-    return result
+    else:
+        # In base stage.
+        if not stage:
+            result.extend((BLR, BRR, BRF, BLF))
+        else:
+            result.extend((BLR, BRx, BLF))
+    return np.array(result)
 
 
 def getCandidatesByDestination(candidates, nDst, index):
@@ -778,7 +783,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems):
                         potentialPoints[d] = np.vstack((potentialPoints[d], newPPs)) if len(newPPs) else \
                             potentialPoints[d]
                     else:
-                        potentialPoints[d] = newPPs[d]
+                        potentialPoints[d] = newPPs
                     # Add insertion order to item.
                     feasibleItem["in_id"] = len(placedItems)
                     # Add item to placedItems.
@@ -837,13 +842,6 @@ def getMixedPotentialPoints(potentialPoints):
                     newPPs.append(np.vstack((sortedPPByZ[i - 1][-int(len(potentialPoints[i - 1]) / 2):], sortedPPByZ[i],
                                              sortedPPByZ[i + 1][:int(len(potentialPoints[i + 1]) / 2)])))
     return newPPs
-
-
-def getPossiblePPsOverlapped(potentialPoints, dstCode):
-    if dstCode:
-        return np.vstack(
-            (potentialPoints[dstCode], np.asarray(sorted(potentialPoints[dstCode - 1], key=lambda x: x[:][2])[:10])))
-    return potentialPoints[dstCode]
 
 
 def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, placedItems):
@@ -908,12 +906,6 @@ def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, plac
             "truck": truck, "potentialPoints": potentialPoints}
 
 
-def computeAttraction(placedItems):
-    origin = np.array([0, 0, 0])
-    placedItemsToOrigin = sorted(placedItems, key=lambda x: getEuclideanDistanceTo(origin, x["mass_center"]))
-    return
-
-
 def createNewPPs(placedItems, potentialPoints):
     """
     This function creates new potential point, BRR in last stages.
@@ -924,7 +916,7 @@ def createNewPPs(placedItems, potentialPoints):
     """
     for i in placedItems:
         if not isInFloor(i):
-            BRR = getBRR(i) + np.array([0, 0, 0.0015])
+            BRR = addOffsetAndDirectionTo('BRR', getBRR(i))
             if not any(list(map(lambda x: all(BRR == x), i["pp_out"]))):
                 # Reduce the scope of items to those sharing their top y-axis Plane with bottom y-axis Plane of the new item.
                 sharePlaneItems = list(

@@ -18,10 +18,10 @@ def setItemMassCenter(item, potentialPoint, truckWidth, minDim):
     :param minDim: minimum dimension that there is in the rest of the packets 
     :return:
     """
-    if truckWidth - minDim <= potentialPoint[0] <= truckWidth:
-        item["mass_center"] = potentialPoint + np.array([-item["width"], item["height"], item["length"]]) / 2
+    if truckWidth - minDim <= potentialPoint[0] or potentialPoint[-1]:
+        item["mass_center"] = potentialPoint[:-1] + np.array([-item["width"], item["height"], item["length"]]) / 2
     else:
-        item["mass_center"] = potentialPoint + np.array([item["width"], item["height"], item["length"]]) / 2
+        item["mass_center"] = potentialPoint[:-1] + np.array([item["width"], item["height"], item["length"]]) / 2
     return item
 
 
@@ -54,7 +54,7 @@ def getBRF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] - np.array([-item["width"], item["height"], item["length"]]) / 2
+    return item["mass_center"] - [-item["width"] / 2, item["height"] / 2, item["length"] / 2]
 
 
 def getBRR(item):
@@ -64,7 +64,7 @@ def getBRR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([item["width"], -item["height"], item["length"]]) / 2
+    return item["mass_center"] + [item["width"] / 2, -item["height"] / 2, item["length"] / 2]
 
 
 def getBLR(item):
@@ -74,7 +74,7 @@ def getBLR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([-item["width"], -item["height"], item["length"]]) / 2
+    return item["mass_center"] + [-item["width"] / 2, -item["height"] / 2, item["length"] / 2]
 
 
 def getTLF(item):
@@ -84,7 +84,7 @@ def getTLF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] - np.array([item["width"], -item["height"], item["length"]]) / 2
+    return item["mass_center"] - [item["width"] / 2, -item["height"] / 2, item["length"] / 2]
 
 
 def getTRF(item):
@@ -94,7 +94,7 @@ def getTRF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([item["width"], item["height"], -item["length"]]) / 2
+    return item["mass_center"] + [item["width"] / 2, item["height"] / 2, -item["length"] / 2]
 
 
 def getTRR(item):
@@ -104,7 +104,7 @@ def getTRR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([item["width"], item["height"], item["length"]]) / 2
+    return item["mass_center"] + [item["width"] / 2, item["height"] / 2, item["length"] / 2]
 
 
 def getTLR(item):
@@ -114,7 +114,7 @@ def getTLR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([-item["width"], item["height"], item["length"]]) / 2
+    return item["mass_center"] + [-item["width"] / 2, item["height"] / 2, item["length"] / 2]
 
 
 def getBottomPlaneHeight(item):
@@ -125,6 +125,24 @@ def getBottomPlaneHeight(item):
     :return: Height in metres.
     """
     return item["mass_center"][1] - item["height"] / 2
+
+
+def addOffsetAndDirectionTo(extremeId, extremePP):
+    # Simulation of envelope thickness.
+    offset = 0.0015
+    truckWidth = 2.45
+    extremePP = np.append(extremePP, 0)
+    if extremeId == 'BLR':
+        return extremePP + np.array([-offset, 0, offset, 0]) if extremePP[0] else extremePP + np.array([0, 0, offset, 0])
+    elif extremeId == 'BLF':
+        # Condition protected but not going to be any case in which BLF will be created in any x=0
+        return extremePP + np.array([-offset, 0, 0, 1]) if extremePP[0] else extremePP
+    elif extremeId == 'BRF':
+        return extremePP + np.array([offset, 0, 0, 0])
+    elif extremeId == 'BRR':
+        return extremePP + np.array([offset, 0, offset, 0]) if extremePP[0] != truckWidth else extremePP + np.array([0, 0, offset, 0])
+    elif extremeId in ['TLR', 'TLF', 'TRF', 'TRR']:
+        return extremePP + np.array([0, offset, 0, 0])
 
 
 def getTopPlaneHeight(item):
@@ -200,6 +218,7 @@ def pointInPlane(point, planeLF, planeRR):
         2] - 0.0001
 
 
+# TODO, see changing value instead of creating a new ndarray.
 def getNearestProjectionPointFor(point, placedItems):
     """
     This function projects a potential point onto the nearest item top plane along the y-axis.
@@ -208,15 +227,15 @@ def getNearestProjectionPointFor(point, placedItems):
     :param placedItems: dictionary of placed packets.
     :return: cartesian coordinates of the projected points.
     """
-    # Reduce the scope to those items whose top or bottom plane contains the point in (x,z)-axis.
-    pointIntoPlaneItems = list(filter(lambda x: pointInPlane(point, getBLF(x), getBRR(x)), placedItems))
+    # Reduce the scope to those items whose top or bottom plane contains the point in (x,z)-axis and are underneath.
+    pointIntoPlaneItems = list(filter(lambda x: pointInPlane(point, getBLF(x), getBRR(x)) and getTopPlaneHeight(x) <= point[1], placedItems))
     # Sort and get the item with the nearest y-axis value.
     itemWithNearestProj = sorted(pointIntoPlaneItems, key=lambda x: getTopPlaneHeight(x), reverse=True)
-    if len(itemWithNearestProj) != 0:
-        # Return the same point but with y-axis value projected.
-        return np.array([point[0], getTopPlaneHeight(itemWithNearestProj[0]) + 0.0015, point[2]])
+    if len(itemWithNearestProj):
+        # Return the same point but with y-axis value projected. Remember the offset.
+        return np.array([point[0], getTopPlaneHeight(itemWithNearestProj[0]) + 0.0015, point[2], point[3]])
     # Return the projection to the floor.
-    return np.array([point[0], 0, point[2]])
+    return np.array([point[0], 0, point[2], point[3]])
 
 
 def reorient(item):
@@ -266,16 +285,19 @@ def projectPPOverlapped(item, potentialPoints):
     :return: list of potential points projected.
     """
     PPsOverlapped = []
-    # Same destination potential points.
+    # Check same destination potential points overlapped.
     currentDstPPsOverlapped = np.asarray(list(
         filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints[item["dstCode"]])))
     PPsOverlapped.append(currentDstPPsOverlapped)
+    # Check if the insertion of a new item has overlapped potential points of previous destination items.
+    # From the second destination and so on.
     if item["dstCode"]:
         # TODO comprobar si se tarda mas ordenando.
         previousDstPPsOverlapped = np.asarray(list(
             filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints[item["dstCode"] - 1])))
         PPsOverlapped.append(previousDstPPsOverlapped)
     for j in range(len(PPsOverlapped)):
+        # j=0 -> currentDstPPsOverlapped, j=1 -> previousDstPPsOverlapped
         index = item["dstCode"] if not j else item["dstCode"] - 1
         if len(PPsOverlapped[j]):
             nonOverlappedPPs = potentialPoints[index][
@@ -285,6 +307,7 @@ def projectPPOverlapped(item, potentialPoints):
                 potentialPoints[index] = np.vstack((nonOverlappedPPs, p))
     return potentialPoints
 
+
 def getEuclideanDistanceTo(objective, fromReference):
     return np.sqrt(np.sum(np.square(objective - fromReference), axis=1))
 
@@ -293,7 +316,7 @@ def getEuclideanDistanceTo(objective, fromReference):
 # This function returns the spacial Bottom-Left-Front of the item.
 # TODO, if the truck is modified this changes.
 def getTruckBLF(truck):
-    return np.array([0, 0, 0])
+    return np.array([0, 0, 0, 0])
 
 
 def getTruckBRF(truck):
@@ -303,7 +326,7 @@ def getTruckBRF(truck):
     :param truck: truck object.
     :return: ndarray representing the spatial coordinates of truck's BRF.
     """
-    return np.array([truck["width"], 0, 0])
+    return np.array([truck["width"], 0, 0, 1])
 
 
 def getTruckBRR(truck):
