@@ -70,9 +70,16 @@ def logBestPSOExperiment(expID, bestCost, position, iteration):
             file, indent=2, ensure_ascii=False)
 
 
+def serializeHistory(history):
+    for i in history:
+        i["position"] = i["position"].tolist()
+        i["bestPos"] = i["bestPos"].tolist()
+    return history
+
+
 def logPSOHistory(expID, history):
     with open(os.path.dirname(
             __file__) + os.path.sep + 'results' + os.path.sep + 'resultsNew' + os.path.sep + 'PSOexperiments' + os.path.sep + str(
         expID) + "BestPSO.json",
               'w+') as file:
-        json.dump(history, file, indent=2, ensure_ascii=False)
+        json.dump(serializeHistory(history), file, indent=2, ensure_ascii=False)
