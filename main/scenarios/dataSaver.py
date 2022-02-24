@@ -50,6 +50,9 @@ def persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, best
 
 
 def persistStats(stats, ID):
+    pathlib.Path(os.path.dirname(
+        __file__) + os.path.sep + 'results' + os.path.sep + 'resultsNew' + os.path.sep + 'simulationNew').mkdir(
+        parents=True, exist_ok=True)
     with open(os.path.dirname(
             __file__) + os.path.sep + 'results' + os.path.sep + 'resultsNew' + os.path.sep + 'simulationNew' + os.path.sep + str(
         ID) + 'simulationStats.json',
