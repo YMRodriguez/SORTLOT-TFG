@@ -200,6 +200,10 @@ def pointInPlane(point, planeLF, planeRR):
         2] - 0.0001
 
 
+def getEuclideanDistanceTo(objective, fromReference):
+    return np.sqrt(np.sum(np.square(objective - fromReference), axis=1))
+
+
 def getNearestProjectionPointFor(point, placedItems):
     """
     This function projects a potential point onto the nearest item top plane along the y-axis.

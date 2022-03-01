@@ -511,8 +511,8 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
                                                 [coeffs[4], 0, coeffs[6], coeffs[4]]]
     # Take the weights of the stage.
     stageFW = fitWeights[stage - 1]
-    # Length condition in the fitness function.
-    lengthCondition = 1 - (PP[2] / maxLength)
+    # Length condition in the fitness function, tries to be attracted by the origin.
+    lengthCondition = 1 - (getEuclideanDistanceTo(np.array([[0, 0, 0]]), PP) / maxLength)
 
     if nDst > 1:
         # For the surrounding customer code objects.
@@ -592,7 +592,7 @@ def isBetterPP(newPP, currentBest, truckWidth):
     :return: True if the newPP is better than the current best, False otherwise.
     """
     if newPP[1] == currentBest[1]:
-        return sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth/2))[0]
+        return sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth / 2))[0][1] == newPP[1]
     return newPP[1] > currentBest[1]
 
 
@@ -719,7 +719,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
             # Initialization of best point as the worst, in this context the TRR of the truck. And worse fitness value.
             ppBest = [np.array([truck["width"], truck["height"], truck["length"]]), 0]
             # Get the potential point with lower z-coordinate (closest to the front of the container).
-            pp = sorted(potentialPoints[d], key=lambda x: (x[:][2], -abs(x[:][0] - truck["width"]/2)))[0]
+            pp = sorted(potentialPoints[d], key=lambda x: (x[:][2], -abs(x[:][0] - truck["width"] / 2)))[0]
             # Gather in one list the current destination and the next.
             # TODO, keep in mind this alternative: getCandidatesByDestination()
             candidatesByDst = candidateList[d]
