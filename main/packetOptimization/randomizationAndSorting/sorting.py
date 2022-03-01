@@ -8,7 +8,7 @@ from main.packetAdapter.helpers import *
 
 # -------------- Types -----------------------------------------
 
-def sortByFitness(items, maxWeight, maxPrio, nDst, coefficients):
+def sortByFitness(items, maxWeight, maxVolume, maxPrio, nDst, coefficients):
     """
     This function sorts items according to a fitness function.
 
@@ -19,8 +19,8 @@ def sortByFitness(items, maxWeight, maxPrio, nDst, coefficients):
     :return: sorted set of packets.
     """
     fitweights = coefficients if maxPrio else [1, 0]
-    return sorted(items, key=lambda x: (((x["weight"] / maxWeight) *
-                                         fitweights[0] + (x["priority"] / max(maxPrio, 1)) * fitweights[1]) + (
+    return sorted(items, key=lambda x: ((((x["weight"] / maxWeight * 0.5 + x["volume"] / maxVolume * 0.5) *
+                                          fitweights[0]) + (x["priority"] / max(maxPrio, 1)) * fitweights[1]) + (
                                                 nDst - x["dstCode"])), reverse=True)
 
 
@@ -60,7 +60,7 @@ def sortingPhase(items, nDst, coefficients):
     :param nDst: number of destinations of the cargo.
     :return: sorted set of packets.
     """
-    return sortByFitness(items, getMaxWeight(items),
+    return sortByFitness(items, getMaxWeight(items), getMaxVolume(items),
                          getMaxPriority(items), nDst, coefficients)
 
 
