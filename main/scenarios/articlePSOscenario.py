@@ -22,6 +22,9 @@ import os
 from pyswarms.backend.topology import Star
 from pyswarms.backend.handlers import OptionsHandler, VelocityHandler, BoundaryHandler
 import pyswarms.backend as P
+import logging
+
+logging.basicConfig(filename='pso.log', filemode='w', format='%(levelname)s - %(message)s')
 
 
 # ----------------------- MongoDB extraction ----------------------
@@ -162,16 +165,16 @@ def objectiveFunction(coefficients, nParticles, expID, packets, nDst, truck, nCo
     costFunction = []
     # Computation for each particle.
     for i in range(nParticles):
-        print("Started execution of particle " + str(i+1) + " out of " + str(nParticles))
+        logging.info("Started execution of particle " + str(i+1) + " out of " + str(nParticles))
         # Max. resources by doing as many iterations as cores being used.
         costFunctionForParticle = computeAlgorithm(coefficients[i], expID, packets, nDst, truck, multIter=nCores, nCores=nCores)
         # Repeat operation in case the cost is max. caused by no feasible solutions provided.
         if costFunctionForParticle == 1:
-            print("No feasible solution found for: " + str(coefficients))
+            logging.warning("No feasible solution found for: " + str(coefficients))
             costFunctionForParticle = computeAlgorithm(coefficients[i], expID, packets, nDst, truck, multIter=nCores*2, nCores=nCores)
-            print("Computed new set of solutions and the cost was " + str(costFunctionForParticle))
+            logging.info("Computed new set of solutions and the cost was " + str(costFunctionForParticle))
         costFunction.append(costFunctionForParticle)
-        print("Finished execution of particle " + str(i+1) + " out of " + str(nParticles))
+        logging.info("Finished execution of particle " + str(i+1) + " out of " + str(nParticles))
     return np.array(costFunction)
 
 
@@ -251,16 +254,15 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
     history = []
     for p in range(nPSOiters):
         # Part 1: Update personal best
-        print("Best position of each particle before computing iteration")
-        print(mySwarm.pbest_pos)
-        print("Swarm current position")
-        print(mySwarm.position)
+        logging.info("Best position of each particle before computing iteration")
+        logging.info(mySwarm.pbest_pos)
+        logging.info("Swarm current position")
+        logging.info(mySwarm.position)
         mySwarm.current_cost = objectiveFunction(mySwarm.position, nParticles, expID, packets, nDst, truck, nCores)  # Compute current cost
-        print("Current position cost finished")
+        logging.info("Current position cost finished")
         mySwarm.pbest_cost = objectiveFunction(mySwarm.pbest_pos, nParticles, expID, packets, nDst, truck, nCores)  # Compute personal best pos
-        print("Computed best position for each particle")
-        print(mySwarm.current_cost, mySwarm.pbest_cost)
-        history.append({"position": mySwarm.position, "cost": mySwarm.current_cost, "bestPos": mySwarm.pbest_pos, "bestCost": mySwarm.pbest_cost})
+        logging.info("Computed best position for each particle")
+        logging.info(mySwarm.pbest_cost)
         mySwarm.pbest_pos, mySwarm.pbest_cost = P.compute_pbest(mySwarm)  # Update and store
 
         # Part 2: Update global best
@@ -268,6 +270,8 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
         if np.min(mySwarm.pbest_cost) < mySwarm.best_cost:
             bestCostIter = p
             mySwarm.best_pos, mySwarm.best_cost = topology.compute_gbest(mySwarm)
+
+        history.append({"generation": p, "position": mySwarm.position, "cost": mySwarm.current_cost, "bestPos": mySwarm.pbest_pos, "bestCost": mySwarm.pbest_cost})
 
         # Part 3: Update position and velocity matrices
         myVh = VelocityHandler(strategy="invert")
@@ -278,7 +282,7 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
         mySwarm.position = topology.compute_position(mySwarm, bounds=bounds, bh=myBh)
         mySwarm.options = opHandler(options, iternow=p, itermax=nPSOiters)
         print("-----------------")
-        print("Iteration " + str(p) + " of the PSO completed")
+        print("Iteration " + str(p + 1) + " of the PSO completed")
         print('Iteration: {} | my_swarm.best_cost: {:.4f}'.format(p + 1, mySwarm.best_cost))
         print("-----------------")
 

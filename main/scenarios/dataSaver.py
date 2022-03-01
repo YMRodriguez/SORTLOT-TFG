@@ -77,12 +77,14 @@ def serializeHistory(history):
     for i in history:
         i["position"] = i["position"].tolist()
         i["bestPos"] = i["bestPos"].tolist()
+        i["bestCost"] = i["bestCost"].tolist()
+        i["cost"] = i["cost"].tolist()
     return history
 
 
 def logPSOHistory(expID, history):
     with open(os.path.dirname(
             __file__) + os.path.sep + 'results' + os.path.sep + 'resultsNew' + os.path.sep + 'PSOexperiments' + os.path.sep + str(
-        expID) + "BestPSO.json",
+        expID) + "history.json",
               'w+') as file:
         json.dump(serializeHistory(history), file, indent=2, ensure_ascii=False)
