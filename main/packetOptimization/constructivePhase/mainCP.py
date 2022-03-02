@@ -1,3 +1,5 @@
+import logging
+
 from main.packetOptimization.constructivePhase.geometryHelpers import *
 from main.packetAdapter.helpers import getStatsForBase, getMinDim, getMaxWeight
 from main.packetOptimization.randomizationAndSorting.sorting import reSortingPhase
@@ -290,7 +292,7 @@ def isWithinTruckWidth(item, truckWidth):
     :param truckWidth: truck/container width.
     :return: True if within width, False otherwise.
     """
-    return getBRR(item)[0] <= truckWidth
+    return truckWidth >= getBRR(item)[0] and getBLF(item)[0] >= 0
 
 
 def isWithinTruckHeight(item, truckHeight):
@@ -335,11 +337,11 @@ def overlapper(p1all, p2all):
     return False
 
 
-def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
+def getSurroundingItems(referencePoint, placedItems, amountOfNearItems):
     """
     This function gets the neighbours of an item.
 
-    :param massCenter: ndarray with the coordinates of an item mass center.
+    :param referencePoint: ndarray with the coordinates of the reference.
     :param placedItems: list of item objects.
     :param amountOfNearItems: int with the number of desired neighbours.
     :return: list of N neighbours, with N specified.
@@ -348,7 +350,7 @@ def getSurroundingItems(massCenter, placedItems, amountOfNearItems):
         # Extract the mass center of all placed items.
         itemsMCs = np.asarray(list(map(lambda x: x["mass_center"], placedItems)))
         # Compute and sort the distances between the new item mass center and the rest.
-        ndxDistances = getComputedDistancesIndexes(massCenter, itemsMCs)
+        ndxDistances = getComputedDistancesIndexes(referencePoint, itemsMCs)
         # Get the nearest mass centers and its items.
         return (np.asarray(placedItems)[ndxDistances[:min(len(placedItems), amountOfNearItems)]]).tolist()
     return []
@@ -664,6 +666,12 @@ def getCandidatesByDestination(candidates, nDst, index):
             return candidates[index]
 
 
+def estimateOffset(itemsEstimation, offset):
+    while sum([r * offset for r in itemsEstimation]) < 180:
+        offset += 0.1
+    return offset
+
+
 def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, coefficients):
     """
     This function creates a solution from a list of packets and a given potential points in the base of the truck.
@@ -677,11 +685,10 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     :return: dictionary with the packed items, non-packed items, current state of the truck and not used potential points.
     """
     # Fill number of items per destination.
-    nItemDst = []
     filteredCandidates = []
-    for n in range(nDst):
-        filteredCandidates.append(list(filter(lambda x: x["dstCode"] == n, candidateList)))
-        nItemDst.append(len(filteredCandidates[n]))
+    for d in range(nDst):
+        filteredCandidates.append(list(filter(lambda x: x["dstCode"] == d, candidateList)))
+    nItemDst = list(map(lambda x: len(x), filteredCandidates))
     # Statistics on the candidateList.
     meanDim, avgWeight, stdDev = getStatsForBase(candidateList)
     # Obtain the maximum weight of the candidateList.
@@ -690,11 +697,12 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     nFilteredDst = list(map(lambda x: len(x), filteredCandidates))
     # Create max area items of a destination can occupy within the container.
     maxAreas = generateMaxAreas(nItemDst, nFilteredDst, truck, nDst)
+    nItemsEstimation = list(map(lambda x: int(maxAreas[x] / (meanDim[x] ** 2)), range(nDst)))
+    offset = estimateOffset(nItemsEstimation, 1.5)
     # Make sure there are neither too many packets nor very few caused by a really low std dev.
     for d in range(nDst):
-        nItemsEstimation = int(maxAreas[d] / (meanDim[d] ** 2))
         # Added filtered candidates based on estimation.
-        filteredCandidates[d] = filteredCandidates[d][:int(nItemsEstimation * 1.5)]
+        filteredCandidates[d] = filteredCandidates[d][:int(nItemsEstimation[d] * offset)]
     # Initialize current areas.
     currentAreas = np.zeros((1, nDst))
     # Group items that did not pass the filter.
@@ -767,7 +775,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
                         potentialPoints[d] = np.vstack((potentialPoints[d], newPPs)) if len(newPPs) else \
                             potentialPoints[d]
                     else:
-                        potentialPoints[d] = newPPs[d]
+                        potentialPoints[d] = newPPs
                     # Add insertion order to item.
                     feasibleItem["in_id"] = len(placedItems)
                     # Add item to placedItems.
@@ -829,15 +837,8 @@ def getMixedPotentialPoints(potentialPoints):
                             np.vstack((sortedPPByZ[i - 1][-int(len(potentialPoints[i - 1]) / 2):], sortedPPByZ[i],
                                        sortedPPByZ[i + 1][:int(len(potentialPoints[i + 1]) / 2)])))
                     except Exception:
-                        print("No fair base distribution error")
+                        logging.error("No fair base distribution error")
     return newPPs
-
-
-def getPossiblePPsOverlapped(potentialPoints, dstCode):
-    if dstCode:
-        return np.vstack(
-            (potentialPoints[dstCode], np.asarray(sorted(potentialPoints[dstCode - 1], key=lambda x: x[:][2])[:10])))
-    return potentialPoints[dstCode]
 
 
 def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, placedItems, coefficients):

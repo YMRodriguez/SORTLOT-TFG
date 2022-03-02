@@ -54,7 +54,7 @@ def getBRF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] - np.array([-item["width"], item["height"], item["length"]]) / 2
+    return item["mass_center"] - [-item["width"] / 2, item["height"] / 2, item["length"] / 2]
 
 
 def getBRR(item):
@@ -64,7 +64,7 @@ def getBRR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([item["width"], -item["height"], item["length"]]) / 2
+    return item["mass_center"] + [item["width"] / 2, -item["height"] / 2, item["length"] / 2]
 
 
 def getBLR(item):
@@ -74,7 +74,7 @@ def getBLR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([-item["width"], -item["height"], item["length"]]) / 2
+    return item["mass_center"] + [-item["width"] / 2, -item["height"] / 2, item["length"] / 2]
 
 
 def getTLF(item):
@@ -84,7 +84,7 @@ def getTLF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] - np.array([item["width"], -item["height"], item["length"]]) / 2
+    return item["mass_center"] - [item["width"] / 2, -item["height"] / 2, item["length"] / 2]
 
 
 def getTRF(item):
@@ -94,7 +94,7 @@ def getTRF(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([item["width"], item["height"], -item["length"]]) / 2
+    return item["mass_center"] + [item["width"] / 2, item["height"] / 2, -item["length"] / 2]
 
 
 def getTRR(item):
@@ -104,7 +104,7 @@ def getTRR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([item["width"], item["height"], item["length"]]) / 2
+    return item["mass_center"] + [item["width"] / 2, item["height"] / 2, item["length"] / 2]
 
 
 def getTLR(item):
@@ -114,7 +114,7 @@ def getTLR(item):
     :param item: object representing the item.
     :return: The cartesian coordinates of the corner.
     """
-    return item["mass_center"] + np.array([-item["width"], item["height"], item["length"]]) / 2
+    return item["mass_center"] + [-item["width"] / 2, item["height"] / 2, item["length"] / 2]
 
 
 def getBottomPlaneHeight(item):
@@ -212,11 +212,11 @@ def getNearestProjectionPointFor(point, placedItems):
     :param placedItems: dictionary of placed packets.
     :return: cartesian coordinates of the projected points.
     """
-    # Reduce the scope to those items whose top or bottom plane contains the point in (x,z)-axis.
-    pointIntoPlaneItems = list(filter(lambda x: pointInPlane(point, getBLF(x), getBRR(x)), placedItems))
+    # Reduce the scope to those items whose top or bottom plane contains the point in (x,z)-axis and are underneath.
+    pointIntoPlaneItems = list(filter(lambda x: pointInPlane(point, getBLF(x), getBRR(x)) and getTopPlaneHeight(x) <= point[1], placedItems))
     # Sort and get the item with the nearest y-axis value.
     itemWithNearestProj = sorted(pointIntoPlaneItems, key=lambda x: getTopPlaneHeight(x), reverse=True)
-    if len(itemWithNearestProj) != 0:
+    if len(itemWithNearestProj):
         # Return the same point but with y-axis value projected.
         return np.array([point[0], getTopPlaneHeight(itemWithNearestProj[0]) + 0.0015, point[2]])
     # Return the projection to the floor.
@@ -270,7 +270,7 @@ def projectPPOverlapped(item, potentialPoints):
     :return: list of potential points projected.
     """
     PPsOverlapped = []
-    # Same destination potential points.
+    # Check same destination potential points overlapped.
     currentDstPPsOverlapped = np.asarray(list(
         filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints[item["dstCode"]])))
     PPsOverlapped.append(currentDstPPsOverlapped)
@@ -280,6 +280,7 @@ def projectPPOverlapped(item, potentialPoints):
             filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints[item["dstCode"] - 1])))
         PPsOverlapped.append(previousDstPPsOverlapped)
     for j in range(len(PPsOverlapped)):
+        # j=0 -> currentDstPPsOverlapped, j=1 -> previousDstPPsOverlapped
         index = item["dstCode"] if not j else item["dstCode"] - 1
         if len(PPsOverlapped[j]):
             nonOverlappedPPs = potentialPoints[index][
