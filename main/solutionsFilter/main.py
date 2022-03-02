@@ -144,7 +144,7 @@ def checkSubgroupingCondition(solution):
     :return: True if condition satisfied, false otherwise.
     """
     placedSubgroups = list(map(lambda x: x["subgroupId"], solution["placed"]))
-    return int(len(list(filter(lambda x: x["subgroupId"] not in placedSubgroups, solution["discard"]))) == 0)
+    return int(len(list(filter(lambda x: x["subgroupId"] in placedSubgroups, solution["discard"]))) == 0)
 
 
 def checkPriorityCondition(solutionDiscarded, priorityLevelThreshold=1):
