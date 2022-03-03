@@ -23,10 +23,18 @@ from pyswarms.backend.topology import Star
 from pyswarms.backend.handlers import OptionsHandler, VelocityHandler, BoundaryHandler
 import pyswarms.backend as P
 import logging
+import mlflow
+from mlflow.tracking import MlflowClient
 
 logging.basicConfig(filename='pso.log', filemode='w', format='%(levelname)s - %(message)s')
 
+client = MlflowClient(tracking_uri="http://com31.dit.upm.es:8889")
+expMlflow = client.get_experiment_by_name("pruebaInicial444")
 
+if not expMlflow:
+    expMlflow = client.create_experiment("pruebaInicial444")
+else:
+    expMlflow = expMlflow.experiment_id
 # ----------------------- MongoDB extraction ----------------------
 truck_var = json.load(open(os.path.dirname(__file__) + os.path.sep + "packetsDatasets" + os.path.sep + "truckvar.json"))
 
@@ -160,25 +168,30 @@ else:
     iterations, exp, cores, psoIterations, particles = 3, 0, 2, 2, 2
 
 
-def objectiveFunction(coefficients, nParticles, expID, packets, nDst, truck, nCores=1):
+def objectiveFunction(coefficients, nParticles, expID, packets, nDst, truck, genRun, nCores=1):
     # Base list to put the cost function of each of the particles.
     costFunction = []
     # Computation for each particle.
     for i in range(nParticles):
+        particle_run = client.create_run(expMlflow)
+        client.set_tag(particle_run.info.run_id, "mlflow.parentRunId", genRun.info.run_id)
+        client.log_param(particle_run.info.run_id, "particle_id", str(i))
+        # client.log_param(particle_run.info.run_id, "current_position", str(coefficients))
         logging.info("Started execution of particle " + str(i+1) + " out of " + str(nParticles))
         # Max. resources by doing as many iterations as cores being used.
-        costFunctionForParticle = computeAlgorithm(coefficients[i], expID, packets, nDst, truck, multIter=nCores, nCores=nCores)
+        costFunctionForParticle = computeAlgorithm(coefficients[i], expID, packets, nDst, truck, particle_run, multIter=nCores, nCores=nCores)
         # Repeat operation in case the cost is max. caused by no feasible solutions provided.
         if costFunctionForParticle == 1:
             logging.warning("No feasible solution found for: " + str(coefficients))
-            costFunctionForParticle = computeAlgorithm(coefficients[i], expID, packets, nDst, truck, multIter=nCores*2, nCores=nCores)
+            costFunctionForParticle = computeAlgorithm(coefficients[i], expID, packets, nDst, truck, particle_run, multIter=nCores*2, nCores=nCores)
             logging.info("Computed new set of solutions and the cost was " + str(costFunctionForParticle))
         costFunction.append(costFunctionForParticle)
         logging.info("Finished execution of particle " + str(i+1) + " out of " + str(nParticles))
+        client.set_terminated(particle_run.info.run_id)
     return np.array(costFunction)
 
 
-def computeAlgorithm(coefficients, expID, packets, nDst, truck, multIter=1, nCores=1):
+def computeAlgorithm(coefficients, expID, packets, nDst, truck, particleRun, multIter=1, nCores=1):
     # ------ Iterations ------------
     with parallel_backend(backend="loky", n_jobs=nCores):
         parallel = Parallel(verbose=100)
@@ -209,6 +222,11 @@ def computeAlgorithm(coefficients, expID, packets, nDst, truck, multIter=1, nCor
         feasibleSols = len(filteredSolutions)
         # Opposite to volume occupation.
         costFunction = 1 - averageVolume if feasibleSols else 1
+
+        client.log_metric(particleRun.info.run_id, "cost", costFunction)
+        client.log_metric(particleRun.info.run_id, "avgVolume", averageVolume)
+        client.log_metric(particleRun.info.run_id, "computedSols", multIter)
+        client.log_metric(particleRun.info.run_id, "feasibleSols", feasibleSols)
 
         # Make it json serializable
         bestSolsFiltered = {"volume": bestFiltered["volume"][0],
@@ -253,14 +271,16 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
     bestCostIter = 0
     history = []
     for p in range(nPSOiters):
+        gen_run = client.create_run(expMlflow)
+        client.log_param(gen_run.info.run_id, "generation", p)
         # Part 1: Update personal best
         logging.info("Best position of each particle before computing iteration")
         logging.info(mySwarm.pbest_pos)
         logging.info("Swarm current position")
         logging.info(mySwarm.position)
-        mySwarm.current_cost = objectiveFunction(mySwarm.position, nParticles, expID, packets, nDst, truck, nCores)  # Compute current cost
+        mySwarm.current_cost = objectiveFunction(mySwarm.position, nParticles, expID, packets, nDst, truck, gen_run, nCores)  # Compute current cost
         logging.info("Current position cost finished")
-        mySwarm.pbest_cost = objectiveFunction(mySwarm.pbest_pos, nParticles, expID, packets, nDst, truck, nCores)  # Compute personal best pos
+        mySwarm.pbest_cost = objectiveFunction(mySwarm.pbest_pos, nParticles, expID, packets, nDst, truck, gen_run, nCores)  # Compute personal best pos
         logging.info("Computed best position for each particle")
         logging.info(mySwarm.pbest_cost)
         mySwarm.pbest_pos, mySwarm.pbest_cost = P.compute_pbest(mySwarm)  # Update and store
@@ -271,8 +291,13 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
             bestCostIter = p
             mySwarm.best_pos, mySwarm.best_cost = topology.compute_gbest(mySwarm)
 
-        history.append({"generation": p, "position": mySwarm.position, "cost": mySwarm.current_cost, "bestPos": mySwarm.pbest_pos, "bestCost": mySwarm.pbest_cost})
+        client.log_metric(gen_run.info.run_id, "bestCost", mySwarm.best_cost)
+        client.log_metric(gen_run.info.run_id, "bestParticle", mySwarm.best_pos)
+        client.log_metric(gen_run.info.run_id, "bestPos", mySwarm.pbest_pos)
+        client.log_metric(gen_run.info.run_id, "bestCost", mySwarm.pbest_cost)
 
+        history.append({"generation": p, "position": mySwarm.position, "cost": mySwarm.best_cost, "bestPos": mySwarm.pbest_pos, "bestCost": mySwarm.pbest_cost})
+        client.set_terminated(gen_run.info.run_id)
         # Part 3: Update position and velocity matrices
         myVh = VelocityHandler(strategy="invert")
         myBh = BoundaryHandler(strategy="nearest")
