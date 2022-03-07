@@ -712,6 +712,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     candidateList = filteredCandidates
     # Auxiliary list to group PP that are not important in this stage(those that are not in the floor).
     notInFloorPPByDst = list(map(lambda x: [], range(nDst)))
+    print(maxAreas, nItemsEstimation, [len(ji) for ji in filteredCandidates])
     # Check the best item for each Potential Point in order of destination.
     for d in range(nDst):
         # Add to next destination the potential points of the previous destination.
@@ -793,6 +794,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
                 continue
     # Update the list with the items that have not been packed.
     discardList = discardList + [item for sublist in candidateList for item in sublist]
+    print(currentAreas)
     # Keep the potential points that are not in the floor.
     return {"placed": placedItems, "discard": discardList,
             "truck": truck, "potentialPoints": list(map(lambda x: np.asarray(x), notInFloorPPByDst))}
