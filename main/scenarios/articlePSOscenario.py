@@ -27,13 +27,6 @@ from mlflow.tracking import MlflowClient
 
 logging.basicConfig(filename='pso.log', filemode='w', format='%(levelname)s - %(message)s')
 
-client = MlflowClient(tracking_uri="http://com31.dit.upm.es:8889")
-expMlflow = client.get_experiment_by_name("pruebaInicial444")
-
-if not expMlflow:
-    expMlflow = client.create_experiment("pruebaInicial444")
-else:
-    expMlflow = expMlflow.experiment_id
 # ----------------------- MongoDB extraction ----------------------
 truck_var = json.load(open(os.path.dirname(__file__) + os.path.sep + "packetsDatasets" + os.path.sep + "truckvar.json"))
 
@@ -369,6 +362,15 @@ experiments = getFilepaths()
 items, ndst = getDataFromJSONWith(experiments[exp])
 #     itemsByExp.append(items)
 #     nDstByExp.append(ndst)
+
+
+client = MlflowClient(tracking_uri="http://com31.dit.upm.es:8889")
+expMlflow = client.get_experiment_by_name("Prueba" + experiments[exp])
+
+if not expMlflow:
+    expMlflow = client.create_experiment("Prueba" + experiments[exp])
+else:
+    expMlflow = expMlflow.experiment_id
 
 # # Perform the PSO for each experiment provided the ID, the items and the numbers of destinations.
 # for a, b, c in zip(IDs, itemsByExp, nDstByExp):
