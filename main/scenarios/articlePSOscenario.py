@@ -365,10 +365,10 @@ items, ndst = getDataFromJSONWith(experiments[exp])
 
 
 client = MlflowClient(tracking_uri="http://com31.dit.upm.es:8889")
-expMlflow = client.get_experiment_by_name("Prueba" + experiments[exp])
+expMlflow = client.get_experiment_by_name("Prueba" + getIdFromFilePath(experiments[exp]))
 
 if not expMlflow:
-    expMlflow = client.create_experiment("Prueba" + experiments[exp])
+    expMlflow = client.create_experiment("Prueba" + getIdFromFilePath(experiments[exp]))
 else:
     expMlflow = expMlflow.experiment_id
 
