@@ -48,7 +48,7 @@ def getFilepaths():
 
 
 def getIdFromFilePath(filepath):
-    return filepath.split(os.path.sep)[-1].split("-")[0]
+    return filepath.split(os.path.sep)[-1].split("-")[0] + "pso"
 
 
 # -------------------- Main Processes -----------------------------
@@ -375,4 +375,4 @@ else:
 # # Perform the PSO for each experiment provided the ID, the items and the numbers of destinations.
 # for a, b, c in zip(IDs, itemsByExp, nDstByExp):
 #     performPSO(a, b, c, truck_var, particles, psoIterations, cores)
-performPSO(experiments[exp], items, ndst, truck_var, particles, psoIterations, cores)
+performPSO(getIdFromFilePath(experiments[exp]), items, ndst, truck_var, particles, psoIterations, cores)
