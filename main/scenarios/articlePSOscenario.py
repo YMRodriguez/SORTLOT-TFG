@@ -146,27 +146,27 @@ def serializeSolutions(sols):
 # ------ Common variables ----------
 if len(sys.argv) > 1:
     try:
-        exp = int(sys.argv[1])
+        exp = int(sys.argv[0])
     except ValueError:
         exp = 1
     try:
-        iterations = int(sys.argv[2])
+        iterations = int(sys.argv[1])
     except ValueError:
         iterations = 1
     try:
-        cores = int(sys.argv[3])
+        cores = int(sys.argv[2])
     except ValueError:
         cores = 1
     try:
-        psoIterations = int(sys.argv[4])
+        psoIterations = int(sys.argv[3])
     except ValueError:
         psoIterations = 50
     try:
-        particles = int(sys.argv[5])
+        particles = int(sys.argv[4])
     except ValueError:
         particles = 30
 else:
-    iterations, exp, cores, psoIterations, particles = 3, 0, 20, 600, 30
+    exp, cores, psoIterations, particles = 0, 20, 300, 30
 
 
 def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions, current):
@@ -235,7 +235,7 @@ def computeAlgorithm(coefficients, expID, packets, nDst, truck, particleRun, sav
 
     if saveStats:
         # Keep stats of all iterations, useful for graphics. TODO, not needed now
-        persistStats(updatedStats, ID)
+        persistStats(updatedStats, expID)
     # -------------------------------------------------------
     # Get best filtered and unfiltered.
     serializedSolutions = serializeSolutions(solutionsCleaned)
@@ -308,6 +308,7 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
     for p in range(nPSOiters):
         gen_run = client.create_run(expMlflow)
         client.log_param(gen_run.info.run_id, "generation", p)
+        client.log_param(gen_run.info.run_id, "expID", expID)
         # Part 1: Update personal best
         logging.info("Best position of each particle before computing iteration")
         logging.info(mySwarm.pbest_pos)
@@ -357,18 +358,19 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
 
 # ---------- Experiments ------------------------------------
 experiments = getFilepaths()
-IDs = []
-itemsByExp = []
-nDstByExp = []
+# IDs = []
+# itemsByExp = []
+# nDstByExp = []
 
 # ------ Get packets dataset -------
-for j in experiments:
-    ID = getIdFromFilePath(j)
-    IDs.append(ID)
-    items, ndst = getDataFromJSONWith(j)
-    itemsByExp.append(items)
-    nDstByExp.append(ndst)
+# for j in experiments:
+#     ID = getIdFromFilePath(j)
+#     IDs.append(ID)
+items, ndst = getDataFromJSONWith(experiments[exp])
+#     itemsByExp.append(items)
+#     nDstByExp.append(ndst)
 
-# Perform the PSO for each experiment provided the ID, the items and the numbers of destinations.
-for a, b, c in zip(IDs, itemsByExp, nDstByExp):
-    performPSO(a, b, c, truck_var, particles, psoIterations, cores)
+# # Perform the PSO for each experiment provided the ID, the items and the numbers of destinations.
+# for a, b, c in zip(IDs, itemsByExp, nDstByExp):
+#     performPSO(a, b, c, truck_var, particles, psoIterations, cores)
+performPSO(experiments[exp], items, ndst, truck_var, particles, psoIterations, cores)
