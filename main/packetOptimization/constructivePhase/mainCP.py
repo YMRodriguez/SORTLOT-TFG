@@ -712,7 +712,6 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     candidateList = filteredCandidates
     # Auxiliary list to group PP that are not important in this stage(those that are not in the floor).
     notInFloorPPByDst = list(map(lambda x: [], range(nDst)))
-    print(maxAreas, nItemsEstimation, [len(ji) for ji in filteredCandidates])
     # Check the best item for each Potential Point in order of destination.
     for d in range(nDst):
         # Add to next destination the potential points of the previous destination.
@@ -794,7 +793,9 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
                 continue
     # Update the list with the items that have not been packed.
     discardList = discardList + [item for sublist in candidateList for item in sublist]
-    print(currentAreas)
+    # Discards an unfair base solution.
+    if not np.std(maxAreas, ddof=1) * 0.8 <= np.std(currentAreas, ddof=1) <= np.std(maxAreas, ddof=1) * 1.2:
+        return None
     # Keep the potential points that are not in the floor.
     return {"placed": placedItems, "discard": discardList,
             "truck": truck, "potentialPoints": list(map(lambda x: np.asarray(x), notInFloorPPByDst))}
@@ -968,6 +969,8 @@ def main_cp(truck, candidateList, nDst, coefficients, subgroupingEnabled=1):
     #    print("Number of items packed after stage" + len(fillingBase["placed"]))
     #    startTime1 = time.time()
     # ----- DEBUG-INFO ------
+    if loadedBase is None:
+        return None
 
     stage = stage + 1
     loadedS1 = load(
