@@ -73,6 +73,8 @@ def main_scenario(packets, coefficients, truck, nDst, nIteration, rangeOrientati
     startTime = time.time()
     iteration = main_cp(truck, rand_output, nDst, coefficients[2:])
     endTime = time.time()
+    if iteration is None:
+        return iteration
     # It may be relevant to know the sorting method used.
     return {"placed": iteration["placed"],
             "discard": iteration["discard"],
@@ -162,43 +164,64 @@ if len(sys.argv) > 1:
     try:
         particles = int(sys.argv[5])
     except ValueError:
-        particles = 15
+        particles = 30
 else:
-    iterations, exp, cores, psoIterations, particles = 3, 0, 6, 2, 30
+    iterations, exp, cores, psoIterations, particles = 3, 0, 20, 600, 30
 
 
-def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun):
-    particle_run = client.create_run(expMlflow)
-    client.set_tag(particle_run.info.run_id, "mlflow.parentRunId", genRun.info.run_id)
-    client.log_param(particle_run.info.run_id, "particle_id", str(i))
-    # client.log_param(particle_run.info.run_id, "current_position", str(coefficients))
+def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions, current):
+    particle_run = None
+    if current:
+        # Set particle child in generation.
+        particle_run = client.create_run(expMlflow)
+        client.set_tag(particle_run.info.run_id, "mlflow.parentRunId", genRun.info.run_id)
+        client.log_param(particle_run.info.run_id, "particleId", str(i))
+        client.log_param(particle_run.info.run_id, "currentPosition", str(coefficients[i]))
+        # This will show best position without the current generation taken into account.
+        client.log_param(particle_run.info.run_id, "bestPositionPrev", str(bestPositions[i]))
+
     logging.info("Started execution of particle " + str(i + 1) + " out of " + str(nParticles))
     # Max. resources by doing as many iterations as cores being used.
     costFunctionForParticle = computeAlgorithm(coefficients[i], expID, packets, nDst, truck, particle_run)
     # Repeat operation in case the cost is max. caused by no feasible solutions provided.
     if costFunctionForParticle == 1:
-        logging.warning("No feasible solution found for: " + str(coefficients))
+        logging.warning("No feasible solution found for: " + str(coefficients) + " in particle " + str(i))
         costFunctionForParticle = computeAlgorithm(coefficients[i], expID, packets, nDst, truck, particle_run)
         logging.info("Computed new set of solutions and the cost was " + str(costFunctionForParticle))
-    # costFunction.append(costFunctionForParticle)
-    logging.info("Finished execution of particle " + str(i + 1) + " out of " + str(nParticles))
-    client.set_terminated(particle_run.info.run_id)
+    logging.info("CURRENTC " if current else "BESTC " + "Finished execution of particle " + str(i + 1) + " out of " + str(nParticles))
+    if particle_run is not None:
+        client.set_terminated(particle_run.info.run_id)
     return costFunctionForParticle
 
 
-def objectiveFunction(coefficients, nParticles, expID, packets, nDst, truck, genRun, nCores):
+def objectiveFunction(coefficients, nParticles, expID, packets, nDst, truck, genRun, nCores, bestPositions, current):
     with parallel_backend(backend="loky", n_jobs=nCores):
         parallel = Parallel(verbose=100)
         # Computation for each particle.
         costFunction = parallel(
-            [delayed(processParticle)(i, coefficients, nParticles, expID, packets, nDst, truck, genRun) for i in
+            [delayed(processParticle)(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions, current) for i in
              range(nParticles)])
     return np.array(costFunction)
 
 
-def computeAlgorithm(coefficients, expID, packets, nDst, truck, particleRun):
+def computeAlgorithm(coefficients, expID, packets, nDst, truck, particleRun, saveStats=False):
+    def logMetrics(noFair):
+        if noFair and particleRun is not None:
+            client.log_metric(particleRun.info.run_id, "cost", 1)
+            client.log_metric(particleRun.info.run_id, "avgVolume", 0)
+            client.log_metric(particleRun.info.run_id, "feasibleSols", 0)
+        if not noFair and particleRun is not None:
+            client.log_metric(particleRun.info.run_id, "cost", costFunction)
+            client.log_metric(particleRun.info.run_id, "avgVolume", averageVolume)
+            client.log_metric(particleRun.info.run_id, "feasibleSols", feasibleSols)
     # ------ Iterations ------------
     solutions = [main_scenario(deepcopy(packets), coefficients, deepcopy(truck), nDst, 0)]
+
+    # The has been no fair distribution.
+    if solutions[0] is None:
+        logMetrics(True)
+        return 1
+
     solutionsStats = list(map(lambda x: solutionStatistics(x), solutions))
     # ------- Process set of solutions
     # Clean solutions
@@ -209,14 +232,17 @@ def computeAlgorithm(coefficients, expID, packets, nDst, truck, particleRun):
                                            "time": x["time"]}, solutions))
     # ------------- Iterations data -------------------------
     updatedStats = getUpdatedStatsWithConditions(solutionsCleaned, solutionsStats)
-    # Keep stats of all iterations, useful for graphics.
-    persistStats(updatedStats, ID)
+
+    if saveStats:
+        # Keep stats of all iterations, useful for graphics. TODO, not needed now
+        persistStats(updatedStats, ID)
     # -------------------------------------------------------
     # Get best filtered and unfiltered.
     serializedSolutions = serializeSolutions(solutionsCleaned)
     filteredSolutions, filteredStats = filterSolutions(serializedSolutions, solutionsStats)
-    bestFiltered = getBest(filteredSolutions, filteredStats, 5)
-    bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 5)
+    if saveStats:
+        bestFiltered = getBest(filteredSolutions, filteredStats, 5)
+        bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 5)
 
     # Get the average volume of the iterations.
     averageVolume = sum([s["used_volume"] for s in solutionsStats])
@@ -225,25 +251,23 @@ def computeAlgorithm(coefficients, expID, packets, nDst, truck, particleRun):
     # Opposite to volume occupation.
     costFunction = 1 - averageVolume if feasibleSols else 1
 
-    client.log_metric(particleRun.info.run_id, "cost", costFunction)
-    client.log_metric(particleRun.info.run_id, "avgVolume", averageVolume)
-    client.log_metric(particleRun.info.run_id, "feasibleSols", feasibleSols)
+    logMetrics(False)
 
-    # Make it json serializable
-    bestSolsFiltered = {"volume": bestFiltered["volume"][0],
-                        "weight": bestFiltered["weight"][0],
-                        "taxability": bestFiltered["taxability"][0]}
-    bestStatsFiltered = {"volume": bestFiltered["volume"][1],
-                         "weight": bestFiltered["weight"][1],
-                         "taxability": bestFiltered["taxability"][1]}
-    bestSolsUnfiltered = {"volume": bestUnfiltered["volume"][0],
-                          "weight": bestUnfiltered["weight"][0],
-                          "taxability": bestUnfiltered["taxability"][0]}
-    bestStatsUnfiltered = {"volume": bestUnfiltered["volume"][1],
-                           "weight": bestUnfiltered["weight"][1],
-                           "taxability": bestUnfiltered["taxability"][1]}
-
-    persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, expID)
+    if saveStats:
+        # Make it json serializable. TODO, not needed now.
+        bestSolsFiltered = {"volume": bestFiltered["volume"][0],
+                            "weight": bestFiltered["weight"][0],
+                            "taxability": bestFiltered["taxability"][0]}
+        bestStatsFiltered = {"volume": bestFiltered["volume"][1],
+                             "weight": bestFiltered["weight"][1],
+                             "taxability": bestFiltered["taxability"][1]}
+        bestSolsUnfiltered = {"volume": bestUnfiltered["volume"][0],
+                              "weight": bestUnfiltered["weight"][0],
+                              "taxability": bestUnfiltered["taxability"][0]}
+        bestStatsUnfiltered = {"volume": bestUnfiltered["volume"][1],
+                               "weight": bestUnfiltered["weight"][1],
+                               "taxability": bestUnfiltered["taxability"][1]}
+        persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, expID)
     return costFunction
 
 
@@ -289,13 +313,15 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
         logging.info(mySwarm.pbest_pos)
         logging.info("Swarm current position")
         logging.info(mySwarm.position)
+
         mySwarm.current_cost = objectiveFunction(mySwarm.position, nParticles, expID, packets, nDst, truck, gen_run,
-                                                 nCores)  # Compute current cost
+                                                 nCores, bestPositions=mySwarm.pbest_pos, current=True)  # Compute current cost
         logging.info("Current position cost finished")
         mySwarm.pbest_cost = objectiveFunction(mySwarm.pbest_pos, nParticles, expID, packets, nDst, truck, gen_run,
-                                               nCores)  # Compute personal best pos
+                                               nCores, bestPositions=None, current=False)  # Compute personal best pos
         logging.info("Computed best position for each particle")
         logging.info(mySwarm.pbest_cost)
+        # Update pbest_pos based on cost of previous bests and current positions
         mySwarm.pbest_pos, mySwarm.pbest_cost = P.compute_pbest(mySwarm)  # Update and store
 
         # Part 2: Update global best
@@ -305,9 +331,8 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
             mySwarm.best_pos, mySwarm.best_cost = topology.compute_gbest(mySwarm)
 
         client.log_metric(gen_run.info.run_id, "bestCost", mySwarm.best_cost)
-        client.log_metric(gen_run.info.run_id, "bestParticle", mySwarm.best_pos)
-        client.log_metric(gen_run.info.run_id, "bestPos", mySwarm.pbest_pos)
-        client.log_metric(gen_run.info.run_id, "bestCost", mySwarm.pbest_cost)
+        client.log_param(gen_run.info.run_id, "bestParticle", str(mySwarm.best_pos))
+        client.log_param(gen_run.info.run_id, "bestCostPart", str(mySwarm.pbest_cost))
 
         history.append(
             {"generation": p, "position": mySwarm.position, "cost": mySwarm.best_cost, "bestPos": mySwarm.pbest_pos,
@@ -321,13 +346,11 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
         mySwarm.velocity = topology.compute_velocity(mySwarm, vh=myVh, clamp=None, bounds=bounds)
         mySwarm.position = topology.compute_position(mySwarm, bounds=bounds, bh=myBh)
         mySwarm.options = opHandler(options, iternow=p, itermax=nPSOiters)
-        print("-----------------")
-        print("Iteration " + str(p + 1) + " of the PSO completed")
-        print('Iteration: {} | my_swarm.best_cost: {:.4f}'.format(p + 1, mySwarm.best_cost))
-        print("-----------------")
+        logging.info("Iteration " + str(p + 1) + " of the PSO completed")
+        logging.info('Iteration: {} | my_swarm.best_cost: {:.4f}'.format(p + 1, mySwarm.best_cost))
 
-    print('The best cost found by our swarm is: {:.4f}'.format(mySwarm.best_cost))
-    print('The best position found by our swarm is: {}'.format(mySwarm.best_pos))
+    logging.info('The best cost found by our swarm is: {:.4f}'.format(mySwarm.best_cost))
+    logging.info('The best position found by our swarm is: {}'.format(mySwarm.best_pos))
     logBestPSOExperiment(expID, mySwarm.best_cost, mySwarm.best_pos, bestCostIter)
     logPSOHistory(expID, history)
 
