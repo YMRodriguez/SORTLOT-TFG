@@ -19,6 +19,7 @@ from main.solutionsFilter.main import filterSolutions, getBest, getUpdatedStatsW
 from main.scenarios.dataSaver import persistInLocal, persistStats, logBestPSOExperiment, logPSOHistory
 import glob
 import os
+import random
 from pyswarms.backend.topology import Star
 from pyswarms.backend.handlers import OptionsHandler, VelocityHandler, BoundaryHandler
 import pyswarms.backend as P
@@ -26,6 +27,7 @@ import logging
 from mlflow.tracking import MlflowClient
 
 logging.basicConfig(filename='pso.log', filemode='w', format='%(levelname)s - %(message)s')
+random.seed(20)
 
 # ----------------------- MongoDB extraction ----------------------
 truck_var = json.load(open(os.path.dirname(__file__) + os.path.sep + "packetsDatasets" + os.path.sep + "truckvar.json"))
@@ -157,7 +159,6 @@ if len(sys.argv) > 1:
 else:
     exp, cores, psoIterations, particles = 0, 20, 300, 30
 
-print(exp, cores, psoIterations, particles)
 
 def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions, current):
     particle_run = None
@@ -347,8 +348,7 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
 
 
 # ---------- Experiments ------------------------------------
-experiments = getFilepaths()
-print(getIdFromFilePath(experiments[exp]))
+experiments = sorted(getFilepaths())
 # IDs = []
 # itemsByExp = []
 # nDstByExp = []
