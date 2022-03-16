@@ -157,6 +157,7 @@ if len(sys.argv) > 1:
 else:
     exp, cores, psoIterations, particles = 0, 20, 300, 30
 
+print(exp, cores, psoIterations, particles)
 
 def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions, current):
     particle_run = None
@@ -347,6 +348,7 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
 
 # ---------- Experiments ------------------------------------
 experiments = getFilepaths()
+print(getIdFromFilePath(experiments[exp]))
 # IDs = []
 # itemsByExp = []
 # nDstByExp = []
