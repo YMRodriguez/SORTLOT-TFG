@@ -139,13 +139,9 @@ def serializeSolutions(sols):
 # ------ Common variables ----------
 if len(sys.argv) > 1:
     try:
-        exp = int(sys.argv[0])
+        exp = int(sys.argv[1])
     except ValueError:
-        exp = 1
-    try:
-        iterations = int(sys.argv[1])
-    except ValueError:
-        iterations = 1
+        exp = 0
     try:
         cores = int(sys.argv[2])
     except ValueError:
@@ -340,8 +336,8 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
         mySwarm.velocity = topology.compute_velocity(mySwarm, vh=myVh, clamp=None, bounds=bounds)
         mySwarm.position = topology.compute_position(mySwarm, bounds=bounds, bh=myBh)
         mySwarm.options = opHandler(options, iternow=p, itermax=nPSOiters)
-        logging.info("Iteration " + str(p + 1) + " of the PSO completed")
-        logging.info('Iteration: {} | my_swarm.best_cost: {:.4f}'.format(p + 1, mySwarm.best_cost))
+        logging.info("Iteration " + str(p) + " of the PSO completed")
+        logging.info('Iteration: {} | my_swarm.best_cost: {:.4f}'.format(p, mySwarm.best_cost))
 
     logging.info('The best cost found by our swarm is: {:.4f}'.format(mySwarm.best_cost))
     logging.info('The best position found by our swarm is: {}'.format(mySwarm.best_pos))
