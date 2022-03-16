@@ -279,16 +279,17 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
     topology = Star()
     # initPositionsList = [0.8, 0.2, 0.55, 0.45, 0.35, 0.25, 0.4, 0.45, 0.45, 0.05, 0.05, 0.3, 0.5, 0.1, 0.1]
     initialPositions = []
-    for i in range(15):
-        reference1 = np.ones(15) * 1 / 2
-        reference2 = np.ones(15) * 1 / 2
+    nDimensions = 18
+    for i in range(nDimensions):
+        reference1 = np.ones(nDimensions) * 1 / 2
+        reference2 = np.ones(nDimensions) * 1 / 2
         reference1[i] = 0
         reference2[i] = 1
         initialPositions.append(reference1)
         initialPositions.append(reference2)
     initialPositions = np.array(initialPositions)
     # initPositions = np.tile(initPositionsList, (particles, 1))
-    bounds = (np.zeros(15), np.ones(15))
+    bounds = (np.zeros(nDimensions), np.ones(nDimensions))
     opHandler = OptionsHandler(strategy={"w": "lin_variation"})
     options = {"w": 0.9, "c1": 0.5, "c2": 0.3}
 

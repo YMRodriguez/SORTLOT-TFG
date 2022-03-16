@@ -506,11 +506,11 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
     :return: potential point with fitness, format [x, y, z, fitness].
     """
 
-    fitWeights = [coeffs[:4],
-                  coeffs[4:],
-                  coeffs[4:]] if nDst > 1 else [[coeffs[0], 0, coeffs[2], coeffs[3]],
-                                                [coeffs[4], 0, coeffs[6], coeffs[7]],
-                                                [coeffs[4], 0, coeffs[6], coeffs[4]]]
+    fitWeights = [coeffs[:5],
+                  coeffs[5:],
+                  coeffs[5:]] if nDst > 1 else [[coeffs[0], 0, coeffs[2], coeffs[3], coeffs[4]],
+                                                [coeffs[5], 0, coeffs[7], coeffs[8], coeffs[9]],
+                                                [coeffs[5], 0, coeffs[7], coeffs[8], coeffs[9]]]
     # Take the weights of the stage.
     stageFW = fitWeights[stage - 1]
     # Length condition in the fitness function, tries to be attracted by the origin.
@@ -545,12 +545,12 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
         areaCondition = 1 - abs((getBottomPlaneArea(item) / getBottomPlaneArea(itemBehind)) - 1)
         areaCondition = areaCondition if (1 >= areaCondition >= 0) else 0
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
-                   areaCondition * stageFW[2] + heightWeightRelation * stageFW[3]
+                   areaCondition * stageFW[2] + heightWeightRelation * stageFW[3] + item["priority"] * stageFW[4]
         fitvalue = fitvalue if fitvalue >= 0 else 0
         return [PP, fitvalue]
     else:
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
-                   stageFW[2] + heightWeightRelation * stageFW[3]
+                   stageFW[2] + heightWeightRelation * stageFW[3] + item["priority"] * stageFW[4]
         # Threshold in fitness value. TODO, maybe change the threshold depending on the stage.
         fitvalue = fitvalue if fitvalue >= 0 else 0
         return [PP, fitvalue]
@@ -567,7 +567,7 @@ def fitnessForBase(PP, item, containerLength, nDst, placedItems, maxWeight, coef
     :param placedItems: set of placed items into the container.
     :return: potential point with fitness, format [x, y, z, fitness].
     """
-    fitWeights = coefficients if nDst > 1 else [coefficients[0], 0, coefficients[2]]
+    fitWeights = coefficients if nDst > 1 else [coefficients[0], 0, coefficients[2], coefficients[3]]
     if nDst > 1:
         # For the surrounding customer code objects.
         nItems = 5
@@ -579,7 +579,7 @@ def fitnessForBase(PP, item, containerLength, nDst, placedItems, maxWeight, coef
     else:
         surroundingCondition = 0
     fitnessValue = (item["weight"] / maxWeight) * fitWeights[0] + surroundingCondition * fitWeights[1] + (
-            1 - (item["mass_center"][2] / containerLength)) * fitWeights[2]
+            1 - (item["mass_center"][2] / containerLength)) * fitWeights[2] + item["priority"] * coefficients[3]
     return [PP, fitnessValue]
 
 
@@ -950,8 +950,8 @@ def main_cp(truck, candidateList, nDst, coefficients, subgroupingEnabled=1):
     """
     # Map the coefficients.
     coefficientsResorting = coefficients[0:2]
-    coefficientsBase = coefficients[2:5]
-    coefficientsLoading = coefficients[5:]
+    coefficientsBase = coefficients[2:6]
+    coefficientsLoading = coefficients[6:]
 
     # Fetch the new potential points from the truck.
     potentialPoints = truck["pp"]
