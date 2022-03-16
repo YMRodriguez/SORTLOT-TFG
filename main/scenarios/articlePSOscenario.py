@@ -293,7 +293,7 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
     opHandler = OptionsHandler(strategy={"w": "lin_variation"})
     options = {"w": 0.9, "c1": 0.5, "c2": 0.3}
 
-    mySwarm = P.create_swarm(n_particles=nParticles, dimensions=15, options=options, bounds=bounds,
+    mySwarm = P.create_swarm(n_particles=nParticles, dimensions=nDimensions, options=options, bounds=bounds,
                              init_pos=initialPositions)
     bestCostIter = 0
     history = []
