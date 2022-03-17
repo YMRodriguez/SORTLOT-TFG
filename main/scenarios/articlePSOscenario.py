@@ -147,17 +147,17 @@ if len(sys.argv) > 1:
     try:
         cores = int(sys.argv[2])
     except ValueError:
-        cores = 1
+        cores = 2
     try:
         psoIterations = int(sys.argv[3])
     except ValueError:
-        psoIterations = 50
+        psoIterations = 300
     try:
         particles = int(sys.argv[4])
     except ValueError:
-        particles = 30
+        particles = 36
 else:
-    exp, cores, psoIterations, particles = 0, 20, 300, 30
+    exp, cores, psoIterations, particles = 0, 2, 300, 36
 
 
 def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions, current):
@@ -322,11 +322,9 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
         if np.min(mySwarm.pbest_cost) < mySwarm.best_cost:
             bestCostIter = p
             mySwarm.best_pos, mySwarm.best_cost = topology.compute_gbest(mySwarm)
-
-        client.log_metric(gen_run.info.run_id, "bestCost", mySwarm.best_cost)
-        client.log_param(gen_run.info.run_id, "bestParticle", str(mySwarm.best_pos))
-        client.log_param(gen_run.info.run_id, "bestCostPart", str(mySwarm.pbest_cost))
-
+            client.log_metric(gen_run.info.run_id, "bestCost", mySwarm.best_cost)
+            client.log_param(gen_run.info.run_id, "bestParticle", str(mySwarm.best_pos))
+            client.log_param(gen_run.info.run_id, "bestCostPart", str(list(map(lambda x: round(x, 4), mySwarm.pbest_cost))))
         history.append(
             {"generation": p, "position": mySwarm.position, "cost": mySwarm.best_cost, "bestPos": mySwarm.pbest_pos,
              "bestCost": mySwarm.pbest_cost})
