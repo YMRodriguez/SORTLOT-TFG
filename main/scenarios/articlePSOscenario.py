@@ -310,8 +310,11 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
         mySwarm.current_cost = objectiveFunction(mySwarm.position, nParticles, expID, packets, nDst, truck, gen_run,
                                                  nCores, bestPositions=mySwarm.pbest_pos, current=True)  # Compute current cost
         logging.info("Current position cost finished")
-        mySwarm.pbest_cost = objectiveFunction(mySwarm.pbest_pos, nParticles, expID, packets, nDst, truck, gen_run,
+        if not p:
+            mySwarm.pbest_cost = objectiveFunction(mySwarm.pbest_pos, nParticles, expID, packets, nDst, truck, gen_run,
                                                nCores, bestPositions=None, current=False)  # Compute personal best pos
+        else:
+            continue
         logging.info("Computed best position for each particle")
         logging.info(mySwarm.pbest_cost)
         # Update pbest_pos based on cost of previous bests and current positions
