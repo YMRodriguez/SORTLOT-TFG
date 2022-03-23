@@ -325,9 +325,11 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
         if np.min(mySwarm.pbest_cost) < mySwarm.best_cost:
             bestCostIter = p
             mySwarm.best_pos, mySwarm.best_cost = topology.compute_gbest(mySwarm)
-            client.log_metric(gen_run.info.run_id, "bestCost", mySwarm.best_cost)
-            client.log_param(gen_run.info.run_id, "bestParticle", str(mySwarm.best_pos))
-            client.log_param(gen_run.info.run_id, "bestCostPart", str(list(map(lambda x: round(x, 4), mySwarm.pbest_cost))))
+
+        client.log_metric(gen_run.info.run_id, "bestCost", mySwarm.best_cost)
+        client.log_param(gen_run.info.run_id, "bestParticle", str(mySwarm.best_pos))
+        client.log_param(gen_run.info.run_id, "bestCostPart", str(list(map(lambda x: round(x, 3), mySwarm.pbest_cost))))
+
         history.append(
             {"generation": p, "position": mySwarm.position, "cost": mySwarm.best_cost, "bestPos": mySwarm.pbest_pos,
              "bestCost": mySwarm.pbest_cost})
@@ -365,10 +367,10 @@ items, ndst = getDataFromJSONWith(experiments[exp])
 
 
 client = MlflowClient(tracking_uri="http://com31.dit.upm.es:8889")
-expMlflow = client.get_experiment_by_name("Prueba" + getIdFromFilePath(experiments[exp]))
+expMlflow = client.get_experiment_by_name("P" + getIdFromFilePath(experiments[exp]))
 
 if not expMlflow:
-    expMlflow = client.create_experiment("Prueba" + getIdFromFilePath(experiments[exp]))
+    expMlflow = client.create_experiment("P" + getIdFromFilePath(experiments[exp]))
 else:
     expMlflow = expMlflow.experiment_id
 
