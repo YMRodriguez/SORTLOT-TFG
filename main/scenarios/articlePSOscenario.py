@@ -46,7 +46,7 @@ def getDataFromJSONWith(filepath):
 
 def getFilepaths():
     return glob.glob(os.path.dirname(
-        __file__) + os.path.sep + "packetsDatasets" + os.path.sep + "articleDatasets" + os.path.sep + "*.json")
+        __file__) + os.path.sep + "packetsDatasets" + os.path.sep + "articleDatasets" + os.path.sep + "round2" + os.path.sep + "*.json")
 
 
 def getIdFromFilePath(filepath):
@@ -367,10 +367,10 @@ items, ndst = getDataFromJSONWith(experiments[exp])
 
 
 client = MlflowClient(tracking_uri="http://com31.dit.upm.es:8889")
-expMlflow = client.get_experiment_by_name("P" + getIdFromFilePath(experiments[exp]))
+expMlflow = client.get_experiment_by_name("2rP" + getIdFromFilePath(experiments[exp]))
 
 if not expMlflow:
-    expMlflow = client.create_experiment("P" + getIdFromFilePath(experiments[exp]))
+    expMlflow = client.create_experiment("2rP" + getIdFromFilePath(experiments[exp]))
 else:
     expMlflow = expMlflow.experiment_id
 
