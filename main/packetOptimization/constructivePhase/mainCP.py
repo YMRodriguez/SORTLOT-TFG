@@ -794,7 +794,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     # Update the list with the items that have not been packed.
     discardList = discardList + [item for sublist in candidateList for item in sublist]
     # Discards an unfair base solution.
-    if not (np.std([maxAreas], ddof=1) * 0.8 <= np.std(currentAreas, ddof=1) <= np.std([maxAreas], ddof=1) * 1.2) and (nDst > 1):
+    if (nDst > 1) and not (np.std([maxAreas], ddof=1) * 0.8 <= np.std(currentAreas, ddof=1) <= np.std([maxAreas], ddof=1) * 1.2):
         return None
     # Keep the potential points that are not in the floor.
     return {"placed": placedItems, "discard": discardList,
