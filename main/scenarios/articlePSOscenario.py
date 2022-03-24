@@ -157,7 +157,7 @@ if len(sys.argv) > 1:
     except ValueError:
         particles = 36
 else:
-    exp, cores, psoIterations, particles = 0, 2, 300, 36
+    exp, cores, psoIterations, particles = 0, 23, 360, 36
 
 
 def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions, current):
@@ -367,10 +367,10 @@ items, ndst = getDataFromJSONWith(experiments[exp])
 
 
 client = MlflowClient(tracking_uri="http://com31.dit.upm.es:8889")
-expMlflow = client.get_experiment_by_name("2rP" + getIdFromFilePath(experiments[exp]))
+expMlflow = client.get_experiment_by_name("2Pr" + getIdFromFilePath(experiments[exp]))
 
 if not expMlflow:
-    expMlflow = client.create_experiment("2rP" + getIdFromFilePath(experiments[exp]))
+    expMlflow = client.create_experiment("2Pr" + getIdFromFilePath(experiments[exp]))
 else:
     expMlflow = expMlflow.experiment_id
 
