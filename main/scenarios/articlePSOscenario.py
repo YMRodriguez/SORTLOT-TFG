@@ -151,7 +151,7 @@ if len(sys.argv) > 1:
     try:
         psoIterations = int(sys.argv[3])
     except ValueError:
-        psoIterations = 300
+        psoIterations = 360
     try:
         particles = int(sys.argv[4])
     except ValueError:
@@ -160,16 +160,14 @@ else:
     exp, cores, psoIterations, particles = 0, 23, 360, 36
 
 
-def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions, current):
-    particle_run = None
-    if current:
-        # Set particle child in generation.
-        particle_run = client.create_run(expMlflow)
-        client.set_tag(particle_run.info.run_id, "mlflow.parentRunId", genRun.info.run_id)
-        client.log_param(particle_run.info.run_id, "particleId", str(i))
-        client.log_param(particle_run.info.run_id, "currentPosition", str(coefficients[i]))
-        # This will show best position without the current generation taken into account.
-        client.log_param(particle_run.info.run_id, "bestPositionPrev", str(bestPositions[i]))
+def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions):
+    # Set particle child in generation.
+    particle_run = client.create_run(expMlflow)
+    client.set_tag(particle_run.info.run_id, "mlflow.parentRunId", genRun.info.run_id)
+    client.log_param(particle_run.info.run_id, "particleId", str(i))
+    client.log_param(particle_run.info.run_id, "currentPosition", str(coefficients[i]))
+    # This will show best position without the current generation taken into account.
+    client.log_param(particle_run.info.run_id, "bestPositionPrev", str(bestPositions[i]))
 
     logging.info("Started execution of particle " + str(i + 1) + " out of " + str(nParticles))
     # Max. resources by doing as many iterations as cores being used.
@@ -179,18 +177,17 @@ def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, ge
         logging.warning("No feasible solution found for: " + str(coefficients) + " in particle " + str(i))
         costFunctionForParticle = computeAlgorithm(coefficients[i], expID, packets, nDst, truck, particle_run)
         logging.info("Computed new set of solutions and the cost was " + str(costFunctionForParticle))
-    logging.info("CURRENTC " if current else "BESTC " + "Finished execution of particle " + str(i + 1) + " out of " + str(nParticles))
     if particle_run is not None:
         client.set_terminated(particle_run.info.run_id)
     return costFunctionForParticle
 
 
-def objectiveFunction(coefficients, nParticles, expID, packets, nDst, truck, genRun, nCores, bestPositions, current):
+def objectiveFunction(coefficients, nParticles, expID, packets, nDst, truck, genRun, nCores, bestPositions):
     with parallel_backend(backend="loky", n_jobs=nCores):
         parallel = Parallel(verbose=100)
         # Computation for each particle.
         costFunction = parallel(
-            [delayed(processParticle)(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions, current) for i in
+            [delayed(processParticle)(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions) for i in
              range(nParticles)])
     return np.array(costFunction)
 
@@ -280,6 +277,7 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
     # initPositionsList = [0.8, 0.2, 0.55, 0.45, 0.35, 0.25, 0.4, 0.45, 0.45, 0.05, 0.05, 0.3, 0.5, 0.1, 0.1]
     initialPositions = []
     nDimensions = 18
+    # Create initial positions.
     for i in range(nDimensions):
         reference1 = np.ones(nDimensions) * 1 / 2
         reference2 = np.ones(nDimensions) * 1 / 2
@@ -308,13 +306,11 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
         logging.info(mySwarm.position)
 
         mySwarm.current_cost = objectiveFunction(mySwarm.position, nParticles, expID, packets, nDst, truck, gen_run,
-                                                 nCores, bestPositions=mySwarm.pbest_pos, current=True)  # Compute current cost
+                                                 nCores, bestPositions=mySwarm.pbest_pos)  # Compute current cost
         logging.info("Current position cost finished")
         if not p:
-            mySwarm.pbest_cost = objectiveFunction(mySwarm.pbest_pos, nParticles, expID, packets, nDst, truck, gen_run,
-                                               nCores, bestPositions=None, current=False)  # Compute personal best pos
-        else:
-            continue
+            mySwarm.pbest_cost = deepcopy(mySwarm.current_cost)  # Compute personal best pos
+
         logging.info("Computed best position for each particle")
         logging.info(mySwarm.pbest_cost)
         # Update pbest_pos based on cost of previous bests and current positions
@@ -326,9 +322,9 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
             bestCostIter = p
             mySwarm.best_pos, mySwarm.best_cost = topology.compute_gbest(mySwarm)
 
-        client.log_metric(gen_run.info.run_id, "bestCost", mySwarm.best_cost)
         client.log_param(gen_run.info.run_id, "bestParticle", str(mySwarm.best_pos))
         client.log_param(gen_run.info.run_id, "bestCostPart", str(list(map(lambda x: round(x, 3), mySwarm.pbest_cost))))
+        client.log_metric(gen_run.info.run_id, "bestCost", mySwarm.best_cost)
 
         history.append(
             {"generation": p, "position": mySwarm.position, "cost": mySwarm.best_cost, "bestPos": mySwarm.pbest_pos,
