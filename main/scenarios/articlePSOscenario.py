@@ -165,9 +165,9 @@ def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, ge
     particle_run = client.create_run(expMlflow)
     client.set_tag(particle_run.info.run_id, "mlflow.parentRunId", genRun.info.run_id)
     client.log_param(particle_run.info.run_id, "particleId", str(i))
-    client.log_param(particle_run.info.run_id, "currentPosition", str(coefficients[i]))
+    client.log_param(particle_run.info.run_id, "currentPosition", str(list(map(lambda x: round(x, 2), coefficients[i]))))
     # This will show best position without the current generation taken into account.
-    client.log_param(particle_run.info.run_id, "bestPositionPrev", str(bestPositions[i]))
+    client.log_param(particle_run.info.run_id, "bestPositionPrev", str(list(map(lambda x: round(x, 2), bestPositions[i]))))
 
     logging.info("Started execution of particle " + str(i + 1) + " out of " + str(nParticles))
     # Max. resources by doing as many iterations as cores being used.
@@ -322,8 +322,8 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
             bestCostIter = p
             mySwarm.best_pos, mySwarm.best_cost = topology.compute_gbest(mySwarm)
 
-        client.log_param(gen_run.info.run_id, "bestParticle", str(mySwarm.best_pos))
-        client.log_param(gen_run.info.run_id, "bestCostPart", str(list(map(lambda x: round(x, 3), mySwarm.pbest_cost))))
+        client.log_param(gen_run.info.run_id, "bestParticle", str(list(map(lambda x: round(x, 2), mySwarm.best_pos))))
+        client.log_param(gen_run.info.run_id, "bestCostPart", str(list(map(lambda x: round(x, 2), mySwarm.pbest_cost))))
         client.log_metric(gen_run.info.run_id, "bestCost", mySwarm.best_cost)
 
         history.append(
