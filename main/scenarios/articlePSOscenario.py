@@ -193,15 +193,15 @@ def objectiveFunction(coefficients, nParticles, expID, packets, nDst, truck, gen
 
 
 def computeAlgorithm(coefficients, expID, packets, nDst, truck, particleRun, saveStats=False):
-    def logMetrics(noFair):
+    def logMetrics(noFair, cost=1, volume=0, sols=0):
         if noFair and particleRun is not None:
-            client.log_metric(particleRun.info.run_id, "cost", 1)
-            client.log_metric(particleRun.info.run_id, "avgVolume", 0)
-            client.log_metric(particleRun.info.run_id, "feasibleSols", 0)
+            client.log_metric(particleRun.info.run_id, "cost", cost)
+            client.log_metric(particleRun.info.run_id, "avgVolume", volume)
+            client.log_metric(particleRun.info.run_id, "feasibleSols", sols)
         if not noFair and particleRun is not None:
-            client.log_metric(particleRun.info.run_id, "cost", costFunction)
-            client.log_metric(particleRun.info.run_id, "avgVolume", averageVolume)
-            client.log_metric(particleRun.info.run_id, "feasibleSols", feasibleSols)
+            client.log_metric(particleRun.info.run_id, "cost", cost)
+            client.log_metric(particleRun.info.run_id, "avgVolume", volume)
+            client.log_metric(particleRun.info.run_id, "feasibleSols", sols)
     # ------ Iterations ------------
     solutions = [main_scenario(deepcopy(packets), coefficients, deepcopy(truck), nDst, 0)]
 
@@ -239,7 +239,7 @@ def computeAlgorithm(coefficients, expID, packets, nDst, truck, particleRun, sav
     # Opposite to volume occupation.
     costFunction = 1 - averageVolume if feasibleSols else 1
 
-    logMetrics(False)
+    logMetrics(False, costFunction, averageVolume, feasibleSols)
 
     if saveStats:
         # Make it json serializable. TODO, not needed now.
