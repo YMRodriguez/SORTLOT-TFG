@@ -4,10 +4,9 @@ from main.packetOptimization.constructivePhase.geometryHelpers import *
 from main.packetAdapter.helpers import getStatsForBase, getMinDim, getMaxWeight
 from main.packetOptimization.randomizationAndSorting.sorting import reSortingPhase
 from copy import deepcopy
-import random
 import numpy as np
 import math
-import time
+
 
 np.set_printoptions(suppress=True)
 
@@ -320,6 +319,7 @@ def isWithinTruckDimensionsConstrains(item, truckDimensions):
 
 
 # ------------------ Physical constrains - Items-related ----------------------------------------
+
 def overlapper(p1all, p2all):
     """
     This function checks whether an item overlaps other or not.
@@ -328,8 +328,8 @@ def overlapper(p1all, p2all):
     :param p2all: triplet of 3 planes.
     :return: True if the item does not overlap, False otherwise.
     """
-    for i, j in zip(p1all, p2all):
-        if generalIntersectionArea(i, j):
+    for i in range(len(p1all)):
+        if generalIntersectionArea(p1all[i], p2all[i]):
             continue
         # If there is a plane that does not overlap then we conclude there is not overlapping (hyperplane separation theorem)
         else:

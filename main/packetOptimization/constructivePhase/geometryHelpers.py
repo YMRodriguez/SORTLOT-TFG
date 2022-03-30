@@ -156,6 +156,8 @@ def generalIntersectionArea(p1, p2):
     :return: intersection area in m2.
     """
     d1 = min(p1[0] + p1[2], p2[0] + p2[2]) - max(p1[0], p2[0])
+    if d1 < 0:
+        return 0
     d2 = min(p1[1] + p1[3], p2[1] + p2[3]) - max(p1[1], p2[1])
     if (d1 >= 0) and (d2 >= 0):
         return d1 * d2
@@ -245,7 +247,7 @@ def generateMaxAreas(nItemsDst, nFilteredDst, truck, nDst):
     """
     nItemsDst = np.asarray(nItemsDst)
     nFilteredDSt = np.asarray(nFilteredDst)
-    if nDst > 3:
+    if nDst > 1:
         # List of factors related to each destination, decimal values in [0, 1].
         factor = []
         for i in range(nDst):
