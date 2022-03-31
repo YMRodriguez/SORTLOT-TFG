@@ -6,6 +6,7 @@ from main.packetOptimization.randomizationAndSorting.sorting import reSortingPha
 from copy import deepcopy
 import numpy as np
 import math
+from sklearn.metrics import mean_absolute_percentage_error
 
 
 np.set_printoptions(suppress=True)
@@ -694,7 +695,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     # Obtain the maximum weight of the candidateList.
     maxWeight = getMaxWeight(candidateList)
     # Count amount of filtered for each destination.
-    nFilteredDst = list(map(lambda x: len(x), filteredCandidates))
+    nFilteredDst = list(map(lambda x: len(list(filter(lambda y: y["priority"], x))), filteredCandidates))
     # Create max area items of a destination can occupy within the container.
     maxAreas = generateMaxAreas(nItemDst, nFilteredDst, truck, nDst)
     nItemsEstimation = list(map(lambda x: int(maxAreas[x] / (meanDim[x] ** 2)), range(nDst)))
@@ -794,7 +795,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     # Update the list with the items that have not been packed.
     discardList = discardList + [item for sublist in candidateList for item in sublist]
     # Discards an unfair base solution.
-    if (nDst > 1) and not (np.std([maxAreas], ddof=1) * 0.8 <= np.std(currentAreas, ddof=1) <= np.std([maxAreas], ddof=1) * 1.2):
+    if (nDst > 1) and not mean_absolute_percentage_error([maxAreas], currentAreas) < 0.1:
         return None
     # Keep the potential points that are not in the floor.
     return {"placed": placedItems, "discard": discardList,

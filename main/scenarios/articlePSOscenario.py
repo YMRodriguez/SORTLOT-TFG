@@ -157,7 +157,7 @@ if len(sys.argv) > 1:
     except ValueError:
         particles = 36
 else:
-    exp, cores, psoIterations, particles = 0, 23, 360, 36
+    exp, cores, psoIterations, particles = 8, 1, 10, 1
 
 
 def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions):
@@ -292,7 +292,7 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
     options = {"w": 0.9, "c1": 0.5, "c2": 0.3}
 
     mySwarm = P.create_swarm(n_particles=nParticles, dimensions=nDimensions, options=options, bounds=bounds,
-                             init_pos=initialPositions)
+                             init_pos=None)
     bestCostIter = 0
     history = []
     for p in range(nPSOiters):

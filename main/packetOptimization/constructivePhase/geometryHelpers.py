@@ -259,7 +259,7 @@ def generateMaxAreas(nItemsDst, nFilteredDst, truck, nDst):
         factor = np.asarray(factor)
     else:
         factor = np.ones((1, nDst))[0]
-    return (nItemsDst / np.sum(nItemsDst) + nFilteredDSt / np.sum(nFilteredDSt)) * factor * 0.5 * (
+    return (nItemsDst / np.sum(nItemsDst) + nFilteredDSt / max(1, np.sum(nFilteredDSt))) * factor * 0.5 * (
             truck["length"] * truck["width"])
 
 
