@@ -1,4 +1,6 @@
 import logging
+import random
+import sys
 
 from main.packetOptimization.constructivePhase.geometryHelpers import *
 from main.packetAdapter.helpers import getStatsForBase, getMinDim, getMaxWeight
@@ -584,19 +586,28 @@ def fitnessForBase(PP, item, containerLength, nDst, placedItems, maxWeight, coef
     return [PP, fitnessValue]
 
 
-def isBetterPP(newPP, currentBest, truckWidth):
+def isBetterPP(newPP, currentBest, truckWidth, base):
     """
     This function decide which potential point is better. Criteria is:
     - Given same fitness, choose according to a function then randomly choose one.
     - Choose the one with the best fitness value.
 
-    :param newPP: potential point being evaluated.
+    :param newPP: potential point with fitness.
     :param currentBest: current potential point for an item.
     :return: True if the newPP is better than the current best, False otherwise.
     """
-    if newPP[1] == currentBest[1]:
-        return sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth / 2))[0][1] == newPP[1]
-    return newPP[1] > currentBest[1]
+    try:
+        # Same fitness value
+        if newPP[1] == currentBest[1]:
+            if base:
+                return random.randint(0, 1)
+            # Get the one with the position closer to the extremes. After sorting if
+            return sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth / 2))[0][1] == newPP[1]
+        return newPP[1] > currentBest[1]
+    except:
+        print(newPP, currentBest)
+        logging.info(str(newPP) + str(currentBest))
+        sys.exit()
 
 
 def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim, stage):
@@ -749,7 +760,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
                                                            maxWeight, coefficients)
                             # Can use the same even thought the concept is different, in all cases the pp is going to be
                             # the same but with diff fitness functions so the highest will save the item.
-                            if isBetterPP(ppWithFitness, ppBest, truck["width"]):
+                            if isBetterPP(ppWithFitness, ppBest, truck["width"], 1):
                                 ppBest = ppWithFitness
                                 feasibleItem = feasibility[1]
                     # This condition is only important for the first two items.
@@ -795,7 +806,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     # Update the list with the items that have not been packed.
     discardList = discardList + [item for sublist in candidateList for item in sublist]
     # Discards an unfair base solution.
-    if (nDst > 1) and not mean_absolute_percentage_error([maxAreas], currentAreas) < 0.1:
+    if (nDst > 1) and not mean_absolute_percentage_error([maxAreas], currentAreas) < 0.15:
         return None
     # Keep the potential points that are not in the floor.
     return {"placed": placedItems, "discard": discardList,
@@ -878,7 +889,7 @@ def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, plac
             if feasibility[0]:
                 ppWithFitness = fitnessFor(pp, feasibility[1], placedItems, notPlacedMaxWeight, truck["height"],
                                            truck["length"], stage, nDst, coefficients)
-                if isBetterPP(ppWithFitness, ppBest, truck["width"]):
+                if isBetterPP(ppWithFitness, ppBest, truck["width"], 0):
                     ppBest = ppWithFitness
                     feasibleItem = feasibility[1]
         # If the best is different from the worst there is a PP to insert the item.

@@ -278,14 +278,14 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
     initialPositions = []
     nDimensions = 18
     # Create initial positions.
-    for i in range(nDimensions):
-        reference1 = np.ones(nDimensions) * 1 / 2
-        reference2 = np.ones(nDimensions) * 1 / 2
-        reference1[i] = 0
-        reference2[i] = 1
-        initialPositions.append(reference1)
-        initialPositions.append(reference2)
-    initialPositions = np.array(initialPositions)
+    # for i in range(nDimensions):
+    #     reference1 = np.ones(nDimensions) * 1 / 2
+    #     reference2 = np.ones(nDimensions) * 1 / 2
+    #     reference1[i] = 0
+    #     reference2[i] = 1
+    #     initialPositions.append(reference1)
+    #     initialPositions.append(reference2)
+    initialPositions = None # np.array(initialPositions)
     # initPositions = np.tile(initPositionsList, (particles, 1))
     bounds = (np.zeros(nDimensions), np.ones(nDimensions))
     opHandler = OptionsHandler(strategy={"w": "lin_variation"})
@@ -363,10 +363,10 @@ items, ndst = getDataFromJSONWith(experiments[exp])
 
 
 client = MlflowClient(tracking_uri="http://com31.dit.upm.es:8889")
-expMlflow = client.get_experiment_by_name("2Pr" + getIdFromFilePath(experiments[exp]))
+expMlflow = client.get_experiment_by_name("2PPP" + getIdFromFilePath(experiments[exp]))
 
 if not expMlflow:
-    expMlflow = client.create_experiment("2Pr" + getIdFromFilePath(experiments[exp]))
+    expMlflow = client.create_experiment("2PPP" + getIdFromFilePath(experiments[exp]))
 else:
     expMlflow = expMlflow.experiment_id
 
