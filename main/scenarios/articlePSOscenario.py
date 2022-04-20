@@ -26,7 +26,7 @@ import pyswarms.backend as P
 import logging
 from mlflow.tracking import MlflowClient
 
-logging.basicConfig(filename='pso.log', filemode='w', format='%(levelname)s - %(message)s')
+logging.basicConfig(filemode='w', format='%(levelname)s - %(message)s')
 random.seed(20)
 
 # ----------------------- MongoDB extraction ----------------------
@@ -63,7 +63,7 @@ def main_scenario(packets, coefficients, truck, nDst, nIteration, rangeOrientati
     # ------ Truck adaptation ------
     truck = adaptTruck(truck, 4)
     sort_output = sortingPhase(packets, nDst, coefficients[:2])
-    rand_output = randomization(deepcopy(sort_output))
+    rand_output = randomization(deepcopy(sort_output), nDst)
     # ------- Solution builder --------
     startTime = time.time()
     iteration = main_cp(truck, rand_output, nDst, coefficients[2:])

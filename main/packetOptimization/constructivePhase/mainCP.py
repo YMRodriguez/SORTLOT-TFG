@@ -605,8 +605,7 @@ def isBetterPP(newPP, currentBest, truckWidth, base):
             return sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth / 2))[0][1] == newPP[1]
         return newPP[1] > currentBest[1]
     except:
-        print(newPP, currentBest)
-        logging.info(str(newPP) + str(currentBest))
+        logging.error(str(newPP) + str(currentBest), exc_info=True)
         sys.exit()
 
 

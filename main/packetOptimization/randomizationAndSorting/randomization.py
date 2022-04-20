@@ -74,7 +74,7 @@ def swapByWeight(packets):
     return packets
 
 
-def swapByPriority(packets):
+def swapByPriority(packets, nDst):
     """
     This function swaps an item with another in the list with 50% prob if they have the
     same priority and destination code.
@@ -82,21 +82,20 @@ def swapByPriority(packets):
     :param packets: list of packets.
     :return: modified list of packets.
     """
-    for i in range(len(packets)):
-        same_priority_packets = list(
-            filter(lambda x: (x["priority"] == packets[i]["priority"]
-                              and x["id"] != packets[i]["id"]
-                              and x["dstCode"] == packets[i]["dstCode"]), packets))
-        if bool(random.getrandbits(1)) and (len(same_priority_packets) != 0):
-            item_j = random.choice(same_priority_packets)
-            j = packets.index(item_j)
-            if weightComp(packets[i], packets[j]) and volumeComp(packets[i], packets[j]):
-                genericSwapper(packets, i, j)
+    prioPacketsByDst = list(map(lambda x: list(filter(lambda y: y["dstCode"] == x and y["priority"], packets)), list(range(nDst))))
+    for d in range(nDst):
+        for i in prioPacketsByDst[d]:
+            if bool(random.getrandbits(1)):
+                item_j = random.choice(list(filter(lambda x: x != i, prioPacketsByDst[d])))
+                index_j = packets.index(item_j)
+                index_i = packets.index(i)
+                if weightComp(i, item_j) and volumeComp(i, item_j):
+                    genericSwapper(packets, index_i, index_j)
     return packets
 
 
 # ------------------- Main Function ---------------------------------------------------------------------
-def randomization(packets):
+def randomization(packets, nDst):
     """
     This function randomizes packets based on weight, volume and priority criteria.
 
@@ -105,4 +104,4 @@ def randomization(packets):
     """
     swapped_v = swapByVolume(packets)
     swapped_w = swapByWeight(swapped_v)
-    return swapByPriority(swapped_w) if getMaxPriority(packets) else swapped_w
+    return swapByPriority(swapped_w, nDst) if getMaxPriority(packets) else swapped_w
