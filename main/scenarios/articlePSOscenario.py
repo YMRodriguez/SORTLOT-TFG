@@ -157,7 +157,7 @@ if len(sys.argv) > 1:
     except ValueError:
         particles = 36
 else:
-    exp, cores, psoIterations, particles = 0, 23, 360, 36
+    exp, cores, psoIterations, particles = 0, 23, 360, 34
 
 
 def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions):
@@ -276,7 +276,7 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
     topology = Star()
     # initPositionsList = [0.8, 0.2, 0.55, 0.45, 0.35, 0.25, 0.4, 0.45, 0.45, 0.05, 0.05, 0.3, 0.5, 0.1, 0.1]
     initialPositions = []
-    nDimensions = 18
+    nDimensions = 17
     # Create initial positions.
     # for i in range(nDimensions):
     #     reference1 = np.ones(nDimensions) * 1 / 2

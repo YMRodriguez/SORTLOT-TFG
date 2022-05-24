@@ -253,6 +253,7 @@ def generateMaxAreas(nItemsDst, nFilteredDst, truck, nDst):
         for i in range(nDst):
             if i != nDst - 1:
                 # Just cut percentage of the destinations previous to the first out.
+                # TODO, quizá sea mejor: factor.append(1-nDst*(nDst-i)/100)
                 factor.append(1 - nDst * (nDst - 1) / 100)
             else:
                 factor.append(1)
@@ -276,6 +277,7 @@ def projectPPOverlapped(item, potentialPoints):
     currentDstPPsOverlapped = np.asarray(list(
         filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints[item["dstCode"]])))
     PPsOverlapped.append(currentDstPPsOverlapped)
+    # Check the overlapping in previous destinations.
     if item["dstCode"]:
         # TODO comprobar si se tarda mas ordenando.
         previousDstPPsOverlapped = np.asarray(list(
