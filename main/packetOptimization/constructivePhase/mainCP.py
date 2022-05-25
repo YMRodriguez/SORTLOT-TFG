@@ -602,13 +602,12 @@ def isBetterPP(newPP, currentBest, truckWidth, base):
             if base:
                 return random.randint(0, 1)
             # Get the one with the position closer to the extremes. After sorting if
-            return sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth / 2))[0][1] == newPP[1]
+            return all(sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth / 2))[0][0] == newPP[0])
         return newPP[1] > currentBest[1]
     except:
-        logging.error(str(newPP) + str(currentBest), exc_info=True)
-        sys.exit()
+        logging.error("Error while estimating better PP")
 
-
+        
 def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim, stage):
     """
     This function creates a list of potential points from a packet after its insertion. Depending on the
@@ -904,12 +903,12 @@ def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, plac
             potentialPoints[i["dstCode"]] = potentialPoints[i["dstCode"]][
                 ~(potentialPoints[i["dstCode"]] == ppBest[0]).all(axis=1)]
             # Generate new PPs to add to item and potentialPoints.
-            potentialPoints = projectPPOverlapped(feasibleItem, potentialPoints)
             newPPs = generateNewPPs(feasibleItem, placedItems, truck["height"], truck["width"], minDim, stage)
             feasibleItem["pp_out"] = newPPs
             # Append new potential points to general potential points
             potentialPoints[i["dstCode"]] = np.vstack((potentialPoints[i["dstCode"]], newPPs)) if len(newPPs) else \
                 potentialPoints[i["dstCode"]]
+            potentialPoints = list(map(lambda x: np.unique(x, axis=0), projectPPOverlapped(feasibleItem, potentialPoints)))
             # Add insertion order to item.
             feasibleItem["in_id"] = len(placedItems)
             # Add item to placedItems.
@@ -1012,19 +1011,5 @@ def main_cp(truck, candidateList, nDst, coefficients, subgroupingEnabled=1):
     #    print("Time stage " + str(time.time() - startTime2))
     #    startTime3 = time.time()
     #    print("Number of items packed after stage" + len(filling["placed"]))
-    # ----- DEBUG-INFO ------
-
-    stage = stage + 1
-
-    # Got to do a few more tests to check if this additional phase is really relevant.
-    # TODO, would be nice to make a estimation of time increase and decide on that instead of this fixed number.
-    if len(candidateList) < 300:
-        loadingRest = load(loadingRest["discard"],
-                           np.unique(loadingRest["potentialPoints"], axis=0),
-                           loadingRest["truck"], 1, stage, nDst,
-                           getMinDim(loadingRest["discard"]), loadingRest["placed"], coefficientsLoading)
-    # ----- DEBUG-INFO ------
-    #    print("Number of items packed after stage" + len(fillingSA["placed"]))
-    #    print("Stage time: " + str(time.time() - startTime3))
     # ----- DEBUG-INFO ------
     return loadingRest

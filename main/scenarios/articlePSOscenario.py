@@ -157,7 +157,7 @@ if len(sys.argv) > 1:
     except ValueError:
         particles = 36
 else:
-    exp, cores, psoIterations, particles = 0, 23, 360, 34
+    exp, cores, psoIterations, particles = 0, 23, 200, 34
 
 
 def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions):
@@ -275,7 +275,6 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
     # ---------- Swarm structure creation ------------------------
     topology = Star()
     # initPositionsList = [0.8, 0.2, 0.55, 0.45, 0.35, 0.25, 0.4, 0.45, 0.45, 0.05, 0.05, 0.3, 0.5, 0.1, 0.1]
-    initialPositions = []
     nDimensions = 17
     # Create initial positions.
     # for i in range(nDimensions):
@@ -363,10 +362,10 @@ items, ndst = getDataFromJSONWith(experiments[exp])
 
 
 client = MlflowClient(tracking_uri="http://com31.dit.upm.es:8889")
-expMlflow = client.get_experiment_by_name("3Pr" + getIdFromFilePath(experiments[exp]))
+expMlflow = client.get_experiment_by_name("3r" + getIdFromFilePath(experiments[exp]))
 
 if not expMlflow:
-    expMlflow = client.create_experiment("3Pr" + getIdFromFilePath(experiments[exp]))
+    expMlflow = client.create_experiment("3r" + getIdFromFilePath(experiments[exp]))
 else:
     expMlflow = expMlflow.experiment_id
 
