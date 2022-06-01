@@ -54,7 +54,7 @@ def persistStats(stats, ID):
         __file__) + os.path.sep + 'results' + os.path.sep + 'article' + os.path.sep + 'simulation').mkdir(
         parents=True, exist_ok=True)
     with open(os.path.dirname(
-            __file__) + os.path.sep + 'results' + os.path.sep + 'article' + os.path.sep + 'simulationNew' + os.path.sep + str(
+            __file__) + os.path.sep + 'results' + os.path.sep + 'article' + os.path.sep + 'simulation' + os.path.sep + str(
         ID) + 'simulationStats.json',
               'w+') as file:
         json.dump(stats, file, indent=2, ensure_ascii=False)

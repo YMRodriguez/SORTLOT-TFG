@@ -54,7 +54,7 @@ def main_scenario(packets, truck, nDst, nIteration, coeffs, rangeOrientations=No
     # ------ Truck adaptation ------
     truck = adaptTruck(truck, 4)
     sort_output = sortingPhase(packets, nDst, coeffs[:2])
-    rand_output = randomization(deepcopy(sort_output))
+    rand_output = randomization(deepcopy(sort_output), nDst)
     # ------- Solution builder --------
     startTime = time.time()
     iteration = main_cp(truck, rand_output, nDst, coeffs[2:])
@@ -79,7 +79,7 @@ def serializePlacedItem(item):
     :return: item object with nested numpy arrays jsonified.
     """
     item["mass_center"] = item["mass_center"].tolist()
-    item["subzones"] = item["subzones"].tolist()
+    item["subzones"] = item["subzones"]
     item["pp_in"] = item["pp_in"].tolist()
     item["pp_out"] = item["pp_out"].tolist()
     return item
@@ -94,7 +94,7 @@ def serializeDiscardItem(item):
     """
     item["mass_center"] = item["mass_center"].tolist()
     if "subzones" in item:
-        item["subzones"] = item["subzones"].tolist()
+        item["subzones"] = item["subzones"]
     return item
 
 
@@ -130,22 +130,27 @@ def serializeSolutions(sols):
 # ------ Common variables ----------
 if len(sys.argv) > 1:
     try:
-        iterations = int(sys.argv[2])
+        iterations = int(sys.argv[1])
     except ValueError:
         iterations = 1
 
     try:
-        expP1 = int(sys.argv[1])
-    except ValueError:
-        expP1 = 1
-    expP2 = expP1 + 1
-
-    try:
-        cores = int(sys.argv[3])
+        cores = int(sys.argv[2])
     except ValueError:
         cores = 1
+
+    try:
+        expP1 = int(sys.argv[3])
+    except ValueError:
+        expP1 = 1
+
+    try:
+        expP2 = int(sys.argv[4])
+    except ValueError:
+        expP2 = expP1 + 1
+
 else:
-    iterations, expP1, expP2, cores = 1, 1, 2, 1
+    iterations, expP1, expP2, cores = 3, 1, 2, 2
 
 
 experiments = sorted(getFilepaths())
