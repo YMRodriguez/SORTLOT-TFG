@@ -14,7 +14,7 @@ from main.packetOptimization.randomizationAndSorting.randomization import random
 from main.packetOptimization.randomizationAndSorting.sorting import sortingPhase
 from main.packetOptimization.constructivePhase.mainCP import main_cp
 from main.statistics.main import solutionStatistics
-from main.solutionsFilter.main import filterSolutions, getBest, filterSolutionsWithoutExcluding
+from main.solutionsFilter.main import filterSolutions, getBest, getUpdatedStatsWithConditions
 from main.scenarios.dataSaver import persistInLocal, persistStats
 import glob
 import os
@@ -24,32 +24,40 @@ truck_var = json.load(open(os.path.dirname(__file__) + os.path.sep + "packetsDat
 
 
 # --------------- Packet Generator ------------------------------------------
-def getDataFromJSONWith(Id):
+def getDataFromJSONWith(filepath):
     """
     This function gets a dataset file by its id.
 
-    :param Id: the id of the dataset, not the name.
+    :param filepath: the id of the dataset, not the name.
     :return: object mapped from json file and number of destinations.
     """
-    filepath = glob.glob(os.path.dirname(__file__) + os.path.sep + "packetsDatasets" + os.path.sep + str(Id) + "-*.json")[0]
-    nDst = int(filepath.split("packetsDatasets" + os.path.sep)[1].split("-")[5][3])
+    nDst = int(filepath.split("round2" + os.path.sep)[1].split("-")[5][0])
     return json.load(open(filepath)), nDst
 
 
+def getFilepaths():
+    return glob.glob(os.path.dirname(
+        __file__) + os.path.sep + "packetsDatasets" + os.path.sep + "articleDatasets" + os.path.sep + "round2" + os.path.sep + "*.json")
+
+
+def getIdFromFilePath(filepath):
+    return filepath.split(os.path.sep)[-1].split("-")[0] + "art"
+
+
 # -------------------- Main Processes -----------------------------
-def main_scenario(packets, truck, nDst, nIteration, rangeOrientations=None):
+def main_scenario(packets, truck, nDst, nIteration, coeffs, rangeOrientations=None):
     if rangeOrientations is None:
         rangeOrientations = [1, 2, 3, 4, 5, 6]
     # ------ Packet adaptation------
     # Alpha is 333 for terrestrial transport
-    packets = adaptPackets(cleanDestinationAndSource(packets), 333)
+    packets = adaptPackets(packets, 333)
     # ------ Truck adaptation ------
     truck = adaptTruck(truck, 4)
-    sort_output = sortingPhase(packets, nDst)
+    sort_output = sortingPhase(packets, nDst, coeffs[:2])
     rand_output = randomization(deepcopy(sort_output))
     # ------- Solution builder --------
     startTime = time.time()
-    iteration = main_cp(truck, rand_output, nDst)
+    iteration = main_cp(truck, rand_output, nDst, coeffs[2:])
     endTime = time.time()
     # It may be relevant to know the sorting method used.
     return {"placed": iteration["placed"],
@@ -139,16 +147,21 @@ if len(sys.argv) > 1:
 else:
     iterations, expP1, expP2, cores = 1, 1, 2, 1
 
+
+experiments = sorted(getFilepaths())
+
+coefficients = [0.86, 0.53, 0.88, 0.98, 0.93, 0.97, 0.84, 0.67, 0.45, 0.64, 0.86, 0.45, 0.9, 0.96, 0.8, 0.88, 0.69]
+
 for i in range(expP1, expP2):
     # ------ Get packets dataset -------
-    ID = i
-    items, ndst = getDataFromJSONWith(ID)
+    items, ndst = getDataFromJSONWith(experiments[i])
+    ID = getIdFromFilePath(experiments[i])
 
     # ------ Iterations ------------
     with parallel_backend(backend="loky", n_jobs=cores):
         parallel = Parallel(verbose=100)
         solutions = parallel(
-            [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, i) for i in range(iterations)])
+            [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, i, coefficients) for i in range(iterations)])
         solutionsStats = list(map(lambda x: solutionStatistics(x), solutions))
 
         # ------- Process set of solutions --------
@@ -158,13 +171,13 @@ for i in range(expP1, expP2):
                                                "truck": x["truck"],
                                                "iteration": x["iteration"],
                                                "time": x["time"]}, solutions))
-        updatedStats = filterSolutionsWithoutExcluding(solutionsCleaned, solutionsStats)
+        updatedStats = getUpdatedStatsWithConditions(solutionsCleaned, solutionsStats)
         persistStats(updatedStats, ID)
         # Get best filtered and unfiltered.
         serializedSolutions = serializeSolutions(solutionsCleaned)
         filteredSolutions, filteredStats = filterSolutions(serializedSolutions, solutionsStats)
-        bestFiltered = getBest(filteredSolutions, filteredStats, 5)
-        bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 5)
+        bestFiltered = getBest(filteredSolutions, filteredStats, 3)
+        bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 3)
 
         # Make it json serializable
         bestSolsFiltered = {"volume": bestFiltered["volume"][0],
