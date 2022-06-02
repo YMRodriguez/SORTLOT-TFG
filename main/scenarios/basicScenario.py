@@ -59,6 +59,8 @@ def main_scenario(packets, truck, nDst, nIteration, coeffs, rangeOrientations=No
     startTime = time.time()
     iteration = main_cp(truck, rand_output, nDst, coeffs[2:])
     endTime = time.time()
+    if iteration is None:
+        return iteration
     # It may be relevant to know the sorting method used.
     return {"placed": iteration["placed"],
             "discard": iteration["discard"],
@@ -150,7 +152,7 @@ if len(sys.argv) > 1:
         expP2 = expP1 + 1
 
 else:
-    iterations, expP1, expP2, cores = 3, 1, 2, 2
+    iterations, expP1, expP2, cores = 1, 1, 2, 2
 
 
 experiments = sorted(getFilepaths())
@@ -167,7 +169,14 @@ for i in range(expP1, expP2):
         parallel = Parallel(verbose=100)
         solutions = parallel(
             [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, i, coefficients) for i in range(iterations)])
-        solutionsStats = list(map(lambda x: solutionStatistics(x), solutions))
+        notNoneSolutions = list(filter(lambda x: x is not None, solutions))
+        if not len(notNoneSolutions):
+            with open(
+                    os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP1' + os.path.sep + str(
+                        ID) + 'NoSolution.json',
+                    'w+') as file:
+                json.dump({"error": "no solution"}, file, indent=2, ensure_ascii=False)
+        solutionsStats = list(map(lambda x: solutionStatistics(x), list(filter(lambda x: x is not None, solutions))))
 
         # ------- Process set of solutions --------
         # Clean solutions
