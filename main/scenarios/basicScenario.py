@@ -176,7 +176,8 @@ for i in range(expP1, expP2):
                         ID) + 'NoSolution.json',
                     'w+') as file:
                 json.dump({"error": "no solution"}, file, indent=2, ensure_ascii=False)
-        solutionsStats = list(map(lambda x: solutionStatistics(x), list(filter(lambda x: x is not None, solutions))))
+            break
+        solutionsStats = list(map(lambda x: solutionStatistics(x), notNoneSolutions))
 
         # ------- Process set of solutions --------
         # Clean solutions
@@ -184,7 +185,7 @@ for i in range(expP1, expP2):
                                                "discard": x["discard"],
                                                "truck": x["truck"],
                                                "iteration": x["iteration"],
-                                               "time": x["time"]}, solutions))
+                                               "time": x["time"]}, notNoneSolutions))
         updatedStats = getUpdatedStatsWithConditions(solutionsCleaned, solutionsStats)
         persistStats(updatedStats, ID)
         # Get best filtered and unfiltered.
