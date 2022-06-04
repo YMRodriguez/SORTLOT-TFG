@@ -170,42 +170,42 @@ for i in range(expP1, expP2):
         solutions = parallel(
             [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, i, coefficients) for i in range(iterations)])
         notNoneSolutions = list(filter(lambda x: x is not None, solutions))
-        if not len(notNoneSolutions):
+        if len(notNoneSolutions):
+            solutionsStats = list(map(lambda x: solutionStatistics(x), notNoneSolutions))
+
+            # ------- Process set of solutions --------
+            # Clean solutions
+            solutionsCleaned = list(map(lambda x: {"placed": x["placed"],
+                                                   "discard": x["discard"],
+                                                   "truck": x["truck"],
+                                                   "iteration": x["iteration"],
+                                                   "time": x["time"]}, notNoneSolutions))
+            updatedStats = getUpdatedStatsWithConditions(solutionsCleaned, solutionsStats)
+            persistStats(updatedStats, ID)
+            # Get best filtered and unfiltered.
+            serializedSolutions = serializeSolutions(solutionsCleaned)
+            filteredSolutions, filteredStats = filterSolutions(serializedSolutions, solutionsStats)
+            bestFiltered = getBest(filteredSolutions, filteredStats, 3)
+            bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 3)
+
+            # Make it json serializable
+            bestSolsFiltered = {"volume": bestFiltered["volume"][0],
+                                "weight": bestFiltered["weight"][0],
+                                "taxability": bestFiltered["taxability"][0]}
+            bestStatsFiltered = {"volume": bestFiltered["volume"][1],
+                                 "weight": bestFiltered["weight"][1],
+                                 "taxability": bestFiltered["taxability"][1]}
+            bestSolsUnfiltered = {"volume": bestUnfiltered["volume"][0],
+                                  "weight": bestUnfiltered["weight"][0],
+                                  "taxability": bestUnfiltered["taxability"][0]}
+            bestStatsUnfiltered = {"volume": bestUnfiltered["volume"][1],
+                                   "weight": bestUnfiltered["weight"][1],
+                                   "taxability": bestUnfiltered["taxability"][1]}
+
+            persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)
+        else:
             with open(
                     os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP1' + os.path.sep + str(
                         ID) + 'NoSolution.json',
                     'w+') as file:
                 json.dump({"error": "no solution"}, file, indent=2, ensure_ascii=False)
-            break
-        solutionsStats = list(map(lambda x: solutionStatistics(x), notNoneSolutions))
-
-        # ------- Process set of solutions --------
-        # Clean solutions
-        solutionsCleaned = list(map(lambda x: {"placed": x["placed"],
-                                               "discard": x["discard"],
-                                               "truck": x["truck"],
-                                               "iteration": x["iteration"],
-                                               "time": x["time"]}, notNoneSolutions))
-        updatedStats = getUpdatedStatsWithConditions(solutionsCleaned, solutionsStats)
-        persistStats(updatedStats, ID)
-        # Get best filtered and unfiltered.
-        serializedSolutions = serializeSolutions(solutionsCleaned)
-        filteredSolutions, filteredStats = filterSolutions(serializedSolutions, solutionsStats)
-        bestFiltered = getBest(filteredSolutions, filteredStats, 3)
-        bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 3)
-
-        # Make it json serializable
-        bestSolsFiltered = {"volume": bestFiltered["volume"][0],
-                            "weight": bestFiltered["weight"][0],
-                            "taxability": bestFiltered["taxability"][0]}
-        bestStatsFiltered = {"volume": bestFiltered["volume"][1],
-                             "weight": bestFiltered["weight"][1],
-                             "taxability": bestFiltered["taxability"][1]}
-        bestSolsUnfiltered = {"volume": bestUnfiltered["volume"][0],
-                              "weight": bestUnfiltered["weight"][0],
-                              "taxability": bestUnfiltered["taxability"][0]}
-        bestStatsUnfiltered = {"volume": bestUnfiltered["volume"][1],
-                               "weight": bestUnfiltered["weight"][1],
-                               "taxability": bestUnfiltered["taxability"][1]}
-
-        persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)
