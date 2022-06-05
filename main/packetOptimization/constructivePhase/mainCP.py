@@ -728,11 +728,13 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     candidateList = filteredCandidates
     # Auxiliary list to group PP that are not important in this stage(those that are not in the floor).
     notInFloorPPByDst = list(map(lambda x: [], range(nDst)))
+    # Set of PP in which no item for a destination fits.
+    exhaustedInFloorPPByDst = list(map(lambda x: [], range(nDst)))
     # Check the best item for each Potential Point in order of destination.
     for d in range(nDst):
         # Add to next destination the potential points of the previous destination.
         if d:
-            potentialPoints.append(np.array(potentialPoints[d - 1]))
+            potentialPoints.append(np.vstack((potentialPoints[d - 1], np.array(sorted(exhaustedInFloorPPByDst[0], key=lambda x: x[2]))[-10:])))
         # The intention is to fill the max area of the container assigned to a destination,
         # so it checks this condition for each potential point, each item and each item orientation.
         while (currentAreas[0][d] <= maxAreas[d]) and len(potentialPoints[d]):
@@ -799,6 +801,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
                     truck = addItemWeightToTruckSubzones(feasibleItem["subzones"], truck)
                 else:
                     # There is no item and item orientation for this potential point.
+                    exhaustedInFloorPPByDst[d].append(pp)
                     # Delete it from the list of potential points.
                     potentialPoints[d] = potentialPoints[d][~(potentialPoints[d] == pp).all(axis=1)]
             else:

@@ -152,7 +152,7 @@ if len(sys.argv) > 1:
         expP2 = expP1 + 1
 
 else:
-    iterations, expP1, expP2, cores = 1, 1, 2, 2
+    iterations, expP1, expP2, cores = 1, 2, 3, 1
 
 
 experiments = sorted(getFilepaths())
