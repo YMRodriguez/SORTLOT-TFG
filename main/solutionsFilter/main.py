@@ -47,7 +47,7 @@ def getUpdatedStatsWithConditions(solutions, solutionsStatistics):
     :param solutionsStatistics: set of statistics.
     :return: set of stats with conditions updated.
     """
-    return list(map(lambda x: updateStatsWithConditions(x, solutionsStatistics[x["iteration"]]), solutions))
+    return list(map(lambda x, y: updateStatsWithConditions(x, y), solutions, solutionsStatistics))
 
 
 def updateStatsWithConditions(solution, stats):
