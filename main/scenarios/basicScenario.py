@@ -157,7 +157,7 @@ else:
 
 experiments = sorted(getFilepaths())
 
-coefficients = [0.86, 0.53, 0.88, 0.98, 0.93, 0.97, 0.84, 0.67, 0.45, 0.64, 0.86, 0.45, 0.9, 0.96, 0.8, 0.88, 0.69]
+coefficients = [0.63, 0.18, 1, 0.85, 0.71, 0.96, 0.83, 0.93, 0.84, 0.79, 0.73, 0.94, 0.91, 0.93, 0.97, 0.54, 1]
 
 for i in range(expP1, expP2):
     # ------ Get packets dataset -------
@@ -205,7 +205,7 @@ for i in range(expP1, expP2):
             persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)
         else:
             with open(
-                    os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP1' + os.path.sep + str(
+                    os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP2' + os.path.sep + str(
                         ID) + 'NoSolution.json',
                     'w+') as file:
                 json.dump({"error": "no solution"}, file, indent=2, ensure_ascii=False)
