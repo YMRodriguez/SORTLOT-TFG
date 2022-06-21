@@ -205,7 +205,7 @@ for i in range(expP1, expP2):
             persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)
         else:
             with open(
-                    os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP3' + os.path.sep + str(
+                    os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP32' + os.path.sep + str(
                         ID) + 'NoSolution.json',
                     'w+') as file:
                 json.dump({"error": "no solution"}, file, indent=2, ensure_ascii=False)
