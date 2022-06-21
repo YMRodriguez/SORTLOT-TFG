@@ -25,25 +25,25 @@ def persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, best
     #         'w') as file:
     #     json.dump(bestStatsUnfiltered, file, indent=2, ensure_ascii=False)
     with open(
-            os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP2' + os.path.sep + str(
+            os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP3' + os.path.sep + str(
                 ID) + 'bestSolsFiltered.json',
             'w+') as file:
         json.dump(bestSolsFiltered, file, indent=2, ensure_ascii=False)
 
     with open(
-            os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP2' + os.path.sep + str(
+            os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP3' + os.path.sep + str(
                 ID) + 'bestStatsFiltered.json',
             'w+') as file:
         json.dump(bestStatsFiltered, file, indent=2, ensure_ascii=False)
 
     with open(
-            os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP2' + os.path.sep + str(
+            os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP3' + os.path.sep + str(
                 ID) + 'bestSolsUnfiltered.json',
             'w+') as file:
         json.dump(bestSolsUnfiltered, file, indent=2, ensure_ascii=False)
 
     with open(
-            os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP2' + os.path.sep + str(
+            os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP3' + os.path.sep + str(
                 ID) + 'bestStatsUnfiltered.json',
             'w+') as file:
         json.dump(bestStatsUnfiltered, file, indent=2, ensure_ascii=False)
@@ -51,10 +51,10 @@ def persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, best
 
 def persistStats(stats, ID):
     pathlib.Path(os.path.dirname(
-        __file__) + os.path.sep + 'results' + os.path.sep + 'articleP2' + os.path.sep + 'simulation').mkdir(
+        __file__) + os.path.sep + 'results' + os.path.sep + 'articleP3' + os.path.sep + 'simulation').mkdir(
         parents=True, exist_ok=True)
     with open(os.path.dirname(
-            __file__) + os.path.sep + 'results' + os.path.sep + 'articleP2' + os.path.sep + 'simulation' + os.path.sep + str(
+            __file__) + os.path.sep + 'results' + os.path.sep + 'articleP3' + os.path.sep + 'simulation' + os.path.sep + str(
         ID) + 'simulationStats.json',
               'w+') as file:
         json.dump(stats, file, indent=2, ensure_ascii=False)
