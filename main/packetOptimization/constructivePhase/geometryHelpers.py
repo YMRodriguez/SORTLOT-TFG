@@ -156,6 +156,8 @@ def generalIntersectionArea(p1, p2):
     :return: intersection area in m2.
     """
     d1 = min(p1[0] + p1[2], p2[0] + p2[2]) - max(p1[0], p2[0])
+    if d1 < 0:
+        return 0
     d2 = min(p1[1] + p1[3], p2[1] + p2[3]) - max(p1[1], p2[1])
     if (d1 >= 0) and (d2 >= 0):
         return d1 * d2
@@ -245,19 +247,20 @@ def generateMaxAreas(nItemsDst, nFilteredDst, truck, nDst):
     """
     nItemsDst = np.asarray(nItemsDst)
     nFilteredDSt = np.asarray(nFilteredDst)
-    if nDst > 3:
+    if nDst > 1:
         # List of factors related to each destination, decimal values in [0, 1].
         factor = []
         for i in range(nDst):
             if i != nDst - 1:
                 # Just cut percentage of the destinations previous to the first out.
+                # TODO, quizá sea mejor: factor.append(1-nDst*(nDst-i)/100)
                 factor.append(1 - nDst * (nDst - 1) / 100)
             else:
                 factor.append(1)
         factor = np.asarray(factor)
     else:
         factor = np.ones((1, nDst))[0]
-    return (nItemsDst / np.sum(nItemsDst) + nFilteredDSt / np.sum(nFilteredDSt)) * factor * 0.5 * (
+    return (nItemsDst / np.sum(nItemsDst) + nFilteredDSt / max(1, np.sum(nFilteredDSt))) * factor * 0.5 * (
             truck["length"] * truck["width"])
 
 
@@ -274,6 +277,7 @@ def projectPPOverlapped(item, potentialPoints):
     currentDstPPsOverlapped = np.asarray(list(
         filter(lambda x: pointInPlane(x, getBLF(item), getBRR(item)), potentialPoints[item["dstCode"]])))
     PPsOverlapped.append(currentDstPPsOverlapped)
+    # Check the overlapping in previous destinations.
     if item["dstCode"]:
         # TODO comprobar si se tarda mas ordenando.
         previousDstPPsOverlapped = np.asarray(list(

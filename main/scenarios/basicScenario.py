@@ -14,7 +14,7 @@ from main.packetOptimization.randomizationAndSorting.randomization import random
 from main.packetOptimization.randomizationAndSorting.sorting import sortingPhase
 from main.packetOptimization.constructivePhase.mainCP import main_cp
 from main.statistics.main import solutionStatistics
-from main.solutionsFilter.main import filterSolutions, getBest, filterSolutionsWithoutExcluding
+from main.solutionsFilter.main import filterSolutions, getBest, getUpdatedStatsWithConditions
 from main.scenarios.dataSaver import persistInLocal, persistStats
 import glob
 import os
@@ -24,33 +24,43 @@ truck_var = json.load(open(os.path.dirname(__file__) + os.path.sep + "packetsDat
 
 
 # --------------- Packet Generator ------------------------------------------
-def getDataFromJSONWith(Id):
+def getDataFromJSONWith(filepath):
     """
     This function gets a dataset file by its id.
 
-    :param Id: the id of the dataset, not the name.
+    :param filepath: the id of the dataset, not the name.
     :return: object mapped from json file and number of destinations.
     """
-    filepath = glob.glob(os.path.dirname(__file__) + os.path.sep + "packetsDatasets" + os.path.sep + str(Id) + "-*.json")[0]
-    nDst = int(filepath.split("packetsDatasets" + os.path.sep)[1].split("-")[5][3])
+    nDst = int(filepath.split("round2" + os.path.sep)[1].split("-")[5][0])
     return json.load(open(filepath)), nDst
 
 
+def getFilepaths():
+    return glob.glob(os.path.dirname(
+        __file__) + os.path.sep + "packetsDatasets" + os.path.sep + "articleDatasets" + os.path.sep + "round2" + os.path.sep + "*.json")
+
+
+def getIdFromFilePath(filepath):
+    return filepath.split(os.path.sep)[-1].split("-")[0] + "art"
+
+
 # -------------------- Main Processes -----------------------------
-def main_scenario(packets, truck, nDst, nIteration, rangeOrientations=None):
+def main_scenario(packets, truck, nDst, nIteration, coeffs, rangeOrientations=None):
     if rangeOrientations is None:
         rangeOrientations = [1, 2, 3, 4, 5, 6]
     # ------ Packet adaptation------
     # Alpha is 333 for terrestrial transport
-    packets = adaptPackets(cleanDestinationAndSource(packets), 333)
+    packets = adaptPackets(packets, 333)
     # ------ Truck adaptation ------
     truck = adaptTruck(truck, 4)
-    sort_output = sortingPhase(packets, nDst)
-    rand_output = randomization(deepcopy(sort_output))
+    sort_output = sortingPhase(packets, nDst, coeffs[:2])
+    rand_output = randomization(deepcopy(sort_output), nDst)
     # ------- Solution builder --------
     startTime = time.time()
-    iteration = main_cp(truck, rand_output, nDst)
+    iteration = main_cp(truck, rand_output, nDst, coeffs[2:])
     endTime = time.time()
+    if iteration is None:
+        return iteration
     # It may be relevant to know the sorting method used.
     return {"placed": iteration["placed"],
             "discard": iteration["discard"],
@@ -71,7 +81,7 @@ def serializePlacedItem(item):
     :return: item object with nested numpy arrays jsonified.
     """
     item["mass_center"] = item["mass_center"].tolist()
-    item["subzones"] = item["subzones"].tolist()
+    item["subzones"] = item["subzones"]
     item["pp_in"] = item["pp_in"].tolist()
     item["pp_out"] = item["pp_out"].tolist()
     return item
@@ -86,7 +96,7 @@ def serializeDiscardItem(item):
     """
     item["mass_center"] = item["mass_center"].tolist()
     if "subzones" in item:
-        item["subzones"] = item["subzones"].tolist()
+        item["subzones"] = item["subzones"]
     return item
 
 
@@ -122,62 +132,80 @@ def serializeSolutions(sols):
 # ------ Common variables ----------
 if len(sys.argv) > 1:
     try:
-        iterations = int(sys.argv[2])
+        iterations = int(sys.argv[1])
     except ValueError:
         iterations = 1
 
     try:
-        expP1 = int(sys.argv[1])
-    except ValueError:
-        expP1 = 1
-    expP2 = expP1 + 1
-
-    try:
-        cores = int(sys.argv[3])
+        cores = int(sys.argv[2])
     except ValueError:
         cores = 1
+
+    try:
+        expP1 = int(sys.argv[3])
+    except ValueError:
+        expP1 = 1
+
+    try:
+        expP2 = int(sys.argv[4])
+    except ValueError:
+        expP2 = expP1 + 1
+
 else:
-    iterations, expP1, expP2, cores = 1, 1, 2, 1
+    iterations, expP1, expP2, cores = 5, 2, 3, 1
+
+
+experiments = sorted(getFilepaths())
+
+coefficients = [0.23, 0.01, 0.7 , 0.86, 0.17, 0.8 , 0.76, 0.55, 0.3 , 0.92, 0.92, 0.33, 0.34, 0.75, 0.37, 0.6 , 0.79]
 
 for i in range(expP1, expP2):
     # ------ Get packets dataset -------
-    ID = i
-    items, ndst = getDataFromJSONWith(ID)
+    items, ndst = getDataFromJSONWith(experiments[i])
+    ID = getIdFromFilePath(experiments[i])
 
     # ------ Iterations ------------
     with parallel_backend(backend="loky", n_jobs=cores):
         parallel = Parallel(verbose=100)
         solutions = parallel(
-            [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, i) for i in range(iterations)])
-        solutionsStats = list(map(lambda x: solutionStatistics(x), solutions))
+            [delayed(main_scenario)(deepcopy(items), deepcopy(truck_var), ndst, i, coefficients) for i in range(iterations)])
+        notNoneSolutions = list(filter(lambda x: x is not None, solutions))
+        if len(notNoneSolutions):
+            solutionsStats = list(map(lambda x: solutionStatistics(x), notNoneSolutions))
 
-        # ------- Process set of solutions --------
-        # Clean solutions
-        solutionsCleaned = list(map(lambda x: {"placed": x["placed"],
-                                               "discard": x["discard"],
-                                               "truck": x["truck"],
-                                               "iteration": x["iteration"],
-                                               "time": x["time"]}, solutions))
-        updatedStats = filterSolutionsWithoutExcluding(solutionsCleaned, solutionsStats)
-        persistStats(updatedStats, ID)
-        # Get best filtered and unfiltered.
-        serializedSolutions = serializeSolutions(solutionsCleaned)
-        filteredSolutions, filteredStats = filterSolutions(serializedSolutions, solutionsStats)
-        bestFiltered = getBest(filteredSolutions, filteredStats, 5)
-        bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 5)
+            # ------- Process set of solutions --------
+            # Clean solutions
+            solutionsCleaned = list(map(lambda x: {"placed": x["placed"],
+                                                   "discard": x["discard"],
+                                                   "truck": x["truck"],
+                                                   "iteration": x["iteration"],
+                                                   "time": x["time"]}, notNoneSolutions))
+            updatedStats = getUpdatedStatsWithConditions(solutionsCleaned, solutionsStats)
+            persistStats(updatedStats, ID)
+            # Get best filtered and unfiltered.
+            serializedSolutions = serializeSolutions(solutionsCleaned)
+            filteredSolutions, filteredStats = filterSolutions(serializedSolutions, solutionsStats)
+            bestFiltered = getBest(filteredSolutions, filteredStats, 3)
+            bestUnfiltered = getBest(solutionsCleaned, solutionsStats, 3)
 
-        # Make it json serializable
-        bestSolsFiltered = {"volume": bestFiltered["volume"][0],
-                            "weight": bestFiltered["weight"][0],
-                            "taxability": bestFiltered["taxability"][0]}
-        bestStatsFiltered = {"volume": bestFiltered["volume"][1],
-                             "weight": bestFiltered["weight"][1],
-                             "taxability": bestFiltered["taxability"][1]}
-        bestSolsUnfiltered = {"volume": bestUnfiltered["volume"][0],
-                              "weight": bestUnfiltered["weight"][0],
-                              "taxability": bestUnfiltered["taxability"][0]}
-        bestStatsUnfiltered = {"volume": bestUnfiltered["volume"][1],
-                               "weight": bestUnfiltered["weight"][1],
-                               "taxability": bestUnfiltered["taxability"][1]}
+            # Make it json serializable
+            bestSolsFiltered = {"volume": bestFiltered["volume"][0],
+                                "weight": bestFiltered["weight"][0],
+                                "taxability": bestFiltered["taxability"][0]}
+            bestStatsFiltered = {"volume": bestFiltered["volume"][1],
+                                 "weight": bestFiltered["weight"][1],
+                                 "taxability": bestFiltered["taxability"][1]}
+            bestSolsUnfiltered = {"volume": bestUnfiltered["volume"][0],
+                                  "weight": bestUnfiltered["weight"][0],
+                                  "taxability": bestUnfiltered["taxability"][0]}
+            bestStatsUnfiltered = {"volume": bestUnfiltered["volume"][1],
+                                   "weight": bestUnfiltered["weight"][1],
+                                   "taxability": bestUnfiltered["taxability"][1]}
 
-        persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)
+            persistInLocal(bestSolsFiltered, bestStatsFiltered, bestSolsUnfiltered, bestStatsUnfiltered, ID)
+        else:
+            with open(
+                    os.path.dirname(__file__) + os.path.sep + 'results' + os.path.sep + 'articleP32' + os.path.sep + str(
+                        ID) + 'NoSolution.json',
+                    'w+') as file:
+                json.dump({"error": "no solution"}, file, indent=2, ensure_ascii=False)

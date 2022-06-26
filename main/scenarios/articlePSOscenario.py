@@ -26,7 +26,7 @@ import pyswarms.backend as P
 import logging
 from mlflow.tracking import MlflowClient
 
-logging.basicConfig(filename='pso.log', filemode='w', format='%(levelname)s - %(message)s')
+logging.basicConfig(filemode='w', format='%(levelname)s - %(message)s')
 random.seed(20)
 
 # ----------------------- MongoDB extraction ----------------------
@@ -46,7 +46,7 @@ def getDataFromJSONWith(filepath):
 
 def getFilepaths():
     return glob.glob(os.path.dirname(
-        __file__) + os.path.sep + "packetsDatasets" + os.path.sep + "articleDatasets" + os.path.sep + "round2" + os.path.sep + "*.json")
+        __file__) + os.path.sep + "packetsDatasets" + os.path.sep + "articleDatasets" + os.path.sep + "round3pso" + os.path.sep + "*.json")
 
 
 def getIdFromFilePath(filepath):
@@ -63,7 +63,7 @@ def main_scenario(packets, coefficients, truck, nDst, nIteration, rangeOrientati
     # ------ Truck adaptation ------
     truck = adaptTruck(truck, 4)
     sort_output = sortingPhase(packets, nDst, coefficients[:2])
-    rand_output = randomization(deepcopy(sort_output))
+    rand_output = randomization(deepcopy(sort_output), nDst)
     # ------- Solution builder --------
     startTime = time.time()
     iteration = main_cp(truck, rand_output, nDst, coefficients[2:])
@@ -157,7 +157,7 @@ if len(sys.argv) > 1:
     except ValueError:
         particles = 36
 else:
-    exp, cores, psoIterations, particles = 0, 23, 360, 36
+    exp, cores, psoIterations, particles = 0, 23, 200, 34
 
 
 def processParticle(i, coefficients, nParticles, expID, packets, nDst, truck, genRun, bestPositions):
@@ -275,17 +275,16 @@ def performPSO(expID, packets, nDst, truck, nParticles, nPSOiters, nCores):
     # ---------- Swarm structure creation ------------------------
     topology = Star()
     # initPositionsList = [0.8, 0.2, 0.55, 0.45, 0.35, 0.25, 0.4, 0.45, 0.45, 0.05, 0.05, 0.3, 0.5, 0.1, 0.1]
-    initialPositions = []
-    nDimensions = 18
+    nDimensions = 17
     # Create initial positions.
-    for i in range(nDimensions):
-        reference1 = np.ones(nDimensions) * 1 / 2
-        reference2 = np.ones(nDimensions) * 1 / 2
-        reference1[i] = 0
-        reference2[i] = 1
-        initialPositions.append(reference1)
-        initialPositions.append(reference2)
-    initialPositions = np.array(initialPositions)
+    # for i in range(nDimensions):
+    #     reference1 = np.ones(nDimensions) * 1 / 2
+    #     reference2 = np.ones(nDimensions) * 1 / 2
+    #     reference1[i] = 0
+    #     reference2[i] = 1
+    #     initialPositions.append(reference1)
+    #     initialPositions.append(reference2)
+    initialPositions = None # np.array(initialPositions)
     # initPositions = np.tile(initPositionsList, (particles, 1))
     bounds = (np.zeros(nDimensions), np.ones(nDimensions))
     opHandler = OptionsHandler(strategy={"w": "lin_variation"})
@@ -363,10 +362,10 @@ items, ndst = getDataFromJSONWith(experiments[exp])
 
 
 client = MlflowClient(tracking_uri="http://com31.dit.upm.es:8889")
-expMlflow = client.get_experiment_by_name("2Pr" + getIdFromFilePath(experiments[exp]))
+expMlflow = client.get_experiment_by_name("3eR" + getIdFromFilePath(experiments[exp]))
 
 if not expMlflow:
-    expMlflow = client.create_experiment("2Pr" + getIdFromFilePath(experiments[exp]))
+    expMlflow = client.create_experiment("3eR" + getIdFromFilePath(experiments[exp]))
 else:
     expMlflow = expMlflow.experiment_id
 

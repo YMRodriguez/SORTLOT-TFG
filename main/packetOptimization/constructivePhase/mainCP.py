@@ -1,13 +1,15 @@
 import logging
+import random
+import sys
 
 from main.packetOptimization.constructivePhase.geometryHelpers import *
 from main.packetAdapter.helpers import getStatsForBase, getMinDim, getMaxWeight
 from main.packetOptimization.randomizationAndSorting.sorting import reSortingPhase
 from copy import deepcopy
-import random
 import numpy as np
 import math
-import time
+from sklearn.metrics import mean_absolute_percentage_error
+
 
 np.set_printoptions(suppress=True)
 
@@ -320,6 +322,7 @@ def isWithinTruckDimensionsConstrains(item, truckDimensions):
 
 
 # ------------------ Physical constrains - Items-related ----------------------------------------
+
 def overlapper(p1all, p2all):
     """
     This function checks whether an item overlaps other or not.
@@ -328,8 +331,8 @@ def overlapper(p1all, p2all):
     :param p2all: triplet of 3 planes.
     :return: True if the item does not overlap, False otherwise.
     """
-    for i, j in zip(p1all, p2all):
-        if generalIntersectionArea(i, j):
+    for i in range(len(p1all)):
+        if generalIntersectionArea(p1all[i], p2all[i]):
             continue
         # If there is a plane that does not overlap then we conclude there is not overlapping (hyperplane separation theorem)
         else:
@@ -528,7 +531,7 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
         surroundingCondition = 0
 
     # Height condition in the fitness function.
-    heightWeightRelation = (item["mass_center"][1] / maxHeight) * (item["weight"] / notPlacedMaxWeight)
+    heightWeightRelation = 1 - ((item["weight"] / notPlacedMaxWeight)-0.5) * (item["mass_center"][1] / maxHeight)/0.5
 
     # Item not in floor.
     if PP[1]:
@@ -542,15 +545,14 @@ def fitnessFor(PP, item, placedItems, notPlacedMaxWeight, maxHeight, maxLength, 
         if stage == 3:
             surroundingCondition = -stageFW[3] if item["dstCode"] < itemBehind["dstCode"] else surroundingCondition
         # Check how similar are the areas between the item being inserted and the item behind.
-        areaCondition = 1 - abs((getBottomPlaneArea(item) / getBottomPlaneArea(itemBehind)) - 1)
+        areaCondition = 1 - abs(1 - (getBottomPlaneArea(item) / getBottomPlaneArea(itemBehind)))
         areaCondition = areaCondition if (1 >= areaCondition >= 0) else 0
         fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
                    areaCondition * stageFW[2] + heightWeightRelation * stageFW[3] + item["priority"] * stageFW[4]
         fitvalue = fitvalue if fitvalue >= 0 else 0
         return [PP, fitvalue]
     else:
-        fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + \
-                   stageFW[2] + heightWeightRelation * stageFW[3] + item["priority"] * stageFW[4]
+        fitvalue = lengthCondition * stageFW[0] + surroundingCondition * stageFW[1] + heightWeightRelation * stageFW[3] + item["priority"] * stageFW[4]
         # Threshold in fitness value. TODO, maybe change the threshold depending on the stage.
         fitvalue = fitvalue if fitvalue >= 0 else 0
         return [PP, fitvalue]
@@ -567,7 +569,7 @@ def fitnessForBase(PP, item, containerLength, nDst, placedItems, maxWeight, coef
     :param placedItems: set of placed items into the container.
     :return: potential point with fitness, format [x, y, z, fitness].
     """
-    fitWeights = coefficients if nDst > 1 else [coefficients[0], 0, coefficients[2], coefficients[3]]
+    fitWeights = coefficients if nDst > 1 else [coefficients[0], coefficients[1], coefficients[2]]
     if nDst > 1:
         # For the surrounding customer code objects.
         nItems = 5
@@ -578,26 +580,34 @@ def fitnessForBase(PP, item, containerLength, nDst, placedItems, maxWeight, coef
         surroundingCondition = len(nearItemsWithValidDstCode) / max(len(nearItems), 1)
     else:
         surroundingCondition = 0
-    fitnessValue = (item["weight"] / maxWeight) * fitWeights[0] + surroundingCondition * fitWeights[1] + (
-            1 - (item["mass_center"][2] / containerLength)) * fitWeights[2] + item["priority"] * coefficients[3]
+    #TODO, delete the surrounding condition.
+    fitnessValue = (item["weight"] / maxWeight) * fitWeights[0] + (
+            1 - (item["mass_center"][2] / containerLength)) * fitWeights[1] + item["priority"] * fitWeights[2]
     return [PP, fitnessValue]
 
 
-def isBetterPP(newPP, currentBest, truckWidth):
+def isBetterPP(newPP, currentBest, truckWidth, base):
     """
     This function decide which potential point is better. Criteria is:
     - Given same fitness, choose according to a function then randomly choose one.
     - Choose the one with the best fitness value.
 
-    :param newPP: potential point being evaluated.
+    :param newPP: potential point with fitness.
     :param currentBest: current potential point for an item.
     :return: True if the newPP is better than the current best, False otherwise.
     """
-    if newPP[1] == currentBest[1]:
-        return sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth / 2))[0][1] == newPP[1]
-    return newPP[1] > currentBest[1]
+    try:
+        # Same fitness value
+        if newPP[1] == currentBest[1]:
+            if base:
+                return random.randint(0, 1)
+            # Get the one with the position closer to the extremes. After sorting if
+            return all(sorted([newPP, currentBest], key=lambda x: -abs(x[0][0] - truckWidth / 2))[0][0] == newPP[0])
+        return newPP[1] > currentBest[1]
+    except:
+        logging.error("Error while estimating better PP")
 
-
+        
 def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim, stage):
     """
     This function creates a list of potential points from a packet after its insertion. Depending on the
@@ -639,12 +649,18 @@ def generateNewPPs(item, placedItems, truckHeight, truckWidth, minDim, stage):
             BLR = getNearestProjectionPointFor(BLR, placedItems)
     if len(result):
         if not stage:
-            result = np.vstack((result, BLR, BRR, BRF))
+            if TRF[0] >= truckWidth - minDim:
+                result = np.vstack((result, BLR, BRR))
+            else:
+                result = np.vstack((result, BLR, BRR, BRF))
         else:
             result = np.vstack((result, BLR, BRx))
     else:
         if not stage:
-            result.extend((BLR, BRR, BRF))
+            if TRF[0] >= truckWidth - minDim:
+                result.extend((BLR, BRR))
+            else:
+                result.extend((BLR, BRR, BRF))
             result = np.asarray(result)
         else:
             result.extend((BLR, BRx))
@@ -694,7 +710,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     # Obtain the maximum weight of the candidateList.
     maxWeight = getMaxWeight(candidateList)
     # Count amount of filtered for each destination.
-    nFilteredDst = list(map(lambda x: len(x), filteredCandidates))
+    nFilteredDst = list(map(lambda x: len(list(filter(lambda y: y["priority"], x))), filteredCandidates))
     # Create max area items of a destination can occupy within the container.
     maxAreas = generateMaxAreas(nItemDst, nFilteredDst, truck, nDst)
     nItemsEstimation = list(map(lambda x: int(maxAreas[x] / (meanDim[x] ** 2)), range(nDst)))
@@ -712,11 +728,13 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     candidateList = filteredCandidates
     # Auxiliary list to group PP that are not important in this stage(those that are not in the floor).
     notInFloorPPByDst = list(map(lambda x: [], range(nDst)))
+    # Set of PP in which no item for a destination fits.
+    exhaustedInFloorPPByDst = list(map(lambda x: [], range(nDst)))
     # Check the best item for each Potential Point in order of destination.
     for d in range(nDst):
         # Add to next destination the potential points of the previous destination.
         if d:
-            potentialPoints.append(np.array(potentialPoints[d - 1]))
+            potentialPoints.append(np.vstack((potentialPoints[d - 1], np.array(sorted(exhaustedInFloorPPByDst[0], key=lambda x: x[2]))[-10:])))
         # The intention is to fill the max area of the container assigned to a destination,
         # so it checks this condition for each potential point, each item and each item orientation.
         while (currentAreas[0][d] <= maxAreas[d]) and len(potentialPoints[d]):
@@ -735,7 +753,6 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
             if not pp[1]:
                 for i in candidatesByDst:
                     # Pick one random orientation apart from the current.
-                    # orientations = [i["or"], random.choice([o for o in i["feasibleOr"] if o != i["or"]])]
                     orientations = i["feasibleOr"]
                     for o in orientations:
                         if o != i["or"]:
@@ -748,7 +765,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
                                                            maxWeight, coefficients)
                             # Can use the same even thought the concept is different, in all cases the pp is going to be
                             # the same but with diff fitness functions so the highest will save the item.
-                            if isBetterPP(ppWithFitness, ppBest, truck["width"]):
+                            if isBetterPP(ppWithFitness, ppBest, truck["width"], 1):
                                 ppBest = ppWithFitness
                                 feasibleItem = feasibility[1]
                     # This condition is only important for the first two items.
@@ -784,6 +801,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
                     truck = addItemWeightToTruckSubzones(feasibleItem["subzones"], truck)
                 else:
                     # There is no item and item orientation for this potential point.
+                    exhaustedInFloorPPByDst[d].append(pp)
                     # Delete it from the list of potential points.
                     potentialPoints[d] = potentialPoints[d][~(potentialPoints[d] == pp).all(axis=1)]
             else:
@@ -794,7 +812,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
     # Update the list with the items that have not been packed.
     discardList = discardList + [item for sublist in candidateList for item in sublist]
     # Discards an unfair base solution.
-    if (nDst > 1) and not (np.std([maxAreas], ddof=1) * 0.8 <= np.std(currentAreas, ddof=1) <= np.std([maxAreas], ddof=1) * 1.2):
+    if (nDst > 1) and not mean_absolute_percentage_error([maxAreas], currentAreas) < 0.15:
         return None
     # Keep the potential points that are not in the floor.
     return {"placed": placedItems, "discard": discardList,
@@ -877,7 +895,7 @@ def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, plac
             if feasibility[0]:
                 ppWithFitness = fitnessFor(pp, feasibility[1], placedItems, notPlacedMaxWeight, truck["height"],
                                            truck["length"], stage, nDst, coefficients)
-                if isBetterPP(ppWithFitness, ppBest, truck["width"]):
+                if isBetterPP(ppWithFitness, ppBest, truck["width"], 0):
                     ppBest = ppWithFitness
                     feasibleItem = feasibility[1]
         # If the best is different from the worst there is a PP to insert the item.
@@ -888,12 +906,12 @@ def load(candidateList, potentialPoints, truck, retry, stage, nDst, minDim, plac
             potentialPoints[i["dstCode"]] = potentialPoints[i["dstCode"]][
                 ~(potentialPoints[i["dstCode"]] == ppBest[0]).all(axis=1)]
             # Generate new PPs to add to item and potentialPoints.
-            potentialPoints = projectPPOverlapped(feasibleItem, potentialPoints)
             newPPs = generateNewPPs(feasibleItem, placedItems, truck["height"], truck["width"], minDim, stage)
             feasibleItem["pp_out"] = newPPs
             # Append new potential points to general potential points
             potentialPoints[i["dstCode"]] = np.vstack((potentialPoints[i["dstCode"]], newPPs)) if len(newPPs) else \
                 potentialPoints[i["dstCode"]]
+            potentialPoints = list(map(lambda x: np.unique(x, axis=0), projectPPOverlapped(feasibleItem, potentialPoints)))
             # Add insertion order to item.
             feasibleItem["in_id"] = len(placedItems)
             # Add item to placedItems.
@@ -950,8 +968,8 @@ def main_cp(truck, candidateList, nDst, coefficients, subgroupingEnabled=1):
     """
     # Map the coefficients.
     coefficientsResorting = coefficients[0:2]
-    coefficientsBase = coefficients[2:6]
-    coefficientsLoading = coefficients[6:]
+    coefficientsBase = coefficients[2:5]
+    coefficientsLoading = coefficients[5:]
 
     # Fetch the new potential points from the truck.
     potentialPoints = truck["pp"]
@@ -996,19 +1014,5 @@ def main_cp(truck, candidateList, nDst, coefficients, subgroupingEnabled=1):
     #    print("Time stage " + str(time.time() - startTime2))
     #    startTime3 = time.time()
     #    print("Number of items packed after stage" + len(filling["placed"]))
-    # ----- DEBUG-INFO ------
-
-    stage = stage + 1
-
-    # Got to do a few more tests to check if this additional phase is really relevant.
-    # TODO, would be nice to make a estimation of time increase and decide on that instead of this fixed number.
-    if len(candidateList) < 300:
-        loadingRest = load(loadingRest["discard"],
-                           np.unique(loadingRest["potentialPoints"], axis=0),
-                           loadingRest["truck"], 1, stage, nDst,
-                           getMinDim(loadingRest["discard"]), loadingRest["placed"], coefficientsLoading)
-    # ----- DEBUG-INFO ------
-    #    print("Number of items packed after stage" + len(fillingSA["placed"]))
-    #    print("Stage time: " + str(time.time() - startTime3))
     # ----- DEBUG-INFO ------
     return loadingRest
