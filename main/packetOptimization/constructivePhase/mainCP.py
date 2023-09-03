@@ -811,6 +811,7 @@ def loadBase(candidateList, potentialPoints, truck, nDst, minDim, placedItems, c
                 continue
     # Update the list with the items that have not been packed.
     discardList = discardList + [item for sublist in candidateList for item in sublist]
+    print("discardList", discardList)
     # Discards an unfair base solution.
     if (nDst > 1) and not mean_absolute_percentage_error([maxAreas], currentAreas) < 0.15:
         return None
