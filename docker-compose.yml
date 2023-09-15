@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  frontend:
+    build:
+      context: ./path_to_3DBinPacking-VisualizationTool
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+
+  backend:
+    build:
+      context: ./path_to_SORTLOT-TFG
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
